@@ -1,0 +1,10 @@
+.DS_Store
+*.mp4
+*.mov
+*.wav
+frames/
+checks/
+renders/
+node_modules/
+__pycache__/
+*.pyc
