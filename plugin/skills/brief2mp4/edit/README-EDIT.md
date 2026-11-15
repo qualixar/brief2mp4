@@ -138,6 +138,15 @@ How each app is driven, so you can adapt a recipe:
 - **PhotoCraft**: `run --new '{"width":1280,"height":720}' --cmd ID --params '{...}' ... --out file.png`. Saving a layered document as PNG flattens it (the CLI says so).
 - **VectorCraft**: `run --commands file.jsonl --export file.svg`. New shapes get a black stroke unless you switch it off with `paint.setStroke {"none":true}`.
 
+## Commands beyond the recipes (seen working with the pinned versions)
+
+The example 07 run needed a few commands the recipes do not use. All are in the pinned CLIs (`<app>-cli commands` lists them with their parameters):
+
+- FilmCraft `timeline.place` with `sourceIn` and `duration` trims a clip as it places it; `graphics.set` with `props` (`font`, `font_style`, `size`, `fill_color`, `position`, `opacity`) styles a title, and `keyframe: true` animates a property.
+- PhotoCraft `shape.create` draws a shape layer (a rounded rectangle for a thumbnail); `type.create` sets text.
+- PhotoCraft quirk: if the `box` given to `type.create` is too short for the text, only the first wrapped line shows, with no warning. Give text boxes generous height and check the PNG.
+- SoundCraft: `sound_mix.sh` ducks a music bed under any foreground track, not only a voice: pass chimes or sound effects as `--voice` to duck under them.
+
 ## Every route still ends in the same two scripts
 
 Whatever made the picture and sound, the deliverable is checked the same way. An edit export is a rough render like any other:

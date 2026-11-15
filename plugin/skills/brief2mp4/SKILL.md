@@ -104,6 +104,10 @@ After every full render, do all three:
 2. **Look.** `scripts/contact_sheet.sh final.mp4 --at <beat starts, hero moment, last second>` writes one PNG per moment. Open and view each image. For every frame ask: is the text spelled exactly as the spec says? Is anything cut off or overlapping? Are the colours from the palette? Is the beat that should be on screen at this time actually there? To measure instead of eyeballing (text height, distance from the edge, safe zones on a vertical video), run `python3 scripts/bounds.py <still.png> --bg "#rrggbb" [--region x0,y0,x1,y1] [--margin 96,54 | --safe top=288,bottom=672,left=64,right=192]`: it prints the pixel box of everything that is not background and whether it sits inside the zone.
 3. **Walk the list.** Go through **Done when** line by line and mark each **met** or **not met**, with the evidence: the command output line, or the frame file name.
 
+To check a mix (for example "the bed is 10 dB under the voice"), measure the stems you bounced separately, not the final mix, where other sounds fall inside the same window.
+
+Run the skill's scripts with `bash` (they are bash scripts); in your own shell loops, remember that zsh, the default shell on macOS, does not split `$var` on spaces the way bash does.
+
 If you cannot view images in this environment, say so plainly in the report. Never claim a visual check you did not do.
 
 ## 5. Fix

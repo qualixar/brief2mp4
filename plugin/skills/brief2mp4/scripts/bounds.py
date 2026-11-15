@@ -14,7 +14,7 @@ PNGs that contact_sheet.sh and ffmpeg write.
       checks a left/right and top/bottom safe margin (5% at 1920x1080)
 
 Prints one JSON object. Exit 0 when the box is inside the zones (or none were given), 1 otherwise.
-A box height is a good proxy for text height when you measure a single line.
+A box height is a good proxy for text height when you measure a single line. It measures ink, not font-size: a line without descenders (no g, j, p, q, y) is shorter than its font-size, a line with them is taller than its cap height. Compare like with like, or check the CSS for font-size.
 
 Measuring one element (a moving dot, one label): pass a --region that contains only that element,
 then read its box centre: cx = (x0 + x1) / 2, cy = (y0 + y1) / 2. For easing, measure the centre at

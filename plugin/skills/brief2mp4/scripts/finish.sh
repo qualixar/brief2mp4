@@ -61,14 +61,14 @@ VF="scale=${W}:${H}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${W}:
 # loudnorm undershoots on short clips because it needs several seconds of look-ahead.
 PRE="alimiter=limit=0.5:level=disabled"
 TAIL="aresample=48000,apad,atrim=0:${SECONDS_},afade=t=out:st=$(awk "BEGIN{print ${SECONDS_}-0.4}"):d=0.4"
-loudness_filter() {  # loudness_filter <input file> -> prints the -af chain
+loudness_core() {  # loudness_core <input file> -> the normalising part of the chain ("" for silence)
   local m val k f="${PRE},loudnorm=I=${LUFS}:TP=-1.5:LRA=11"
   m="$(ffmpeg -hide_banner -nostats -t "$SECONDS_" -i "$1" -vn -af "${PRE},loudnorm=I=${LUFS}:TP=-1.5:LRA=11:print_format=json" -f null - 2>&1 | awk '/^\{/,/^\}/')"
   for k in input_i input_tp input_lra input_thresh target_offset; do
     val="$(printf '%s\n' "$m" | sed -n "s/.*\"$k\" : \"\([^\"]*\)\".*/\1/p")"
     case "$val" in
-      *inf*|*nan*) echo "${TAIL}"; return ;;                      # silent input: nothing to normalise
-      "") echo "${PRE},loudnorm=I=${LUFS}:TP=-1.5:LRA=11,${TAIL}"; return ;;
+      *inf*|*nan*) echo ""; return ;;                              # silent input: nothing to normalise
+      "") echo "${PRE},loudnorm=I=${LUFS}:TP=-1.5:LRA=11"; return ;;
     esac
     case "$k" in
       input_i) f="$f:measured_I=$val" ;; input_tp) f="$f:measured_TP=$val" ;;
@@ -76,7 +76,28 @@ loudness_filter() {  # loudness_filter <input file> -> prints the -af chain
       target_offset) f="$f:offset=$val" ;;
     esac
   done
-  echo "$f:linear=true,${TAIL}"
+  echo "$f:linear=true"
+}
+
+measured_i() {  # measured_i <input file> <chain> -> integrated loudness of the chain's output
+  ffmpeg -hide_banner -nostats -t "$SECONDS_" -i "$1" -vn -af "$2,ebur128" -f null - 2>&1 \
+    | awk '/Integrated loudness:/{f=1} f && /I:/{print $2; exit}'
+}
+
+loudness_filter() {  # loudness_filter <input file> -> prints the full -af chain
+  # Peaky material (sparse hits, chimes) can need more gain than loudnorm's true-peak limit allows; it
+  # then falls back to dynamic mode and lands short. Measure the result and close the gap through a
+  # brick-wall limiter, at most twice, so the file reaches the target with peaks held under -1 dBTP.
+  local core i d round
+  core="$(loudness_core "$1")"
+  [[ -n "$core" ]] || { echo "${TAIL}"; return; }
+  for round in 1 2; do
+    i="$(measured_i "$1" "$core")"
+    d="$(awk -v t="$LUFS" -v i="$i" 'BEGIN{ if (i=="" || i ~ /inf|nan/) {print "0"; exit} d=t-i; if (d<0.5 && d>-0.5) print "0"; else printf "%.2f", d }')"
+    [[ "$d" == 0 ]] && break
+    core="${core},volume=${d}dB,alimiter=limit=0.79:level=disabled"
+  done
+  echo "${core},${TAIL}"
 }
 
 if [[ -n "$AUDIO" ]]; then

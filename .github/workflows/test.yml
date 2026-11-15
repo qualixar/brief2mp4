@@ -55,7 +55,7 @@ jobs:
 
       - name: Detect 3D pack
         run: |
-          bash plugin/skills/brief2mp4/scripts/detect_3d.sh | tee /dev/stderr | grep -q "3d: ready"
+          out="$(bash plugin/skills/brief2mp4/scripts/detect_3d.sh)"; echo "$out"; [[ "$out" == *"3d: ready"* ]]
 
       - name: Install the edit pack, film + sound (bash)
         if: runner.os != 'Windows'
@@ -68,7 +68,7 @@ jobs:
 
       - name: Detect edit pack
         run: |
-          bash plugin/skills/brief2mp4/scripts/detect_edit.sh | tee /dev/stderr | grep -q "edit: ready"
+          out="$(bash plugin/skills/brief2mp4/scripts/detect_edit.sh)"; echo "$out"; [[ "$out" == *"edit: ready"* ]]
 
       - name: Edit recipes (FilmCraft cut, SoundCraft mix)
         run: |
