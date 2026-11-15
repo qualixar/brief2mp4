@@ -61,7 +61,7 @@ else
   il="$(echo "$stats" | awk '/I:/{v=$2} END{print v}')"
   tp="$(echo "$stats" | awk '/Peak:/{v=$2} END{print v}')"
   if [[ -z "$il" || "$il" == "-inf" ]] || awk -v i="$il" 'BEGIN{exit !(i < -60)}'; then
-    [[ "$SILENT_OK" == 1 ]] && pass "soundtrack silent (brief allows it)" || warn "soundtrack is silent; pass --silent-ok if the brief asked for silence"
+    [[ "$SILENT_OK" == 1 ]] && pass "soundtrack silent (brief allows it)" || fail "soundtrack is silent; fix the audio, or pass --silent-ok if the brief asked for silence"
   else
     awk -v i="$il" -v t="$LUFS" 'BEGIN{d=i-t; if(d<0)d=-d; exit !(d<=1.5)}' \
       && pass "loudness ${il} LUFS (target ${LUFS})" || fail "loudness ${il} LUFS, target ${LUFS} +/- 1.5"
@@ -70,10 +70,12 @@ else
 fi
 
 # Picture health: long black stretches and long frozen stretches.
-black="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "blackdetect=d=0.5:pic_th=0.98" -an -f null - 2>&1 | grep -c black_start || true)"
+# pix_th=0.03 counts only true black (luma within 3% of black), so a dark designed background
+# such as #101114 is not mistaken for a black frame.
+black="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "blackdetect=d=0.5:pic_th=0.98:pix_th=0.03" -an -f null - 2>&1 | grep -c black_start || true)"
 [[ "$black" == 0 ]] && pass "no black stretch over 0.5 s" || warn "$black black stretch(es) over 0.5 s: intended?"
 frozen="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "freezedetect=n=0.001:d=1.5" -an -f null - 2>&1 | grep -c freeze_start || true)"
-[[ "$frozen" == 0 ]] && pass "nothing frozen over 1.5 s" || warn "$frozen frozen stretch(es) over 1.5 s: a hold the brief asked for, or dead air?"
+[[ "$frozen" == 0 ]] && pass "nothing frozen over 1.5 s" || warn "$frozen frozen stretch(es) over 1.5 s: expected where the brief asks for a hold (say so in REPORT.md), otherwise dead air"
 
 echo "----"
 if [[ "$FAILS" == 0 ]]; then echo "RESULT: PASS ($FILE)"; exit 0; else echo "RESULT: FAIL, $FAILS check(s) ($FILE)"; exit 1; fi

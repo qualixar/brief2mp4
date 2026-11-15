@@ -5,6 +5,12 @@
 #   bash install.sh --claude      # Claude Code only
 #   bash install.sh --codex       # Codex only
 #   bash install.sh --uninstall   # remove from both
+#   bash install.sh --uninstall --uninstall-3d --uninstall-edit   # also remove the optional packs
+#   bash install.sh --with-3d     # also install the optional 3D pack (core components)
+#   bash install.sh --with-3d=core,cad   # pick 3D components: core, cad, blender
+#   bash install.sh --with-edit          # also the optional edit pack (FilmCraft + SoundCraft CLIs)
+#   bash install.sh --with-edit=film,sound,effect,photo,vector   # pick editing apps
+#   Windows PowerShell: use install.ps1 instead.
 #
 # Claude Code reads skills from ~/.claude/skills (or $CLAUDE_CONFIG_DIR/skills).
 # Codex reads skills from ~/.codex/skills (or $CODEX_HOME/skills).
@@ -17,13 +23,19 @@ VERSION="$(cat "$HERE/VERSION" 2>/dev/null || echo dev)"
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 CODEX_DIR="${CODEX_HOME:-$HOME/.codex}/skills"
 
-DO_CLAUDE=1 DO_CODEX=1 UNINSTALL=0
+DO_CLAUDE=1 DO_CODEX=1 UNINSTALL=0 UNINSTALL_3D=0 UNINSTALL_EDIT=0 WITH_3D="" WITH_EDIT=""
 for arg in "$@"; do
   case "$arg" in
     --claude) DO_CODEX=0 ;;
     --codex) DO_CLAUDE=0 ;;
     --uninstall) UNINSTALL=1 ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    --uninstall-3d) UNINSTALL_3D=1 ;;
+    --uninstall-edit) UNINSTALL_EDIT=1 ;;
+    --with-edit) WITH_EDIT="film,sound" ;;
+    --with-edit=*) WITH_EDIT="${arg#--with-edit=}" ;;
+    --with-3d) WITH_3D="core" ;;
+    --with-3d=*) WITH_3D="${arg#--with-3d=}" ;;
+    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "install.sh: unknown option $arg" >&2; exit 2 ;;
   esac
 done
@@ -72,6 +84,10 @@ if [[ "$UNINSTALL" == 1 ]]; then
   echo "Removing $NAME"
   [[ "$DO_CLAUDE" == 1 ]] && uninstall_from "$CLAUDE_DIR" "Claude Code"
   [[ "$DO_CODEX" == 1 ]] && uninstall_from "$CODEX_DIR" "Codex"
+  if [[ "$UNINSTALL_3D" == 1 ]]; then bash "$SRC/3d/install_3d.sh" --uninstall
+  else echo "  The optional 3D pack (if installed) stays in ${B2M3D_HOME:-$HOME/.brief2mp4/3d}; add --uninstall-3d to remove it."; fi
+  if [[ "$UNINSTALL_EDIT" == 1 ]]; then bash "$SRC/edit/install_edit.sh" --uninstall
+  else echo "  The optional edit pack (if installed) stays in ${B2M_EDIT_HOME:-$HOME/.brief2mp4/edit}; add --uninstall-edit to remove it."; fi
   exit 0
 fi
 
@@ -79,24 +95,20 @@ echo "Installing $NAME $VERSION"
 [[ "$DO_CLAUDE" == 1 ]] && install_to "$CLAUDE_DIR" "Claude Code"
 [[ "$DO_CODEX" == 1 ]] && install_to "$CODEX_DIR" "Codex"
 
+if [[ -n "$WITH_3D" ]]; then
+  echo
+  echo "Installing the 3D pack (components: $WITH_3D)"
+  bash "$SRC/3d/install_3d.sh" --components "$WITH_3D"
+fi
+
+if [[ -n "$WITH_EDIT" ]]; then
+  echo
+  echo "Installing the edit pack (components: $WITH_EDIT)"
+  bash "$SRC/edit/install_edit.sh" --components "$WITH_EDIT"
+fi
+
 echo
-echo "Tools the skill uses:"
-check() {
-  local cmd="$1" why="$2" fix="$3"
-  if command -v "$cmd" >/dev/null 2>&1; then echo "  ok       $cmd ($why)"
-  else echo "  missing  $cmd ($why). Install: $fix"; fi
-}
-check node "HyperFrames and Three.js, version 22 or newer" "https://nodejs.org or: brew install node"
-check ffmpeg "finishing and checks, needed for every video" "brew install ffmpeg  (Linux: apt install ffmpeg)"
-if command -v blender >/dev/null 2>&1 || [[ -x /Applications/Blender.app/Contents/MacOS/Blender ]]; then
-  echo "  ok       blender (only for Blender briefs)"
-else
-  echo "  missing  blender (only for Blender briefs). Install: https://www.blender.org/download or: brew install --cask blender"
-fi
-if command -v node >/dev/null 2>&1; then
-  major="$(node -v | sed 's/^v//; s/\..*//')"
-  [[ "$major" -ge 22 ]] 2>/dev/null || echo "  note     node $(node -v) is older than 22; HyperFrames needs 22 or newer"
-fi
+bash "$SRC/scripts/doctor.sh" || true
 
 echo
 echo "Done. Start a new Claude Code or Codex session, then try:"

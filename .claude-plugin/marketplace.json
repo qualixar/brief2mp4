@@ -11,13 +11,27 @@
     {
       "name": "brief2mp4",
       "source": "./plugin",
-      "description": "Turn a written brief into a finished, checked MP4 motion graphic with HyperFrames, Three.js, Blender and ffmpeg.",
-      "version": "0.2.0",
-      "author": { "name": "Varun Pratap Bhardwaj" },
+      "description": "Turn a written brief into a finished, checked MP4 motion graphic: HyperFrames, Three.js, an optional 3D pack (CAD, materials, physics), Blender and ffmpeg. macOS, Windows, Linux.",
+      "version": "0.3.0",
+      "author": {
+        "name": "Varun Pratap Bhardwaj"
+      },
       "homepage": "https://github.com/qualixar/brief2mp4",
       "repository": "https://github.com/qualixar/brief2mp4",
       "license": "MIT",
-      "keywords": ["video", "motion-graphics", "hyperframes", "threejs", "blender", "ffmpeg", "skill"],
+      "keywords": [
+        "video",
+        "motion-graphics",
+        "hyperframes",
+        "threejs",
+        "blender",
+        "ffmpeg",
+        "3d",
+        "physics",
+        "agent-skills",
+        "text-to-video",
+        "skill"
+      ],
       "category": "productivity"
     }
   ]

@@ -1,0 +1,26 @@
+name: Brief result
+description: The skill made a video that misses the brief
+labels: ["brief-result"]
+body:
+  - type: textarea
+    id: brief
+    attributes: { label: The brief, description: Paste it exactly as you sent it., render: markdown }
+    validations: { required: true }
+  - type: textarea
+    id: miss
+    attributes: { label: What was wrong, description: Which line of the brief was missed, and at what time in the video. }
+    validations: { required: true }
+  - type: input
+    id: app
+    attributes: { label: App and model, placeholder: "Claude Code, Opus / Codex, GPT" }
+    validations: { required: true }
+  - type: dropdown
+    id: os
+    attributes: { label: OS, options: [macOS, Windows, Linux, WSL] }
+    validations: { required: true }
+  - type: textarea
+    id: doctor
+    attributes: { label: Doctor output, description: "bash plugin/skills/brief2mp4/scripts/doctor.sh", render: text }
+  - type: textarea
+    id: report
+    attributes: { label: REPORT.md, description: The report the skill wrote, if any., render: markdown }

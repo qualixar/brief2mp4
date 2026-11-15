@@ -1,0 +1,97 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  install-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLAUDE_CONFIG_DIR: ${{ github.workspace }}/.tmp/claude
+      CODEX_HOME: ${{ github.workspace }}/.tmp/codex
+      B2M3D_HOME: ${{ github.workspace }}/.tmp/b2m3d
+      B2M_EDIT_HOME: ${{ github.workspace }}/.tmp/edit
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: |
+          case "$RUNNER_OS" in
+            Linux) sudo apt-get update -q && sudo apt-get install -y -q ffmpeg ;;
+            macOS) brew install ffmpeg ;;
+            Windows) choco install ffmpeg -y --no-progress ;;
+          esac
+          ffmpeg -version | head -1
+
+      - name: Install the skill and the 3D pack (bash)
+        if: runner.os != 'Windows'
+        run: bash install.sh --with-3d=core,dev
+
+      - name: Install the skill and the 3D pack (PowerShell)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./install.ps1 -With3D core,dev
+
+      - name: Doctor
+        run: bash plugin/skills/brief2mp4/scripts/doctor.sh
+
+      - name: Detect 3D pack
+        run: |
+          out="$(bash plugin/skills/brief2mp4/scripts/detect_3d.sh)"; echo "$out"; [[ "$out" == *"3d: ready"* ]]
+
+      - name: Install the edit pack, film + sound (bash)
+        if: runner.os != 'Windows'
+        run: bash plugin/skills/brief2mp4/edit/install_edit.sh --components film,sound
+
+      - name: Install the edit pack, film + sound (PowerShell)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./plugin/skills/brief2mp4/edit/install_edit.ps1 -Components film,sound
+
+      - name: Detect edit pack
+        run: |
+          out="$(bash plugin/skills/brief2mp4/scripts/detect_edit.sh)"; echo "$out"; [[ "$out" == *"edit: ready"* ]]
+
+      - name: Edit recipes (FilmCraft cut, SoundCraft mix)
+        run: |
+          mkdir -p .tmp/out
+          bash plugin/skills/brief2mp4/edit/recipes/film_timeline.sh --out .tmp/out/cut.mp4
+          bash plugin/skills/brief2mp4/edit/recipes/sound_mix.sh --out .tmp/out/mix.wav
+          bash plugin/skills/brief2mp4/scripts/finish.sh --in .tmp/out/cut.mp4 --out .tmp/out/final.mp4 --seconds 5 --size 1280x720 --audio .tmp/out/mix.wav
+          bash plugin/skills/brief2mp4/scripts/check_delivery.sh .tmp/out/final.mp4 --seconds 5 --size 1280x720
+
+      - name: Windows PowerShell 5.1 (the version that ships with Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $PSVersionTable.PSVersion.ToString()
+          $env:CLAUDE_CONFIG_DIR = "$env:RUNNER_TEMP\ps51-claude"
+          .\install.ps1 -Claude
+          if (-not (Test-Path "$env:CLAUDE_CONFIG_DIR\skills\brief2mp4\SKILL.md")) { throw "install.ps1 did not install the skill under PowerShell 5.1" }
+          .\install.ps1 -Claude -Uninstall
+          .\plugin\skills\brief2mp4\edit\install_edit.ps1 -Components film,sound -DryRun
+          $d3 = .\plugin\skills\brief2mp4\scripts\detect_3d.ps1; $d3
+          if ($d3 -notlike "3d: ready*") { throw "detect_3d.ps1 under PowerShell 5.1: $d3" }
+          $de = .\plugin\skills\brief2mp4\scripts\detect_edit.ps1; $de
+          if ($de -notlike "edit: ready*") { throw "detect_edit.ps1 under PowerShell 5.1: $de" }
+
+      - name: Fast tests
+        run: bash tests/run_tests.sh -rs

@@ -8,10 +8,12 @@ Docs: https://hyperframes.heygen.com (machine-readable index at `/llms.txt`). Of
 
 ```bash
 npx hyperframes init my-video --example blank --non-interactive --skip-skills
+# or, inside a folder you already made for the video:
+npx hyperframes init . --example blank --non-interactive --skip-skills
 cd my-video
 ```
 
-This writes `index.html` (the root composition), `hyperframes.json`, `meta.json` and `package.json`. Add `--resolution portrait` for 1080x1920. `--skip-skills` stops `init` from installing HyperFrames' own agent skills into the user's skill folders; leave it off only if the user wants them.
+This writes `index.html` (the root composition), `hyperframes.json`, `meta.json` and `package.json`. Add `--resolution portrait` for 1080x1920. `--skip-skills` stops `init` from installing HyperFrames' own agent skills into the user's skill folders; leave it off only if the user wants them. `init` still writes its own `AGENTS.md` and `CLAUDE.md` into the project folder: they are HyperFrames' notes for agents, harmless, and you can delete them if the user does not want them.
 
 ## The composition contract
 
@@ -32,7 +34,7 @@ This writes `index.html` (the root composition), `hyperframes.json`, `meta.json`
 - Every timed element has `data-start` and `data-duration` (seconds) and the class `clip`.
 - Register exactly one **paused** root timeline per composition in `window.__timelines["<composition-id>"]`. Child timelines you nest into it must not be paused, or they will not move when the root is seeked.
 - Timeline positions are seconds from the start of the composition. Keep a comment block at the top of the script that lists the beat sheet times; it makes fixes fast.
-- Load GSAP from a pinned CDN version (`https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js`).
+- **Vendor GSAP into the project; no CDN at render time.** Run `bash <skill>/scripts/vendor_libs.sh . [--three] [--fonts inter,space-grotesk]` in the project: it writes pinned copies to `vendor/` (GSAP 3.15.0, three 0.170.0, font files with their licences and a `fonts.css`). Load GSAP with `<script src="vendor/gsap.min.js">`. The `init` template points at a CDN; replace that line. A render that fetches from the network can differ between runs and fails offline.
 
 ## Sound
 
@@ -50,6 +52,7 @@ Put each scene in its own file under `compositions/` and pull it into the root w
 npx hyperframes lint .                          # structure errors, fast
 npx hyperframes check .                         # lint + runtime + layout + contrast in one gate
 npx hyperframes snapshot . --at 0.5,3,7.5       # PNG stills at exact seconds: look at them
+                                                # they are written under .hyperframes/artifacts/snapshots/<id>/ (the command prints the path)
 npx hyperframes render . -o draft.mp4 --quality draft --workers 4
 npx hyperframes render . -o render.mp4 --quality delivery --fps 30
 npx hyperframes render . -o fix.mp4 --start 4 --end 7   # re-render a span only
@@ -63,7 +66,7 @@ Quality presets: `draft` for iterating, `looks` (default) for review, `delivery`
 - **Count-ups:** tween a plain object and write the rounded value into the element in `onUpdate`. Format with `toLocaleString("en-US")` so the commas are right.
 - **A shape that carries across scenes:** one element (a bar, a circle) that grows to fill the frame becomes the next background. It reads as one continuous film instead of a slide show.
 - **Camera feel on 2D:** scale the whole stage from 1.0 to 1.04 over the shot. Tiny, but it keeps a held frame alive.
-- **Fonts:** use a web font loaded with `<link>` from Google Fonts, or a system stack. Check the snapshot to confirm the font actually loaded; a fallback font is the most common silent failure.
+- **Fonts: vendor them too.** `vendor_libs.sh . --fonts inter,space-grotesk` (any [Fontsource](https://fontsource.org) id) writes the `.woff2` files and `vendor/fonts/fonts.css`; link that stylesheet and use the family name as written there. Check a snapshot to confirm the face actually loaded; a fallback font is the most common silent failure.
 
 ## Common failures and the fix
 
@@ -73,5 +76,15 @@ Quality presets: `draft` for iterating, `looks` (default) for review, `delivery`
 | An element never appears | Missing `data-start` / `data-duration`, or its time range does not cover the tween | Give it the full range it is on screen |
 | Nested animation frozen | Child timeline created paused | Create children unpaused; only the root is paused |
 | Different result every render | `Math.random()`, `Date.now()`, or a fetch | Seeded random, fixed values, local files |
-| Text in the wrong font | Font not loaded before capture | Load from a pinned URL or local file; confirm in a snapshot |
+| Text in the wrong font | Font not loaded before capture | Vendor the font files locally with `@font-face`; confirm in a snapshot |
 | Render is the wrong length | Root `data-duration` differs from the brief | Set it to the exact seconds; `finish.sh --seconds` trims and pads too |
+
+## Reading the output, and warnings to expect
+
+- `render` prints a long trace. The line that matters says `rendered in`; search for it rather than reading the whole log.
+- `hyperframes check` and `check_delivery.sh` warn about **holds**: a closing line held still, or a freeze over 1.5 s. When the brief asks for that hold, the warning is expected: say so in REPORT.md next to the brief line that asked for it. When it did not, it is dead air: fix it.
+- `hyperframes check` may also suggest a longer closing hold than the brief allows. The brief wins; note the difference in REPORT.md.
+- **Eases, by name.** GSAP's `power1` is quadratic, `power2` cubic, `power3` quartic and `power4` quintic; `.out` decelerates into place (arrivals), `.in` accelerates away (exits), `.inOut` does both. `none` is linear: use it only for constant spins and turntables. When a brief names a feel ("snappy", "soft"), write the ease you chose into SPEC.md.
+- **Freeze warnings and small motion.** `check_delivery.sh` looks for whole-frame freezes. A small element that keeps moving (a counter, a dot) can still trip it, because the change is below its threshold. Pull two stills a second apart inside the flagged stretch and compare them before you call it dead air.
+- **Starting states belong in CSS.** A `tl.set(el, {...}, 0)` at time 0 may not be applied when the renderer captures frame 0, so an element meant to start hidden flashes in the first frame. Put the starting state (`opacity: 0`, an offset transform) in CSS and animate from it; `hyperframes check` warns about this.
+- **`first_frame_empty` from `hyperframes check`** can be a false alarm when elements are created by script: the static check does not run your script. Confirm with `npx hyperframes snapshot . --at 0` and look at the frame.
