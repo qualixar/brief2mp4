@@ -6,7 +6,7 @@ All notable changes to brief2mp4. The format follows [Keep a Changelog](https://
 
 ### Added
 - **Optional 3D pack** (`plugin/skills/brief2mp4/3d/`): CAD and mesh models to GLB, material presets, deterministic Jolt physics bakes, shot JSON to a frame-seekable HyperFrames project, and a Blender hero-render route. Installs per component (`core`, `cad`, `blender`) with `install.sh --with-3d` or `install.ps1 -With3D`. The skill detects it and falls back to the Three.js template when it is missing.
-- **Optional edit pack** (`plugin/skills/brief2mp4/edit/`): installs the command-line tools of five free ArtCraft editors by storytold (FilmCraft, SoundCraft, EffectCraft, PhotoCraft, VectorCraft; Apache-2.0) at pinned versions, on macOS, Windows and Linux. Each download must match both the release's SHA256SUMS.txt and the hash pinned in this repository, and the release signature is verified against a pinned key fingerprint when gpg is present. One tested recipe per app: a timeline cut with a dissolve and title, a voice-over mix with ducking, an animated title, a thumbnail and an SVG lower third. `install.sh --with-edit`, `install.ps1 -WithEdit`, `scripts/detect_edit.sh`, example 07.
+- **Optional edit pack** (`plugin/skills/brief2mp4/edit/`): installs the command-line tools of five free ArtCraft editors by storytold (FilmCraft, SoundCraft, EffectCraft, PhotoCraft, VectorCraft; MIT or Apache-2.0) at pinned versions, on macOS, Windows and Linux. Each download must match both the release's SHA256SUMS.txt and the hash pinned in this repository, and the release signature is verified against a pinned key fingerprint when gpg is present. One tested recipe per app: a timeline cut with a dissolve and title, a voice-over mix with ducking, an animated title, a thumbnail and an SVG lower third. `install.sh --with-edit`, `install.ps1 -WithEdit`, `scripts/detect_edit.sh`, example 07.
 - **SETUP.md**: step-by-step instructions an agent follows to set up a machine on macOS, Windows or Linux, ending with a two-minute first render.
 - **Windows support**: `install.ps1` (PowerShell 5.1 and 7, optional winget install of Node, ffmpeg and Git), Git Bash guidance in the skill.
 - `scripts/doctor.sh` (with `--json`): checks every tool and prints the install command for this OS. `scripts/detect_3d.sh`. `scripts/bounds.py`: measures where content sits in a still and checks margins and safe zones, standard library only. `scripts/vendor_libs.sh`: pinned GSAP, three.js and fonts copied into a project. `sound_bed.sh --ticks` for click accents.
@@ -16,7 +16,7 @@ All notable changes to brief2mp4. The format follows [Keep a Changelog](https://
 - `references/ecosystem.md`: 45+ open-source motion, 3D, capture and agent-skill repos with licences, when each beats the default, and how to bring its output in frame-exact.
 - Example 04: a 3D product brief (parts drop and settle, exploded view, title).
 - `docs/`: getting started (per OS, with a flow diagram), architecture (the loop, routing, determinism, the 3D pack) and a 3D walkthrough of example 04.
-- Tests (`tests/`, 46 including render tests) and CI on macOS, Ubuntu and Windows.
+- Tests (`tests/`, 97: 76 fast, 21 that render or download, run with `--slow`) and CI on macOS, Ubuntu and Windows, including Windows PowerShell 5.1.
 - `AGENTS.md` and `CLAUDE.md` so an agent opened in a clone knows what to do; CONTRIBUTING, SECURITY, code of conduct, issue and PR templates.
 
 ### Fixed (from an independent pre-release audit)

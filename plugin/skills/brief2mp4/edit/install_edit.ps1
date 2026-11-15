@@ -71,17 +71,32 @@ function Invoke-Native([string]$file, [string[]]$arguments, [hashtable]$environm
     $psi.RedirectStandardError = $true
     $psi.CreateNoWindow = $true
     foreach ($k in $environment.Keys) { $psi.EnvironmentVariables[$k] = $environment[$k] }
-    try { $p = [System.Diagnostics.Process]::Start($psi) } catch { return [pscustomobject]@{ ExitCode = -1; Output = "" } }
+    try { $p = [System.Diagnostics.Process]::Start($psi) } catch { return [pscustomobject]@{ ExitCode = -1; Output = ""; Error = $_.Exception.Message } }
+    $errTask = $p.StandardError.ReadToEndAsync()   # read both pipes at once, so neither can fill up and block
     $out = $p.StandardOutput.ReadToEnd()
-    $null = $p.StandardError.ReadToEnd()
     $p.WaitForExit()
-    return [pscustomobject]@{ ExitCode = $p.ExitCode; Output = $out }
+    return [pscustomobject]@{ ExitCode = $p.ExitCode; Output = $out; Error = $errTask.Result }
 }
 
 function Add-ToManifest([string]$rel) {
     $lines = @()
     if (Test-Path $Manifest) { $lines = @([System.IO.File]::ReadAllLines($Manifest, $Utf8) | Where-Object { $_ }) }
     if ($lines -notcontains $rel) { [System.IO.File]::WriteAllLines($Manifest, @($lines + $rel), $Utf8) }
+}
+
+function Test-InManifest([string]$rel) {
+    if (-not (Test-Path $Manifest)) { return $false }
+    return @([System.IO.File]::ReadAllLines($Manifest, $Utf8)) -contains $rel
+}
+
+function Set-Claim([string]$rel) {
+    # Before writing a path, move aside anything there that this installer did not create.
+    $p = Join-Path $HomeDir $rel
+    if ((Test-Path -LiteralPath $p) -and -not (Test-InManifest $rel)) {
+        $aside = "$p.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        Move-Item -LiteralPath $p -Destination $aside
+        Write-Output "  kept your existing $rel at $aside (it was not created by this installer)"
+    }
 }
 
 function Test-Hash([string]$file, [string]$asset, [string]$sums, [string]$pinned) {
@@ -103,12 +118,20 @@ function Test-Signature([string]$dir, [string]$fingerprint) {
     $gh = Join-Path ([System.IO.Path]::GetTempPath()) ("b2m-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
     New-Item -ItemType Directory -Force -Path $gh | Out-Null
     try {
-        $env2 = @{ GNUPGHOME = $gh }
-        # No agent is needed to check a signature; a failed import shows up as a failed verification below.
-        $null = Invoke-Native $gpg.Source @("--batch", "--quiet", "--no-autostart", "--import", (Join-Path $dir "release-signing-key.asc")) $env2
-        $ver = Invoke-Native $gpg.Source @("--batch", "--no-autostart", "--status-fd", "1", "--verify", (Join-Path $dir "SHA256SUMS.txt.asc"), (Join-Path $dir "SHA256SUMS.txt")) $env2
+        # Forward slashes work for both Gpg4win and the MSYS gpg that ships with Git for Windows; a
+        # backslash GNUPGHOME is not understood by the MSYS build. --homedir avoids the environment entirely.
+        $home2 = $gh -replace '\\', '/'
+        $key = (Join-Path $dir "release-signing-key.asc") -replace '\\', '/'
+        $sig = (Join-Path $dir "SHA256SUMS.txt.asc") -replace '\\', '/'
+        $sums = (Join-Path $dir "SHA256SUMS.txt") -replace '\\', '/'
+        $imp = Invoke-Native $gpg.Source @("--homedir", $home2, "--batch", "--quiet", "--import", $key)
+        $ver = Invoke-Native $gpg.Source @("--homedir", $home2, "--batch", "--status-fd", "1", "--verify", $sig, $sums)
         $ok = $ver.Output -split "`n" | Where-Object { $_ -like "*VALIDSIG *" -and ($_.Trim() -split " ")[-1] -eq $fingerprint }
-        if (-not $ok) { throw "the signature on SHA256SUMS.txt did not verify against the pinned key $fingerprint. Nothing was installed." }
+        if (-not $ok) {
+            Write-Output "  gpg ($($gpg.Source)) import: exit $($imp.ExitCode) $($imp.Error.Trim())"
+            Write-Output "  gpg verify: exit $($ver.ExitCode) $($ver.Error.Trim())"
+            throw "the signature on SHA256SUMS.txt did not verify against the pinned key $fingerprint. Nothing was installed."
+        }
         Write-Output ("  signature: OK (SHA256SUMS.txt signed by key " + $fingerprint.Substring(0, 8) + "..." + $fingerprint.Substring($fingerprint.Length - 8) + ")")
     } finally { Remove-Item -Recurse -Force $gh -ErrorAction SilentlyContinue }
 }
@@ -137,14 +160,23 @@ function Install-App([string]$app, [string]$plat, [string]$stage) {
     $x = Join-Path $stage "x-$app"
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $stage $asset.file), $x)
-    $top = Get-ChildItem -Path $x -Directory | Select-Object -First 1
-    if (-not $top) { throw "$($asset.file) had no folder inside" }
-    if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-    Move-Item -Path $top.FullName -Destination $dest
-    Get-ChildItem -Path $dest -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
+    $tops = @(Get-ChildItem -LiteralPath $x -Directory | Where-Object { $_.Name -ne "__MACOSX" })
+    if ($tops.Count -ne 1) { throw "$($asset.file) should hold exactly one top-level folder; found $($tops.Count)" }
+    Set-Claim $a.name
+    $old = "$dest.old"
+    if (Test-Path -LiteralPath $old) { Remove-Item -LiteralPath $old -Recurse -Force }
+    # Keep the previous version until the new one proves it runs, so a failed upgrade loses nothing.
+    if (Test-Path -LiteralPath $dest) { Move-Item -LiteralPath $dest -Destination $old }
+    Move-Item -LiteralPath $tops[0].FullName -Destination $dest
+    Get-ChildItem -LiteralPath $dest -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
     Write-Output "  windows: cleared any download block flag on the files (Unblock-File)"
     $ver = Invoke-Native $cli @("--version")
-    if ($ver.ExitCode -ne 0) { throw "$cli was installed but does not run. Try: & `"$cli`" --version" }
+    if ($ver.ExitCode -ne 0) {
+        Remove-Item -LiteralPath $dest -Recurse -Force
+        if (Test-Path -LiteralPath $old) { Move-Item -LiteralPath $old -Destination $dest }
+        throw "$cli was installed but does not run, so the previous version (if any) was kept. Try: & `"$cli`" --version"
+    }
+    if (Test-Path -LiteralPath $old) { Remove-Item -LiteralPath $old -Recurse -Force }
     [System.IO.File]::WriteAllText($stamp, $a.version + "`n", $Utf8)
     Write-Launcher $a; Add-ToManifest $a.name
     Write-Output "${app}: done, $(($ver.Output -split "`n")[0].Trim()), $(Get-SizeMB $dest) MB on disk"
@@ -153,12 +185,14 @@ function Install-App([string]$app, [string]$plat, [string]$stage) {
 function Write-Launcher($a) {
     # Relative to the .cmd, so the folder can move. Pure ASCII, so any user name works.
     New-Item -ItemType Directory -Force -Path (Join-Path $HomeDir "bin") | Out-Null
+    Set-Claim "bin/$($a.name)-cli.cmd"
     $text = "@echo off`r`n`"%~dp0..\$($a.name)\$($a.name)-cli.exe`" %*`r`n"
     [System.IO.File]::WriteAllText((Join-Path $HomeDir "bin\$($a.name)-cli.cmd"), $text, (New-Object System.Text.UTF8Encoding($false)))
     Add-ToManifest "bin/$($a.name)-cli.cmd"
 }
 
 function Copy-SupportFiles {
+    Set-Claim "versions.json"; Set-Claim "recipes"
     Copy-Item (Join-Path $Pack "versions.json") (Join-Path $HomeDir "versions.json") -Force
     $rec = Join-Path $HomeDir "recipes"
     if (Test-Path $rec) { Remove-Item -Recurse -Force $rec }

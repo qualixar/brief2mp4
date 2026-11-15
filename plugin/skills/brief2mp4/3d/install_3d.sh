@@ -33,11 +33,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Only these entries are ever created in $HOME_DIR. Uninstall removes exactly these, then the folder
+# itself only if nothing else is left in it, so a folder you also use for other things keeps them.
+OWNED="venv node_modules pack js package.json package-lock.json .node-stamp .components .components.tmp $MARKER"
+
 if [[ "$UNINSTALL" == 1 ]]; then
-  if [[ -f "$HOME_DIR/$MARKER" ]]; then rm -r "$HOME_DIR"; echo "removed $HOME_DIR"
-  elif [[ -e "$HOME_DIR" ]]; then echo "install_3d.sh: $HOME_DIR was not created by this script; left it alone" >&2; exit 1
-  else echo "nothing to remove at $HOME_DIR"; fi
+  if [[ ! -e "$HOME_DIR" ]]; then echo "nothing to remove at $HOME_DIR"; exit 0; fi
+  [[ -f "$HOME_DIR/$MARKER" ]] || { echo "install_3d.sh: $HOME_DIR was not created by this script; left it alone" >&2; exit 1; }
+  for e in $OWNED; do [[ -e "$HOME_DIR/$e" ]] && rm -rf "${HOME_DIR:?}/$e"; done
+  if rmdir "$HOME_DIR" 2>/dev/null; then echo "removed $HOME_DIR"
+  else echo "removed the 3D pack from $HOME_DIR; other files in it were left alone"; fi
   exit 0
+fi
+
+# Never adopt a folder that already holds someone else's files: the marker would let uninstall touch it.
+if [[ -d "$HOME_DIR" && ! -f "$HOME_DIR/$MARKER" && -n "$(ls -A "$HOME_DIR" 2>/dev/null)" ]]; then
+  echo "install_3d.sh: $HOME_DIR already exists and was not created by this installer. Set B2M3D_HOME to a new or empty folder." >&2
+  exit 1
 fi
 
 want() { [[ ",$COMPONENTS," == *",$1,"* ]]; }
@@ -68,10 +80,10 @@ find_python() {
 }
 
 install_core() {
-  command -v node >/dev/null 2>&1 || { say "node not found. Install Node.js 20 or newer (macOS: brew install node; Linux: your package manager or https://nodejs.org)." >&2; exit 1; }
+  command -v node >/dev/null 2>&1 || { say "node not found. Install Node.js 22 or newer (macOS: brew install node; Linux: your package manager or https://nodejs.org)." >&2; exit 1; }
   command -v npm >/dev/null 2>&1 || { say "npm not found. It ships with Node.js: https://nodejs.org" >&2; exit 1; }
   local major; major="$(node -p 'process.versions.node.split(".")[0]')"
-  [[ "$major" -ge 20 ]] || { say "Node.js $major is too old: 20 or newer is needed." >&2; exit 1; }
+  [[ "$major" -ge 22 ]] || { say "Node.js $major is too old: 22 or newer is needed." >&2; exit 1; }
 
   local py
   py="$(find_python)" || { say "Python 3.12 or 3.13 not found. macOS: brew install python@3.13. Debian/Ubuntu: python3.13 and python3.13-venv from your package manager. Then run this again." >&2; exit 1; }

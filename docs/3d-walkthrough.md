@@ -63,7 +63,8 @@ npx --yes hyperframes@0.8.216 render . -o ../render.mp4 --quality delivery --fps
 Each `b2m3d` subcommand prints one JSON result (`build.py` hides them for brevity; run the steps by hand to see them), so an agent can read exactly what happened. Then finish and check:
 
 ```bash
-S=plugin/skills/brief2mp4/scripts
+cd ..                                   # back to ~/videos/ex04, where render.mp4 is
+S=/path/to/brief2mp4/plugin/skills/brief2mp4/scripts   # your clone, or the installed skill folder
 bash $S/sound_bed.sh bed.wav --seconds 8 --hits 0.6,1.2,1.8,2.4,3.0,3.2
 bash $S/finish.sh --in render.mp4 --out final.mp4 --seconds 8 --audio bed.wav
 bash $S/check_delivery.sh final.mp4 --seconds 8 --size 1920x1080 --fps 30

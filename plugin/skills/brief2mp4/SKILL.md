@@ -79,7 +79,7 @@ Run `bash <this skill's folder>/scripts/detect_edit.sh`. If it prints `edit: rea
 
 Edited output is a layer or a soundtrack like any other: a FilmCraft cut or an EffectCraft render goes into HyperFrames as video, a SoundCraft bounce goes to `finish.sh --audio`, and every route still ends with `finish.sh`, `check_delivery.sh` and the stills you look at.
 
-If it prints `edit: not installed`, cut with ffmpeg (`references/ffmpeg.md`) and mix with ffmpeg filters, and mention once how to add the pack: `bash <this skill's folder>/edit/install_edit.sh --components film,sound` (Windows: `install_edit.ps1 -Components film,sound`).
+If it prints `edit: not installed`, cut with ffmpeg (`references/ffmpeg.md`) and mix with ffmpeg filters, and mention once how to add the pack: `bash <this skill's folder>/edit/install_edit.sh --components film,sound` (Windows: `powershell -ExecutionPolicy Bypass -File <this skill's folder>\edit\install_edit.ps1 -Components film,sound`).
 
 For briefs that mix tools, read `references/pipelines.md` (architecture, recipes for each mix, how layers meet in HyperFrames). For tools outside this stack (Remotion, Motion Canvas, Manim, Lottie, Rive, PixiJS, R3F, Babylon.js and more), read `references/ecosystem.md`: when each one beats the default, and how to bring its output in frame-exact.
 

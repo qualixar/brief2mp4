@@ -56,7 +56,7 @@ def check_core() -> dict:
     node = paths.node()
     node_pkgs = _node_versions()
     py_mods = _py_modules(CORE_PY_MODULES)
-    missing = (([] if node else ["node on PATH (Node.js 20 or newer)"])
+    missing = (([] if node else ["node on PATH (Node.js 22 or newer)"])
                + [f"npm:{k}" for k, v in node_pkgs.items() if v is None]
                + [f"python:{k}" for k, v in py_mods.items() if not v])
     return {"ok": not missing, "missing": missing, "node": node, "node_packages": node_pkgs,

@@ -78,5 +78,20 @@ jobs:
           bash plugin/skills/brief2mp4/scripts/finish.sh --in .tmp/out/cut.mp4 --out .tmp/out/final.mp4 --seconds 5 --size 1280x720 --audio .tmp/out/mix.wav
           bash plugin/skills/brief2mp4/scripts/check_delivery.sh .tmp/out/final.mp4 --seconds 5 --size 1280x720
 
+      - name: Windows PowerShell 5.1 (the version that ships with Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $PSVersionTable.PSVersion.ToString()
+          $env:CLAUDE_CONFIG_DIR = "$env:RUNNER_TEMP\ps51-claude"
+          .\install.ps1 -Claude
+          if (-not (Test-Path "$env:CLAUDE_CONFIG_DIR\skills\brief2mp4\SKILL.md")) { throw "install.ps1 did not install the skill under PowerShell 5.1" }
+          .\install.ps1 -Claude -Uninstall
+          .\plugin\skills\brief2mp4\edit\install_edit.ps1 -Components film,sound -DryRun
+          $d3 = .\plugin\skills\brief2mp4\scripts\detect_3d.ps1; $d3
+          if ($d3 -notlike "3d: ready*") { throw "detect_3d.ps1 under PowerShell 5.1: $d3" }
+          $de = .\plugin\skills\brief2mp4\scripts\detect_edit.ps1; $de
+          if ($de -notlike "edit: ready*") { throw "detect_edit.ps1 under PowerShell 5.1: $de" }
+
       - name: Fast tests
         run: bash tests/run_tests.sh -rs

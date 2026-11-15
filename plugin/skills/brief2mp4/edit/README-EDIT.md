@@ -2,7 +2,7 @@
 
 brief2mp4 works without this folder. The pack adds real editing tools for briefs that are more than "generate a graphic and finish it with ffmpeg": footage cut on a timeline, a multitrack audio mix, layered compositing, image editing, vector art. It installs the command-line tools of five free desktop apps, pinned to exact versions, and ships one tested recipe per app.
 
-The apps are the ArtCraft family by **storytold**, released under **Apache-2.0** (each download carries its own `LICENSE-APACHE` and `NOTICE` files; read them). brief2mp4 does not redistribute them: the installer downloads each release from `github.com/storytold`. **They are alpha software.** Command ids and parameters change between versions, which is why this pack pins versions, tests its recipes against the pinned ones, and tells agents to discover commands at run time.
+The apps are the ArtCraft family by **storytold**, released under **MIT or Apache-2.0** (each app is licensed MIT or Apache-2.0 at your option, per its `NOTICE`; each download carries `LICENSE-MIT`, `LICENSE-APACHE`, `NOTICE` and font licences; read them). brief2mp4 does not redistribute them: the installer downloads each release from `github.com/storytold`. **They are alpha software.** Command ids and parameters change between versions, which is why this pack pins versions, tests its recipes against the pinned ones, and tells agents to discover commands at run time.
 
 | Component | App | Pinned | What it is |
 |---|---|---|---|
@@ -51,7 +51,7 @@ Everything goes into `~/.brief2mp4/edit` (Windows `%USERPROFILE%\.brief2mp4\edit
 | download: vector | 127.8 MB | 150.4 MB | 155.4 MB |
 | download: all five | 420.4 MB | 489.3 MB | 500.2 MB |
 
-Measured on macOS after install: filmcraft 179 MB, soundcraft 22 MB, effectcraft 187 MB, photocraft 222 MB, vectorcraft 253 MB, about 1.2 GB for all five. Linux and Windows disk sizes were not measured. The Linux and Windows archives hold the whole desktop app next to the CLI (inspected for SoundCraft), and the installer keeps that folder as it came.
+Measured on macOS after install: filmcraft 179 MB, soundcraft 22 MB, effectcraft 187 MB, photocraft 236 MB, vectorcraft 254 MB, about 880 MB for all five. Linux and Windows disk sizes were not measured. The Linux and Windows archives hold the whole desktop app next to the CLI (inspected for SoundCraft), and the installer keeps that folder as it came.
 
 To put the launchers on your PATH the installer prints one line to run yourself. The recipes do not need that: they find the pinned CLIs through `B2M_EDIT_HOME` and never use an older copy that happens to be on the PATH.
 

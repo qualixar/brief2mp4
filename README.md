@@ -164,7 +164,7 @@ The brief does the asking. "Parts fall and settle" becomes a physics bake with a
 
 ## The edit pack
 
-Motion graphics are half of a video. The other half is editing: cutting your screen recording or footage on a timeline, mixing a voiceover over music so the music ducks when you speak, compositing titles, making the thumbnail. The optional edit pack installs the command-line tools of five free, open-source desktop editors, the ArtCraft apps by [storytold](https://github.com/storytold) (Apache-2.0), so Claude Code or Codex can do that work too, headless, and hand the result to the same checks.
+Motion graphics are half of a video. The other half is editing: cutting your screen recording or footage on a timeline, mixing a voiceover over music so the music ducks when you speak, compositing titles, making the thumbnail. The optional edit pack installs the command-line tools of five free, open-source desktop editors, the ArtCraft apps by [storytold](https://github.com/storytold) (MIT or Apache-2.0, at your option), so Claude Code or Codex can do that work too, headless, and hand the result to the same checks.
 
 <p align="center">
   <img src="assets/edit-pack-recipes.png" alt="Output of the four edit-pack recipes: a FilmCraft timeline mid cross-dissolve, an EffectCraft animated title, a PhotoCraft thumbnail reading Cut faster, and a VectorCraft lower third" width="720">
@@ -264,12 +264,13 @@ plugin/
   skills/brief2mp4/
     SKILL.md                       the loop the agent follows
     references/                    formats, pipelines, ecosystem, hyperframes, threejs, blender, ffmpeg
-    scripts/                       finish, check_delivery, contact_sheet, sound_bed, doctor, detect_3d
+    scripts/                       finish, check_delivery, contact_sheet, sound_bed, doctor, detect_3d,
+                                   detect_edit, bounds.py, vendor_libs
     templates/                     SPEC.md, a Three.js scene, a Blender turntable
     3d/                            the optional 3D pack and its installers
     edit/                          the optional edit pack: verified installers, pinned versions, recipes
 docs/                              getting started, architecture, 3D walkthrough
-examples/                          six briefs; 01, 04, 05 and 06 with sample reports or a worked build
+examples/                          seven briefs; 01, 05, 06 and 07 with sample reports, 04 with a worked build
 tests/                             fast checks and render tests (bash tests/run_tests.sh [--slow])
 ```
 
@@ -279,6 +280,6 @@ Bad results are the most useful bug reports: open a **Brief result** issue with 
 
 ## Licence
 
-MIT. Use it, change it, ship videos with it. HyperFrames (Apache-2.0), Three.js (MIT), GSAP (standard no-charge licence), Jolt (MIT), glTF-Transform (MIT), meshoptimizer (MIT), Manifold (Apache-2.0), CadQuery (Apache-2.0), trimesh (MIT), Blender (GPL), ffmpeg (LGPL/GPL) and the ArtCraft apps by storytold (Apache-2.0, downloaded from their own releases by the edit pack) keep their own licences; this repo does not bundle them.
+MIT. Use it, change it, ship videos with it. HyperFrames (Apache-2.0), Three.js (MIT), GSAP (standard no-charge licence), Jolt (MIT), glTF-Transform (MIT), meshoptimizer (MIT), Manifold (Apache-2.0), CadQuery (Apache-2.0), trimesh (MIT), Blender (GPL), ffmpeg (LGPL/GPL) and the ArtCraft apps by storytold (MIT or Apache-2.0, downloaded from their own releases by the edit pack) keep their own licences; this repo does not bundle them.
 
 Made by [Varun Pratap Bhardwaj](https://github.com/qualixar).

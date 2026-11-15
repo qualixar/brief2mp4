@@ -47,7 +47,7 @@ def sync_js() -> Path:
 def node_script(script: str, args: list[str], timeout: int = 3600) -> str:
     node = paths.node()
     if not node:
-        raise B2M3DError("node was not found on PATH (Node.js 20 or newer is required)")
+        raise B2M3DError("node was not found on PATH (Node.js 22 or newer is required)")
     return run([node, str(sync_js() / script), *args], timeout=timeout)
 
 

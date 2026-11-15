@@ -146,8 +146,20 @@ manifest_add() { # manifest_add <relative path>: remember what this installer cr
   grep -qxF "$1" "$MANIFEST" || printf '%s\n' "$1" >> "$MANIFEST"
 }
 
+in_manifest() { [[ -f "$MANIFEST" ]] && grep -qxF "$1" "$MANIFEST"; }
+
+claim() { # claim <relative path>: before writing it, move aside anything there this installer did not create
+  local rel="$1" aside
+  if [[ -e "$HOME_DIR/$rel" || -L "$HOME_DIR/$rel" ]] && ! in_manifest "$rel"; then
+    aside="$HOME_DIR/$rel.backup-$(date +%Y%m%d-%H%M%S)"
+    mv "$HOME_DIR/$rel" "$aside"
+    say "  kept your existing $rel at $aside (it was not created by this installer)"
+  fi
+}
+
 write_launcher() { # write_launcher <cli name> <relative cli path>; relative, so the folder can move
   mkdir -p "$HOME_DIR/bin"
+  claim "bin/$1"
   cat > "$HOME_DIR/bin/$1" <<LAUNCH
 #!/usr/bin/env bash
 # brief2mp4 edit pack launcher. Paths are relative to this file, so the folder can move.
@@ -161,6 +173,7 @@ LAUNCH
 }
 
 copy_support_files() { # everything the installed pack needs, so it never reads from the clone
+  claim "versions.json"; claim "recipes"
   cp "$PACK/versions.json" "$HOME_DIR/versions.json"
   rm -rf "${HOME_DIR:?}/recipes"; mkdir -p "$HOME_DIR/recipes"
   cp "$PACK"/recipes/* "$HOME_DIR/recipes/"
@@ -186,14 +199,21 @@ install_app() { # install_app <app> <platform>
   verify_hash "$STAGE/$file" "$file" "$STAGE/SHA256SUMS.txt" "$sha"
   verify_signature "$STAGE" "$(vget "$app" fingerprint)"
   unpack "$STAGE/$file" "$STAGE/x"
-  top="$(find "$STAGE/x" -mindepth 1 -maxdepth 1 -type d | head -1)"
-  [[ -n "$top" ]] || die "$file had no folder inside"
-  rm -rf "${dest:?}.new"; mv "$top" "$dest.new"
-  if [[ -d "$dest" ]]; then rm -rf "${dest:?}"; fi
+  local tops; tops="$(find "$STAGE/x" -mindepth 1 -maxdepth 1 -type d | grep -v '/__MACOSX$' || true)"
+  [[ "$(printf '%s\n' "$tops" | grep -c .)" == 1 ]] || die "$file should hold exactly one top-level folder; found: $(printf '%s ' $tops)"
+  top="$tops"
+  claim "$name"
+  rm -rf "${dest:?}.new" "${dest:?}.old"; mv "$top" "$dest.new"
+  # Keep the previous version until the new one proves it runs, so a failed upgrade loses nothing.
+  if [[ -d "$dest" ]]; then mv "$dest" "$dest.old"; fi
   mv "$dest.new" "$dest"
   chmod +x "$cli" 2>/dev/null || true
   strip_quarantine "$cli"
-  "$cli" --version >/dev/null 2>&1 || die "$cli was installed but does not run. Try: $cli --version"
+  if ! "$cli" --version >/dev/null 2>&1; then
+    rm -rf "${dest:?}"; [[ -d "$dest.old" ]] && mv "$dest.old" "$dest"
+    die "$cli was installed but does not run, so the previous version (if any) was kept. Try: $cli --version"
+  fi
+  rm -rf "${dest:?}.old"
   printf '%s\n' "$ver" > "$dest/.b2m-version"
   write_launcher "$name-cli" "$(rel_cli "$name" "$plat")"; manifest_add "$name"
   say "$app: done, $("$cli" --version | head -1), $(size_mb "$dest") MB on disk"

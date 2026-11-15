@@ -139,3 +139,32 @@ def test_public_repo_hygiene():
         hits += [f"{path.relative_to(REPO)}: {b}" for b in banned if b.lower() in text.lower()]
     assert not hits, hits
     assert max(len(p.read_text(encoding="utf-8").splitlines()) for p in files if p.suffix in {".py", ".js", ".mjs", ".sh", ".md"}) < 800
+
+
+@posix_only
+def test_3d_installer_never_adopts_or_deletes_a_users_folder(tmp_path):
+    """An existing folder with the user's files must be refused at install and left alone at uninstall."""
+    folder = tmp_path / "myproj"
+    folder.mkdir()
+    (folder / "thesis.txt").write_text("precious", encoding="utf-8")
+    env = {**os.environ, "B2M3D_HOME": str(folder)}
+    installer = str(PACK / "install_3d.sh")
+    inst = subprocess.run([BASH, installer, "--components", "core"], env=env, capture_output=True, text=True)
+    assert inst.returncode != 0 and "not created by this installer" in inst.stderr
+    assert not (folder / ".installed-by-brief2mp4-3d").exists()
+    unin = subprocess.run([BASH, installer, "--uninstall"], env=env, capture_output=True, text=True)
+    assert unin.returncode != 0
+    assert (folder / "thesis.txt").read_text(encoding="utf-8") == "precious"
+
+
+@posix_only
+def test_3d_uninstall_keeps_files_it_did_not_create(tmp_path):
+    """Uninstall removes only the pack's own entries; a file the user added stays, and so does the folder."""
+    home = tmp_path / "home"
+    (home / "venv").mkdir(parents=True)
+    (home / ".installed-by-brief2mp4-3d").write_text("x", encoding="utf-8")
+    (home / "notes.txt").write_text("mine", encoding="utf-8")
+    env = {**os.environ, "B2M3D_HOME": str(home)}
+    run = subprocess.run([BASH, str(PACK / "install_3d.sh"), "--uninstall"], env=env, capture_output=True, text=True)
+    assert run.returncode == 0
+    assert not (home / "venv").exists() and (home / "notes.txt").read_text(encoding="utf-8") == "mine"

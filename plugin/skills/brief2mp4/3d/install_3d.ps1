@@ -22,11 +22,20 @@ $Venv = Join-Path $HomeDir "venv"
 $VPy = Join-Path $Venv "Scripts\python.exe"
 
 $Marker = Join-Path $HomeDir ".installed-by-brief2mp4-3d"
+# Only these entries are ever created in $HomeDir. Uninstall removes exactly these, then the folder
+# itself only if nothing else is left in it.
+$Owned = @("venv", "node_modules", "pack", "js", "package.json", "package-lock.json", ".node-stamp", ".components", ".installed-by-brief2mp4-3d")
 if ($Uninstall) {
-    if (Test-Path $Marker) { Remove-Item -LiteralPath $HomeDir -Recurse -Force; Write-Output "removed $HomeDir" }
-    elseif (Test-Path $HomeDir) { throw "$HomeDir was not created by this script; left it alone" }
-    else { Write-Output "nothing to remove at $HomeDir" }
+    if (-not (Test-Path $HomeDir)) { Write-Output "nothing to remove at $HomeDir"; exit 0 }
+    if (-not (Test-Path $Marker)) { throw "$HomeDir was not created by this script; left it alone" }
+    foreach ($e in $Owned) { $p = Join-Path $HomeDir $e; if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Recurse -Force } }
+    if (@(Get-ChildItem -LiteralPath $HomeDir -Force).Count -eq 0) { Remove-Item -LiteralPath $HomeDir -Force; Write-Output "removed $HomeDir" }
+    else { Write-Output "removed the 3D pack from $HomeDir; other files in it were left alone" }
     exit 0
+}
+# Never adopt a folder that already holds someone else's files: the marker would let uninstall touch it.
+if ((Test-Path $HomeDir) -and -not (Test-Path $Marker) -and (@(Get-ChildItem -LiteralPath $HomeDir -Force).Count -gt 0)) {
+    throw "$HomeDir already exists and was not created by this installer. Set B2M3D_HOME to a new or empty folder."
 }
 # Accept "-Components core,cad" (an array), "core cad" or "core,cad" (one string) alike.
 $wanted = @($Components | ForEach-Object { $_ -split "[,\s]+" } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
@@ -108,10 +117,10 @@ function Link-Pack {
 }
 
 function Install-Core {
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "node not found. Install Node.js 20 or newer: winget install OpenJS.NodeJS.LTS" }
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "node not found. Install Node.js 22 or newer: winget install OpenJS.NodeJS.LTS" }
     if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) { throw "npm not found. It ships with Node.js: https://nodejs.org" }
     $major = [int](node -p "process.versions.node.split('.')[0]")
-    if ($major -lt 20) { throw "Node.js $major is too old: 20 or newer is needed." }
+    if ($major -lt 22) { throw "Node.js $major is too old: 22 or newer is needed." }
     $py = Find-Python
     if (-not $py) { throw "Python 3.12 or 3.13 not found. Install it: winget install Python.Python.3.13 (then open a new terminal)." }
 
