@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import stat
+import subprocess
 
 import pytest
 
@@ -248,7 +249,14 @@ def test_scripts_are_lf_utf8_and_executable_where_needed():
             if path.suffix == ".ps1":
                 data.decode("ascii")    # Windows PowerShell 5.1 reads BOM-less files as ANSI: keep them pure ASCII
     for path in RECIPE_FILES + [INSTALL_SH, DETECT_SH]:
-        assert path.stat().st_mode & stat.S_IXUSR, f"{path.name} is not executable"
+        # The executable bit lives in git (mode 100755), the same on every OS. Windows file systems
+        # have no such bit, so read it from the index rather than from os.stat.
+        mode = subprocess.run(["git", "ls-files", "-s", "--", str(path)], capture_output=True, text=True,
+                              cwd=path.parent).stdout.split()
+        if mode:
+            assert mode[0] == "100755", f"{path.name} is not executable in git (mode {mode[0]})"
+        else:
+            assert path.stat().st_mode & stat.S_IXUSR, f"{path.name} is not executable"
         assert path.read_text(encoding="utf-8").startswith("#!/usr/bin/env bash")
 
 
