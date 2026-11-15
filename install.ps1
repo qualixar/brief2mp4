@@ -5,8 +5,9 @@
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Codex           # Codex only
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -InstallTools    # also winget-install Node, ffmpeg, Git
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -With3D core,cad # also the optional 3D pack
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithEdit film,sound # also the optional edit pack
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall
-#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall -Uninstall3D   # also remove the 3D pack folder
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall -Uninstall3D -UninstallEdit   # also remove the optional packs
 #
 # Claude Code reads skills from %USERPROFILE%\.claude\skills (or $env:CLAUDE_CONFIG_DIR\skills).
 # Codex reads skills from %USERPROFILE%\.codex\skills (or $env:CODEX_HOME\skills).
@@ -16,6 +17,8 @@ param(
   [switch]$Uninstall,
   [switch]$InstallTools,
   [switch]$Uninstall3D,
+  [switch]$UninstallEdit,
+  [string[]]$WithEdit = @(),
   [string[]]$With3D = @()
 )
 $ErrorActionPreference = 'Stop'
@@ -109,6 +112,8 @@ if ($Uninstall) {
   if ($DoCodex) { Uninstall-From $CodexBase 'Codex' }
   if ($Uninstall3D) { & (Join-Path $Src '3d\install_3d.ps1') -Uninstall }
   else { Write-Host "  The optional 3D pack (if installed) stays in %USERPROFILE%\.brief2mp4\3d; add -Uninstall3D to remove it." }
+  if ($UninstallEdit) { & (Join-Path $Src 'edit\install_edit.ps1') -Uninstall }
+  else { Write-Host "  The optional edit pack (if installed) stays in %USERPROFILE%\.brief2mp4\edit; add -UninstallEdit to remove it." }
   exit 0
 }
 
@@ -123,6 +128,12 @@ if ($With3D.Count -gt 0) {
   Write-Host ''
   Write-Host "Installing the 3D pack (components: $Components)"
   & (Join-Path $Src '3d\install_3d.ps1') -Components $Components
+}
+
+if ($WithEdit.Count -gt 0) {
+  Write-Host ''
+  Write-Host "Installing the edit pack (components: $($WithEdit -join ','))"
+  & (Join-Path $Src 'edit\install_edit.ps1') -Components $WithEdit
 }
 
 Write-Host ''

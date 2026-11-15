@@ -44,7 +44,7 @@ Checks: every symbol correct (pull stills and read them); colours consistent acr
 
 ## Tutorial and screen-recording intros
 
-Length 5-20 s for an intro, plus lower thirds and callouts over a recording. Route: HyperFrames with the recording as a `<video>` layer; trim and normalise the recording with ffmpeg first (`references/ffmpeg.md`).
+Length 5-20 s for an intro, plus lower thirds and callouts over a recording. Route: HyperFrames with the recording as a `<video>` layer; trim and normalise the recording with ffmpeg first (`references/ffmpeg.md`). When the video is mostly the recording, with several cuts, a voice-over and music, cut it on a timeline with the edit pack (FilmCraft, `edit/recipes/film_timeline.sh`), mix the voice over the music with ducking (SoundCraft, `edit/recipes/sound_mix.sh`), and use HyperFrames for the titles and callouts layered on top.
 
 | Element | How |
 |---|---|
@@ -58,7 +58,7 @@ Checks: callouts land on the right UI element at the right time (pull stills at 
 
 ## Storytelling, skits and character pieces
 
-Length 15-90 s. Route: HyperFrames with SVG characters or cut-out illustrations; simple 3D props from the Three.js template or the 3D pack. Lip sync and full character animation are outside this skill: use pre-made Lottie or Rive characters ([references/ecosystem.md](ecosystem.md)) seeked by time, or keep characters still and let the camera, captions and props carry the motion.
+Length 15-90 s. Route: HyperFrames with SVG characters or cut-out illustrations; simple 3D props from the Three.js template or the 3D pack. A skit made from recorded takes is an editing job: cut the takes in FilmCraft and mix dialogue, music and sound effects in SoundCraft (edit pack). Lip sync and full character animation are outside this skill: use pre-made Lottie or Rive characters ([references/ecosystem.md](ecosystem.md)) seeked by time, or keep characters still and let the camera, captions and props carry the motion.
 
 | Beat | What is on screen |
 |---|---|

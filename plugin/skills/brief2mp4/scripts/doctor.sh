@@ -88,6 +88,10 @@ d3="$(bash "$HERE/detect_3d.sh" 2>/dev/null || echo '3d: not installed')"
 if [[ "$d3" == *ready* ]]; then row 3d-pack 0 ok "${d3#3d: }"
 else row 3d-pack 0 missing "optional. Install: bash \"$(cd "$HERE/.." && pwd)/3d/install_3d.sh\" --components core (Windows: install_3d.ps1 -Components core in the same folder)"; fi
 
+de="$(bash "$HERE/detect_edit.sh" 2>/dev/null || echo 'edit: not installed')"
+if [[ "$de" == *ready* ]]; then row edit-pack 0 ok "${de#edit: }"
+else row edit-pack 0 missing "optional (ArtCraft editors). Install: bash \"$(cd "$HERE/.." && pwd)/edit/install_edit.sh\" --components film,sound (Windows: install_edit.ps1 -Components film,sound in the same folder)"; fi
+
 if [[ "$JSON" == 1 ]]; then
   printf '{"os":"%s","ok":%s,"tools":[' "$OS" "$([[ $FAIL == 0 ]] && echo true || echo false)"
   sep=""

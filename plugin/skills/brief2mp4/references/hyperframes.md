@@ -13,7 +13,7 @@ npx hyperframes init . --example blank --non-interactive --skip-skills
 cd my-video
 ```
 
-This writes `index.html` (the root composition), `hyperframes.json`, `meta.json` and `package.json`. Add `--resolution portrait` for 1080x1920. `--skip-skills` stops `init` from installing HyperFrames' own agent skills into the user's skill folders; leave it off only if the user wants them.
+This writes `index.html` (the root composition), `hyperframes.json`, `meta.json` and `package.json`. Add `--resolution portrait` for 1080x1920. `--skip-skills` stops `init` from installing HyperFrames' own agent skills into the user's skill folders; leave it off only if the user wants them. `init` still writes its own `AGENTS.md` and `CLAUDE.md` into the project folder: they are HyperFrames' notes for agents, harmless, and you can delete them if the user does not want them.
 
 ## The composition contract
 
@@ -84,3 +84,6 @@ Quality presets: `draft` for iterating, `looks` (default) for review, `delivery`
 - `render` prints a long trace. The line that matters says `rendered in`; search for it rather than reading the whole log.
 - `hyperframes check` and `check_delivery.sh` warn about **holds**: a closing line held still, or a freeze over 1.5 s. When the brief asks for that hold, the warning is expected: say so in REPORT.md next to the brief line that asked for it. When it did not, it is dead air: fix it.
 - `hyperframes check` may also suggest a longer closing hold than the brief allows. The brief wins; note the difference in REPORT.md.
+- **Eases, by name.** GSAP's `power1` is quadratic, `power2` cubic, `power3` quartic and `power4` quintic; `.out` decelerates into place (arrivals), `.in` accelerates away (exits), `.inOut` does both. `none` is linear: use it only for constant spins and turntables. When a brief names a feel ("snappy", "soft"), write the ease you chose into SPEC.md.
+- **Freeze warnings and small motion.** `check_delivery.sh` looks for whole-frame freezes. A small element that keeps moving (a counter, a dot) can still trip it, because the change is below its threshold. Pull two stills a second apart inside the flagged stretch and compare them before you call it dead air.
+- **Starting states belong in CSS.** A `tl.set(el, {...}, 0)` at time 0 may not be applied when the renderer captures frame 0, so an element meant to start hidden flashes in the first frame. Put the starting state (`opacity: 0`, an offset transform) in CSS and animate from it; `hyperframes check` warns about this.

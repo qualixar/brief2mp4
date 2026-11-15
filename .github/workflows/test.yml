@@ -22,6 +22,7 @@ jobs:
       CLAUDE_CONFIG_DIR: ${{ github.workspace }}/.tmp/claude
       CODEX_HOME: ${{ github.workspace }}/.tmp/codex
       B2M3D_HOME: ${{ github.workspace }}/.tmp/b2m3d
+      B2M_EDIT_HOME: ${{ github.workspace }}/.tmp/edit
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -53,7 +54,29 @@ jobs:
         run: bash plugin/skills/brief2mp4/scripts/doctor.sh
 
       - name: Detect 3D pack
-        run: bash plugin/skills/brief2mp4/scripts/detect_3d.sh
+        run: |
+          bash plugin/skills/brief2mp4/scripts/detect_3d.sh | tee /dev/stderr | grep -q "3d: ready"
+
+      - name: Install the edit pack, film + sound (bash)
+        if: runner.os != 'Windows'
+        run: bash plugin/skills/brief2mp4/edit/install_edit.sh --components film,sound
+
+      - name: Install the edit pack, film + sound (PowerShell)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./plugin/skills/brief2mp4/edit/install_edit.ps1 -Components film,sound
+
+      - name: Detect edit pack
+        run: |
+          bash plugin/skills/brief2mp4/scripts/detect_edit.sh | tee /dev/stderr | grep -q "edit: ready"
+
+      - name: Edit recipes (FilmCraft cut, SoundCraft mix)
+        run: |
+          mkdir -p .tmp/out
+          bash plugin/skills/brief2mp4/edit/recipes/film_timeline.sh --out .tmp/out/cut.mp4
+          bash plugin/skills/brief2mp4/edit/recipes/sound_mix.sh --out .tmp/out/mix.wav
+          bash plugin/skills/brief2mp4/scripts/finish.sh --in .tmp/out/cut.mp4 --out .tmp/out/final.mp4 --seconds 5 --size 1280x720 --audio .tmp/out/mix.wav
+          bash plugin/skills/brief2mp4/scripts/check_delivery.sh .tmp/out/final.mp4 --seconds 5 --size 1280x720
 
       - name: Fast tests
-        run: bash tests/run_tests.sh
+        run: bash tests/run_tests.sh -rs

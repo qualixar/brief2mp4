@@ -5,9 +5,11 @@
 #   bash install.sh --claude      # Claude Code only
 #   bash install.sh --codex       # Codex only
 #   bash install.sh --uninstall   # remove from both
-#   bash install.sh --uninstall --uninstall-3d   # also remove the 3D pack folder
+#   bash install.sh --uninstall --uninstall-3d --uninstall-edit   # also remove the optional packs
 #   bash install.sh --with-3d     # also install the optional 3D pack (core components)
 #   bash install.sh --with-3d=core,cad   # pick 3D components: core, cad, blender
+#   bash install.sh --with-edit          # also the optional edit pack (FilmCraft + SoundCraft CLIs)
+#   bash install.sh --with-edit=film,sound,effect,photo,vector   # pick editing apps
 #   Windows PowerShell: use install.ps1 instead.
 #
 # Claude Code reads skills from ~/.claude/skills (or $CLAUDE_CONFIG_DIR/skills).
@@ -21,16 +23,19 @@ VERSION="$(cat "$HERE/VERSION" 2>/dev/null || echo dev)"
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 CODEX_DIR="${CODEX_HOME:-$HOME/.codex}/skills"
 
-DO_CLAUDE=1 DO_CODEX=1 UNINSTALL=0 UNINSTALL_3D=0 WITH_3D=""
+DO_CLAUDE=1 DO_CODEX=1 UNINSTALL=0 UNINSTALL_3D=0 UNINSTALL_EDIT=0 WITH_3D="" WITH_EDIT=""
 for arg in "$@"; do
   case "$arg" in
     --claude) DO_CODEX=0 ;;
     --codex) DO_CLAUDE=0 ;;
     --uninstall) UNINSTALL=1 ;;
     --uninstall-3d) UNINSTALL_3D=1 ;;
+    --uninstall-edit) UNINSTALL_EDIT=1 ;;
+    --with-edit) WITH_EDIT="film,sound" ;;
+    --with-edit=*) WITH_EDIT="${arg#--with-edit=}" ;;
     --with-3d) WITH_3D="core" ;;
     --with-3d=*) WITH_3D="${arg#--with-3d=}" ;;
-    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "install.sh: unknown option $arg" >&2; exit 2 ;;
   esac
 done
@@ -81,6 +86,8 @@ if [[ "$UNINSTALL" == 1 ]]; then
   [[ "$DO_CODEX" == 1 ]] && uninstall_from "$CODEX_DIR" "Codex"
   if [[ "$UNINSTALL_3D" == 1 ]]; then bash "$SRC/3d/install_3d.sh" --uninstall
   else echo "  The optional 3D pack (if installed) stays in ${B2M3D_HOME:-$HOME/.brief2mp4/3d}; add --uninstall-3d to remove it."; fi
+  if [[ "$UNINSTALL_EDIT" == 1 ]]; then bash "$SRC/edit/install_edit.sh" --uninstall
+  else echo "  The optional edit pack (if installed) stays in ${B2M_EDIT_HOME:-$HOME/.brief2mp4/edit}; add --uninstall-edit to remove it."; fi
   exit 0
 fi
 
@@ -92,6 +99,12 @@ if [[ -n "$WITH_3D" ]]; then
   echo
   echo "Installing the 3D pack (components: $WITH_3D)"
   bash "$SRC/3d/install_3d.sh" --components "$WITH_3D"
+fi
+
+if [[ -n "$WITH_EDIT" ]]; then
+  echo
+  echo "Installing the edit pack (components: $WITH_EDIT)"
+  bash "$SRC/edit/install_edit.sh" --components "$WITH_EDIT"
 fi
 
 echo

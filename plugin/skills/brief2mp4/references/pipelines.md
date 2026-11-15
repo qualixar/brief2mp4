@@ -39,6 +39,8 @@ Route each beat of the beat sheet on its own, not the whole video. A 15 s produc
 | A logo or icon that becomes 3D | 3D pack `model` (extrude) + `material` + `reveal` | about a minute |
 | Real footage, screen recordings | `<video>` layer in HyperFrames; trim and normalise with ffmpeg first | seconds |
 | Captions from a voiceover | HyperFrames caption layer timed to the audio | seconds |
+| Real footage with several cuts, a voice-over and music | edit pack: FilmCraft cut, SoundCraft mix, HyperFrames titles on top | a minute or two |
+| A thumbnail or title card, an SVG lower third or logo | edit pack: PhotoCraft or VectorCraft | seconds |
 
 When the 3D pack is not installed (`scripts/detect_3d.sh` says `not installed`), use the Three.js template for 3D beats and say in REPORT.md that physics and exploded views were animated by hand.
 

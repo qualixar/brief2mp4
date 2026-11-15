@@ -108,6 +108,7 @@ Every subcommand prints one JSON object, so an agent reads results instead of pa
 | `scripts/doctor.sh`, `detect_3d.sh` | What is installed, and the fix for what is not |
 | `templates/` | Starting points that already render: SPEC.md, a Three.js scene, a Blender turntable |
 | `3d/` | The optional pack: `b2m3d` CLI, shot runtime, material presets, installers |
+| `edit/` | The optional edit pack: verified installers for the ArtCraft editors' CLIs, pinned versions, one tested recipe per app |
 | `SETUP.md` | Machine setup an agent follows, per OS |
 | `tests/` | Determinism, generation, detection and render tests; CI on macOS, Windows and Ubuntu |
 

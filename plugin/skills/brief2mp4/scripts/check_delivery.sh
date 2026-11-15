@@ -61,7 +61,7 @@ else
   il="$(echo "$stats" | awk '/I:/{v=$2} END{print v}')"
   tp="$(echo "$stats" | awk '/Peak:/{v=$2} END{print v}')"
   if [[ -z "$il" || "$il" == "-inf" ]] || awk -v i="$il" 'BEGIN{exit !(i < -60)}'; then
-    [[ "$SILENT_OK" == 1 ]] && pass "soundtrack silent (brief allows it)" || warn "soundtrack is silent; pass --silent-ok if the brief asked for silence"
+    [[ "$SILENT_OK" == 1 ]] && pass "soundtrack silent (brief allows it)" || fail "soundtrack is silent; fix the audio, or pass --silent-ok if the brief asked for silence"
   else
     awk -v i="$il" -v t="$LUFS" 'BEGIN{d=i-t; if(d<0)d=-d; exit !(d<=1.5)}' \
       && pass "loudness ${il} LUFS (target ${LUFS})" || fail "loudness ${il} LUFS, target ${LUFS} +/- 1.5"

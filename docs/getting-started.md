@@ -64,7 +64,7 @@ Pick one way per app. Installing both ways gives you two copies of the same skil
 | Script, macOS or Linux | `git clone https://github.com/qualixar/brief2mp4.git && bash brief2mp4/install.sh` |
 | Script, Windows | clone the repo, then `powershell -ExecutionPolicy Bypass -File .\brief2mp4\install.ps1` |
 
-Add `--with-3d` (or `-With3D core`) for the 3D pack. See the [3D walkthrough](3d-walkthrough.md) for what it adds.
+Add `--with-3d` (or `-With3D core`) for the 3D pack; see the [3D walkthrough](3d-walkthrough.md). Add `--with-edit` (or `-WithEdit film,sound`) for the edit pack, the ArtCraft timeline editor and audio mixer, when your videos use real footage or a voice-over; see [edit/README-EDIT.md](../plugin/skills/brief2mp4/edit/README-EDIT.md).
 
 ## 3. Check the machine
 

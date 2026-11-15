@@ -15,6 +15,11 @@ PNGs that contact_sheet.sh and ffmpeg write.
 
 Prints one JSON object. Exit 0 when the box is inside the zones (or none were given), 1 otherwise.
 A box height is a good proxy for text height when you measure a single line.
+
+Measuring one element (a moving dot, one label): pass a --region that contains only that element,
+then read its box centre: cx = (x0 + x1) / 2, cy = (y0 + y1) / 2. For easing, measure the centre at
+the start, at the end and at the time the brief names: covered = (c_t - c_start) / (c_end - c_start).
+For an orbit, the angle is atan2(cy - circle_y, cx - circle_x) at each still.
 """
 import argparse
 import json

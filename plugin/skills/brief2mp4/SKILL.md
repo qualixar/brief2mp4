@@ -1,6 +1,6 @@
 ---
 name: brief2mp4
-description: Turn a written brief into a finished, checked MP4 motion graphic. Use when asked to make an animation, motion graphic, 2D explainer, maths or algorithm animation, tutorial intro, animated story or skit, YouTube Short or Reel, data story, kinetic typography, lyric video, title sequence, logo sting, 3D scene, 3D product shot, physics drop, exploded view, product turntable or short explainer clip as a video file. Builds with HyperFrames (HTML + GSAP), Three.js, an optional 3D pack (CAD, materials, physics) or Blender, finishes with ffmpeg, then checks the video against the brief and fixes what fails before handing it over.
+description: Turn a written brief into a finished, checked MP4 motion graphic. Use when asked to make an animation, motion graphic, 2D explainer, maths or algorithm animation, tutorial intro, animated story or skit, YouTube Short or Reel, data story, kinetic typography, lyric video, title sequence, logo sting, 3D scene, 3D product shot, physics drop, exploded view, product turntable or short explainer clip as a video file. Builds with HyperFrames (HTML + GSAP), Three.js, an optional 3D pack (CAD, materials, physics), Blender or an optional edit pack (timeline cuts, multitrack mixing, compositing), finishes with ffmpeg, then checks the video against the brief and fixes what fails before handing it over.
 ---
 
 # brief2mp4
@@ -60,6 +60,7 @@ If the brief names a kind of video (explainer, maths, tutorial intro, skit, Shor
 | Stylised 3D, particles, many objects, flying cameras | Three.js inside HyperFrames | `references/threejs.md` |
 | Realistic products, materials, soft light and shadows | Blender, scripted with Python, run headless | `references/blender.md` |
 | A product or object that falls and settles, explodes into parts, turns on a turntable; a logo made 3D; a CAD part | The 3D pack, if installed (see below) | `3d/README-3D.md` |
+| Real footage cut on a timeline (tutorials, vlogs, skits from recordings), a multitrack voice + music + SFX mix with ducking, layered keyframed compositing, a thumbnail or title card, an SVG logo or lower third | The edit pack, if installed (see below) | `edit/README-EDIT.md` |
 | Joining clips, adding sound, exact duration, loudness, encoding | ffmpeg (`scripts/finish.sh`) | `references/ffmpeg.md` |
 
 Mixing is normal: render a Blender shot to frames, then use it as a video layer under HyperFrames type, or join HyperFrames and Blender clips with ffmpeg. Every path ends with `scripts/finish.sh` and `scripts/check_delivery.sh`.
@@ -71,6 +72,14 @@ Run `bash <this skill's folder>/scripts/detect_3d.sh`. If it prints `3d: ready`,
 Snapshot every 3D shot before the full render (`npx hyperframes snapshot --at 1,3,5`) and look at the frames: a camera framing the fall instead of the landing zone, or parts too small, shows up in seconds.
 
 If it prints `3d: not installed`, use the Three.js template for 3D beats, animate physics and exploded views by hand, and say so in REPORT.md. Mention once how to add the pack: `bash <this skill's folder>/3d/install_3d.sh --components core` (Windows: `powershell -ExecutionPolicy Bypass -File <this skill's folder>\3d\install_3d.ps1 -Components core`). This works for plugin and script installs alike.
+
+### The edit pack (optional)
+
+Run `bash <this skill's folder>/scripts/detect_edit.sh`. If it prints `edit: ready (...)`, the listed ArtCraft editors are installed as pinned command-line tools: FilmCraft (timeline editing), SoundCraft (multitrack mixing, automation, bounce), EffectCraft (layered compositing and keyframes), PhotoCraft (image editing) and VectorCraft (vector drawing). Read `edit/README-EDIT.md` first. Start from the tested recipes in `edit/recipes/` (`film_timeline.sh`, `sound_mix.sh`, `effect_title.sh`, `photo_thumbnail.sh`, `vector_lower_third.sh`) rather than writing commands from memory. These apps are alpha: before any command a recipe does not already use, list the real ids with `<app>-cli commands` (or `--help`) for the pinned version. Use the CLI by default and an app's MCP server only when the brief needs interactive back-and-forth.
+
+Edited output is a layer or a soundtrack like any other: a FilmCraft cut or an EffectCraft render goes into HyperFrames as video, a SoundCraft bounce goes to `finish.sh --audio`, and every route still ends with `finish.sh`, `check_delivery.sh` and the stills you look at.
+
+If it prints `edit: not installed`, cut with ffmpeg (`references/ffmpeg.md`) and mix with ffmpeg filters, and mention once how to add the pack: `bash <this skill's folder>/edit/install_edit.sh --components film,sound` (Windows: `install_edit.ps1 -Components film,sound`).
 
 For briefs that mix tools, read `references/pipelines.md` (architecture, recipes for each mix, how layers meet in HyperFrames). For tools outside this stack (Remotion, Motion Canvas, Manim, Lottie, Rive, PixiJS, R3F, Babylon.js and more), read `references/ecosystem.md`: when each one beats the default, and how to bring its output in frame-exact.
 
@@ -132,5 +141,6 @@ That message means: re-read the **original brief** (not your spec), go through i
 - `references/pipelines.md`: architecture diagram, route per beat, recipes for mixed pipelines, methods
 - `references/ecosystem.md`: 45+ open-source motion, 3D and agent-skill repos, when to use each, how to connect them
 - `3d/README-3D.md`: the optional 3D pack (components, commands, shot JSON, brief-to-shot mapping, look rules)
-- `scripts/finish.sh`, `scripts/check_delivery.sh`, `scripts/contact_sheet.sh`, `scripts/sound_bed.sh`, `scripts/doctor.sh`, `scripts/detect_3d.sh`, `scripts/bounds.py`, `scripts/vendor_libs.sh`
+- `edit/README-EDIT.md`: the optional edit pack (ArtCraft editors: install, verification, recipes, command discovery, MCP)
+- `scripts/finish.sh`, `scripts/check_delivery.sh`, `scripts/contact_sheet.sh`, `scripts/sound_bed.sh`, `scripts/doctor.sh`, `scripts/detect_3d.sh`, `scripts/bounds.py`, `scripts/vendor_libs.sh`, `scripts/detect_edit.sh`
 - `templates/SPEC.md`, `templates/threejs/index.html`, `templates/blender/scene.py`

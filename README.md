@@ -20,6 +20,7 @@
   <a href="#what-it-makes">What it makes</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#the-3d-pack">3D pack</a> ·
+  <a href="#the-edit-pack">Edit pack</a> ·
   <a href="#examples">Examples</a> ·
   <a href="#write-a-brief">Write a brief</a> ·
   <a href="docs/README.md">Docs</a> ·
@@ -53,7 +54,7 @@ The agent detects your OS, asks before installing Node, ffmpeg (and Git Bash on 
 | macOS / Linux / WSL (both apps) | `git clone https://github.com/qualixar/brief2mp4.git && bash brief2mp4/install.sh` |
 | Windows PowerShell (both apps) | `git clone https://github.com/qualixar/brief2mp4.git; powershell -ExecutionPolicy Bypass -File .\brief2mp4\install.ps1 -InstallTools` |
 
-Add the 3D pack with `--with-3d` (macOS/Linux) or `-With3D core` (Windows). Plugins install the skill only, so on a fresh machine also install the tools below. Start a new session after installing so the app loads the skill.
+Add the 3D pack with `--with-3d` (macOS/Linux) or `-With3D core` (Windows), and the edit pack with `--with-edit` or `-WithEdit film,sound`. Plugins install the skill only, so on a fresh machine also install the tools below. Start a new session after installing so the app loads the skill.
 
 **Then make a video.** In a folder for the video:
 
@@ -101,7 +102,7 @@ Round 4 of the video: Fable 5.2 in Claude Code got a written brief for a 60-seco
 | **Photoreal shots** | glass, metal, soft shadows | Blender |
 
 <p align="center">
-  <img src="assets/example05-explainer.png" alt="Example 05, a 2D explainer made by the skill: the hook question, the cache diagram mid-count at 626 ms, three labels, and the closing line Keep a copy close." width="49%">
+  <img src="assets/example05-explainer.png" alt="Example 05, a 2D explainer made by the skill: the hook question, the cache diagram mid-count at 652 ms, three labels, and the closing line Keep a copy close." width="49%">
   <img src="assets/example06-short.png" alt="Example 06, a vertical Short made by the skill: four phone frames with the hook, rule one with an easing dot, rule three with a spinning dot, and Save this." width="49%">
 </p>
 
@@ -161,6 +162,33 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -With3D core,cad
 
 The brief does the asking. "Parts fall and settle" becomes a physics bake with a camera that frames the landing zone; "show what's inside" becomes an exploded view; "hero product" becomes a Blender render with a dramatic light rig. The full mapping, the shot JSON and the look rules are in [3d/README-3D.md](plugin/skills/brief2mp4/3d/README-3D.md).
 
+## The edit pack
+
+Motion graphics are half of a video. The other half is editing: cutting your screen recording or footage on a timeline, mixing a voiceover over music so the music ducks when you speak, compositing titles, making the thumbnail. The optional edit pack installs the command-line tools of five free, open-source desktop editors, the ArtCraft apps by [storytold](https://github.com/storytold) (Apache-2.0), so Claude Code or Codex can do that work too, headless, and hand the result to the same checks.
+
+<p align="center">
+  <img src="assets/edit-pack-recipes.png" alt="Output of the four edit-pack recipes: a FilmCraft timeline mid cross-dissolve, an EffectCraft animated title, a PhotoCraft thumbnail reading Cut faster, and a VectorCraft lower third" width="720">
+</p>
+
+| Component | App | Like | The agent uses it for | Tested recipe |
+|---|---|---|---|---|
+| `film` | [FilmCraft](https://github.com/storytold/filmcraft) 0.20.1 | Premiere | cutting clips on a timeline, transitions, titles, export | `film_timeline.sh` |
+| `sound` | [SoundCraft](https://github.com/storytold/soundcraft) 0.20.1 | a DAW | voice + music mix, ducking with automation, bounce | `sound_mix.sh` |
+| `effect` | [EffectCraft](https://github.com/storytold/effectcraft) 0.24.1 | After Effects | layered, keyframed compositing and titles | `effect_title.sh` |
+| `photo` | [PhotoCraft](https://github.com/storytold/photocraft) 0.23.1 | Photoshop | thumbnails, title cards | `photo_thumbnail.sh` |
+| `vector` | [VectorCraft](https://github.com/storytold/vectorcraft) 0.24.1 | Illustrator | logos and lower thirds as SVG | `vector_lower_third.sh` |
+
+```bash
+bash install.sh --with-edit                                  # film + sound
+bash install.sh --with-edit=film,sound,effect,photo,vector   # all five, about 420 MB download on macOS
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithEdit film,sound
+```
+
+Every download is checked before anything is unpacked: its SHA-256 must match both the release's `SHA256SUMS.txt` and the hash pinned in this repository, and when `gpg` is installed the release signature must verify against the pinned signing-key fingerprint. Versions are pinned because these apps are alpha and move fast; the skill tells the agent to look up each app's real commands (`<app>-cli commands`) before using one a recipe does not cover. Details, sizes per platform and uninstall: [edit/README-EDIT.md](plugin/skills/brief2mp4/edit/README-EDIT.md).
+
 ## Examples
 
 | # | Brief | Route | Length |
@@ -171,6 +199,7 @@ The brief does the asking. "Parts fall and settle" becomes a physics bake with a
 | 04 | [3D product](examples/04-3d-product/BRIEF.md): parts drop and settle, explode, title | 3D pack | 8 s |
 | 05 | [2D explainer](examples/05-2d-explainer/BRIEF.md): "How a cache works" | HyperFrames | 20 s |
 | 06 | [Vertical Short](examples/06-vertical-short/BRIEF.md): "3 easing rules", 1080x1920 with safe zones | HyperFrames | 15 s |
+| 07 | [Edited tutorial](examples/07-edit-tutorial/BRIEF.md): two clips cut together with a title and a ducked voice-over mix | edit pack + HyperFrames | 14 s |
 
 ## Write a brief
 
@@ -238,6 +267,7 @@ plugin/
     scripts/                       finish, check_delivery, contact_sheet, sound_bed, doctor, detect_3d
     templates/                     SPEC.md, a Three.js scene, a Blender turntable
     3d/                            the optional 3D pack and its installers
+    edit/                          the optional edit pack: verified installers, pinned versions, recipes
 docs/                              getting started, architecture, 3D walkthrough
 examples/                          six briefs; 01, 04, 05 and 06 with sample reports or a worked build
 tests/                             fast checks and render tests (bash tests/run_tests.sh [--slow])
@@ -249,6 +279,6 @@ Bad results are the most useful bug reports: open a **Brief result** issue with 
 
 ## Licence
 
-MIT. Use it, change it, ship videos with it. HyperFrames (Apache-2.0), Three.js (MIT), GSAP (standard no-charge licence), Jolt (MIT), glTF-Transform (MIT), meshoptimizer (MIT), Manifold (Apache-2.0), CadQuery (Apache-2.0), trimesh (MIT), Blender (GPL) and ffmpeg (LGPL/GPL) keep their own licences; this repo does not bundle them.
+MIT. Use it, change it, ship videos with it. HyperFrames (Apache-2.0), Three.js (MIT), GSAP (standard no-charge licence), Jolt (MIT), glTF-Transform (MIT), meshoptimizer (MIT), Manifold (Apache-2.0), CadQuery (Apache-2.0), trimesh (MIT), Blender (GPL), ffmpeg (LGPL/GPL) and the ArtCraft apps by storytold (Apache-2.0, downloaded from their own releases by the edit pack) keep their own licences; this repo does not bundle them.
 
 Made by [Varun Pratap Bhardwaj](https://github.com/qualixar).
