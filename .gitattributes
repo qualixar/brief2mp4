@@ -7,3 +7,6 @@
 *.webp binary
 *.jpg binary
 *.glb binary
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf

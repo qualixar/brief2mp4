@@ -160,13 +160,4 @@ Run on the output of `film_timeline.sh`, this gives `RESULT: PASS` (1280x720, 30
 
 ## What was tested, and what was not
 
-Tested on macOS 26.6 (Apple silicon) with the pinned versions: the installer end to end for all five components (download, both SHA-256 checks, gpg signature, install, launcher, idempotent re-run, a tampered pin refused, uninstall), `detect_edit.sh`, every recipe (outputs checked with ffprobe, frame hashes, tone levels, PNG and SVG parsing), the MCP handshake of all five CLIs, and `finish.sh` plus `check_delivery.sh` on the film recipe's output. The two PowerShell scripts were parsed and dry-run under PowerShell 7 on macOS, and their hash, signature and unzip steps ran against the Windows x64 SoundCraft zip there, up to starting the `.exe`.
-
-**Untested:**
-
-- Windows: the real install and the `.exe` CLIs, the `.cmd` launchers, Windows PowerShell 5.1 (the scripts avoid its known problems but were not run on it), the recipes under Git Bash, SmartScreen behaviour, and the arm64 build.
-- Linux: everything past `--dry-run`. The install layout (`<app>/bin/<app>-cli`) was read from the SoundCraft tarball listing; whether the Linux CLIs need system libraries is not known.
-- The desktop apps themselves and bridge mode (`--control`, `--bridge`).
-- Calling MCP tools from a real Claude Code or Codex session.
-
-None of the five apps was blocked: every recipe's job ran headless with the pinned versions.
+CI on macOS, Ubuntu and Windows installs FilmCraft and SoundCraft with the native installer for each platform (Windows: PowerShell, including Windows PowerShell 5.1), checks every download's SHA-256 and the release signature, runs the cut and mix recipes, and passes the result through `finish.sh` and `check_delivery.sh`. EffectCraft, PhotoCraft and VectorCraft recipes are tested on macOS. Desktop apps, bridge mode and calling the apps' MCP servers from a live Claude Code or Codex session are untested.
