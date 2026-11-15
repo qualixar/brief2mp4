@@ -6,7 +6,7 @@
 #   powershell -ExecutionPolicy Bypass -File install_edit.ps1 -Uninstall                   # remove what this installer created
 #   powershell -ExecutionPolicy Bypass -File install_edit.ps1 -Uninstall -Components photo
 #
-# Components (free ArtCraft apps by storytold, Apache-2.0, pinned in versions.json)
+# Components (free ArtCraft apps by storytold, MIT or Apache-2.0, pinned in versions.json)
 #   film FilmCraft, sound SoundCraft, effect EffectCraft, photo PhotoCraft, vector VectorCraft
 #
 # Each download is checked against the release's SHA256SUMS.txt and the hash pinned in versions.json.
@@ -118,12 +118,14 @@ function Test-Signature([string]$dir, [string]$fingerprint) {
     $gh = Join-Path ([System.IO.Path]::GetTempPath()) ("b2m-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
     New-Item -ItemType Directory -Force -Path $gh | Out-Null
     try {
-        # Forward slashes work for both Gpg4win and the MSYS gpg that ships with Git for Windows; a
-        # backslash GNUPGHOME is not understood by the MSYS build. --homedir avoids the environment entirely.
-        $home2 = $gh -replace '\\', '/'
-        $key = (Join-Path $dir "release-signing-key.asc") -replace '\\', '/'
-        $sig = (Join-Path $dir "SHA256SUMS.txt.asc") -replace '\\', '/'
-        $sums = (Join-Path $dir "SHA256SUMS.txt") -replace '\\', '/'
+        # Git for Windows ships an MSYS build of gpg that reads C:\x\y as a relative path and wants /c/x/y.
+        # Gpg4win (native) wants ordinary Windows paths. Convert to whichever this gpg understands.
+        $msys = $gpg.Source -match '\\usr\\bin\\gpg(\.exe)?$'
+        $conv = { param([string]$p) if ($msys -and $p -match '^([A-Za-z]):[\\/](.*)$') { "/" + $Matches[1].ToLowerInvariant() + "/" + ($Matches[2] -replace '\\', '/') } else { $p } }
+        $home2 = & $conv $gh
+        $key = & $conv (Join-Path $dir "release-signing-key.asc")
+        $sig = & $conv (Join-Path $dir "SHA256SUMS.txt.asc")
+        $sums = & $conv (Join-Path $dir "SHA256SUMS.txt")
         $imp = Invoke-Native $gpg.Source @("--homedir", $home2, "--batch", "--quiet", "--import", $key)
         $ver = Invoke-Native $gpg.Source @("--homedir", $home2, "--batch", "--status-fd", "1", "--verify", $sig, $sums)
         $ok = $ver.Output -split "`n" | Where-Object { $_ -like "*VALIDSIG *" -and ($_.Trim() -split " ")[-1] -eq $fingerprint }
@@ -246,7 +248,7 @@ if (-not $DryRun) {
     New-Item -ItemType Directory -Force -Path $stage | Out-Null
 }
 try {
-    Write-Output "brief2mp4 edit pack: ArtCraft apps by storytold (Apache-2.0), alpha software, versions pinned in versions.json"
+    Write-Output "brief2mp4 edit pack: ArtCraft apps by storytold (MIT or Apache-2.0), alpha software, versions pinned in versions.json"
     foreach ($app in $wanted) { Install-App $app $plat $stage }
     if (-not $DryRun) {
         Copy-SupportFiles

@@ -2,7 +2,7 @@
   "schema": 1,
   "checked": "2026-11-15",
   "source": "https://github.com/storytold",
-  "license": "Apache-2.0",
+  "license": "MIT OR Apache-2.0",
   "signing": {
     "key_asset": "release-signing-key.asc",
     "fingerprint": "2B76741B414AAD6CD33E631213A005C0B9D7C3ED"

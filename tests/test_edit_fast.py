@@ -27,7 +27,7 @@ EDIT_FILES = [p for p in EDIT.rglob("*") if p.is_file()] + [DETECT_SH, DETECT_PS
 
 def test_versions_json_schema():
     v = VERSIONS
-    assert v["schema"] == 1 and v["license"] == "Apache-2.0" and v["source"] == "https://github.com/storytold"
+    assert v["schema"] == 1 and v["license"] == "MIT OR Apache-2.0" and v["source"] == "https://github.com/storytold"
     assert re.fullmatch(r"[0-9A-F]{40}", v["signing"]["fingerprint"]) and v["signing"]["key_asset"] == "release-signing-key.asc"
     assert set(v["apps"]) == set(APPS)
     for short, app in v["apps"].items():

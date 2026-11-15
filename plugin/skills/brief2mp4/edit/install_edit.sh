@@ -7,7 +7,7 @@
 #   bash install_edit.sh --uninstall                  # remove everything this installer created
 #   bash install_edit.sh --uninstall --components photo
 #
-# Components (free ArtCraft apps by storytold, Apache-2.0, pinned in versions.json)
+# Components (free ArtCraft apps by storytold, MIT or Apache-2.0, pinned in versions.json)
 #   film     FilmCraft    timeline editor (Premiere class)
 #   sound    SoundCraft   multitrack audio workstation (mix, ducking, bounce)
 #   effect   EffectCraft  layered, keyframed compositing (After Effects class)
@@ -269,7 +269,7 @@ main() {
   if [[ "$UNINSTALL" == 1 ]]; then uninstall; return 0; fi
   local plat app; plat="$(platform_key)"
   if [[ "$DRY" == 0 ]]; then mkdir -p "$HOME_DIR"; STAGE="$HOME_DIR/.stage-$$"; mkdir -p "$STAGE"; trap cleanup EXIT; fi
-  say "brief2mp4 edit pack: ArtCraft apps by storytold (Apache-2.0), alpha software, versions pinned in versions.json"
+  say "brief2mp4 edit pack: ArtCraft apps by storytold (MIT or Apache-2.0), alpha software, versions pinned in versions.json"
   for app in ${COMPONENTS//,/ }; do install_app "$app" "$plat"; done
   if [[ "$DRY" == 1 ]]; then return 0; fi
   copy_support_files; record_components; cleanup
