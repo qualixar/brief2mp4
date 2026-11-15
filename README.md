@@ -34,7 +34,7 @@ brief2mp4 is a free, MIT-licensed agent skill. You paste a written brief (length
 </p>
 
 <p align="center">
-  <b><a href="https://youtu.be/l9mEZQon6JM">▶ Watch the video</a></b> &nbsp;·&nbsp; <b><a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 13-page guide</a></b>
+  <b><a href="https://youtu.be/l9mEZQon6JM">▶ Watch the video</a></b> &nbsp;·&nbsp; <b><a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 69-page guide</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/research/blog/brief2mp4-deep-dive">How it was built</a></b>
 </p>
 
 ## Quick start
@@ -217,7 +217,7 @@ Sound: a quiet bed with a low hit at 4.0 s.
 Done when: every line is readable, nothing touches the frame edge, headlines are at least 100 px tall.
 ```
 
-The "done when" lines matter most, because they are what the self-check measures. The [free guide](https://qualixar.com/learn/guides/brief2mp4-guide) goes through brief writing, each tool and the checks in detail.
+The "done when" lines matter most, because they are what the self-check measures. The [free 69-page field guide](https://qualixar.com/learn/guides/brief2mp4-guide) goes through brief writing, every format, each tool, the 3D and edit packs and the checks in detail, and includes every brief and setting from the contest in the video. The [technical deep dive](https://qualixar.com/research/blog/brief2mp4-deep-dive) explains the engineering: determinism, baked physics, the loudness loop and the self-check.
 
 ## How it compares
 
