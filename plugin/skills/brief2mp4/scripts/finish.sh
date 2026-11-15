@@ -56,13 +56,36 @@ fi
 
 # Fit inside the frame, pad the rest, hold the last frame if the render is short.
 VF="scale=${W}:${H}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2,fps=${FPS},tpad=stop_mode=clone:stop_duration=${SECONDS_},format=yuv420p"
-AF="loudnorm=I=${LUFS}:TP=-1.5:LRA=11,aresample=48000,apad,atrim=0:${SECONDS_},afade=t=out:st=$(awk "BEGIN{print ${SECONDS_}-0.4}"):d=0.4"
+# Loudness: a soft limiter tames sharp hits (so short, peaky beds can still reach the target),
+# then two-pass loudnorm: measure first, then apply linearly with the measured values. Single-pass
+# loudnorm undershoots on short clips because it needs several seconds of look-ahead.
+PRE="alimiter=limit=0.5:level=disabled"
+TAIL="aresample=48000,apad,atrim=0:${SECONDS_},afade=t=out:st=$(awk "BEGIN{print ${SECONDS_}-0.4}"):d=0.4"
+loudness_filter() {  # loudness_filter <input file> -> prints the -af chain
+  local m val k f="${PRE},loudnorm=I=${LUFS}:TP=-1.5:LRA=11"
+  m="$(ffmpeg -hide_banner -nostats -t "$SECONDS_" -i "$1" -vn -af "${PRE},loudnorm=I=${LUFS}:TP=-1.5:LRA=11:print_format=json" -f null - 2>&1 | awk '/^\{/,/^\}/')"
+  for k in input_i input_tp input_lra input_thresh target_offset; do
+    val="$(printf '%s\n' "$m" | sed -n "s/.*\"$k\" : \"\([^\"]*\)\".*/\1/p")"
+    case "$val" in
+      *inf*|*nan*) echo "${TAIL}"; return ;;                      # silent input: nothing to normalise
+      "") echo "${PRE},loudnorm=I=${LUFS}:TP=-1.5:LRA=11,${TAIL}"; return ;;
+    esac
+    case "$k" in
+      input_i) f="$f:measured_I=$val" ;; input_tp) f="$f:measured_TP=$val" ;;
+      input_lra) f="$f:measured_LRA=$val" ;; input_thresh) f="$f:measured_thresh=$val" ;;
+      target_offset) f="$f:offset=$val" ;;
+    esac
+  done
+  echo "$f:linear=true,${TAIL}"
+}
 
 if [[ -n "$AUDIO" ]]; then
+  AF="$(loudness_filter "$AUDIO")"
   ffmpeg -v error -y "${VIN[@]}" -i "$AUDIO" -map 0:v:0 -map 1:a:0 -vf "$VF" -af "$AF" \
     -t "$SECONDS_" -c:v libx264 -preset slow -crf "$CRF" -profile:v high -r "$FPS" \
     -c:a aac -b:a 192k -ar 48000 -ac 2 -movflags +faststart "$OUT"
 elif [[ "$KEEP" == 1 ]]; then
+  AF="$(loudness_filter "$IN")"
   ffmpeg -v error -y "${VIN[@]}" -map 0:v:0 -map 0:a:0 -vf "$VF" -af "$AF" \
     -t "$SECONDS_" -c:v libx264 -preset slow -crf "$CRF" -profile:v high -r "$FPS" \
     -c:a aac -b:a 192k -ar 48000 -ac 2 -movflags +faststart "$OUT"

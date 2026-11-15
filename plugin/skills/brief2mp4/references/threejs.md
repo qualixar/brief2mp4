@@ -1,5 +1,7 @@
 # Three.js inside HyperFrames
 
+**Offline by design.** The template loads `vendor/gsap.min.js` and `vendor/three.module.js`. After copying it into a project, run `bash <skill>/scripts/vendor_libs.sh <project> --three` once, so every render uses the same pinned copies and never fetches from a CDN.
+
 Three.js draws 3D with WebGL. On its own it animates with a render loop that runs in real time, which a frame-by-frame renderer cannot capture reliably. The fix is to make the 3D scene a pure function of time: GSAP owns the clock, and every time HyperFrames seeks the timeline, one `draw(t)` call positions everything for second `t` and renders once.
 
 Start from `templates/threejs/index.html`. It renders as is (10 s, a low-poly shape, a slow camera dolly, seeded stars, an HTML title on top).

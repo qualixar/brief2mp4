@@ -1,6 +1,6 @@
 ---
 name: brief2mp4
-description: Turn a written brief into a finished, checked MP4 motion graphic. Use when asked to make an animation, motion graphic, kinetic typography, title sequence, logo sting, 3D scene, product turntable or short explainer clip as a video file. Builds with HyperFrames (HTML + GSAP), Three.js or Blender, finishes with ffmpeg, then checks the video against the brief and fixes what fails before handing it over.
+description: Turn a written brief into a finished, checked MP4 motion graphic. Use when asked to make an animation, motion graphic, 2D explainer, maths or algorithm animation, tutorial intro, animated story or skit, YouTube Short or Reel, data story, kinetic typography, lyric video, title sequence, logo sting, 3D scene, 3D product shot, physics drop, exploded view, product turntable or short explainer clip as a video file. Builds with HyperFrames (HTML + GSAP), Three.js, an optional 3D pack (CAD, materials, physics) or Blender, finishes with ffmpeg, then checks the video against the brief and fixes what fails before handing it over.
 ---
 
 # brief2mp4
@@ -11,19 +11,19 @@ Work in this order every time: **spec, build, self-check, fix, deliver.** Do not
 
 ## 0. Before you start
 
-Check the tools the job needs and say what is missing:
+Run the doctor once per machine. It checks every tool and prints the install command for this OS:
 
 ```bash
-node -v            # 22 or newer (HyperFrames and Three.js paths)
-ffmpeg -version    # every path
-blender --version  # only for the Blender path
+bash <this skill's folder>/scripts/doctor.sh
 ```
 
-On macOS Blender is often not on the PATH: use `/Applications/Blender.app/Contents/MacOS/Blender`. If a tool is missing, tell the user the install command (`brew install node ffmpeg`, `brew install --cask blender`, or the Linux equivalent) and stop, unless the brief allows another tool.
+Required: Node.js 22 or newer and ffmpeg. Optional: Blender (realistic product shots) and the 3D pack (physics, exploded views, CAD models). If a required tool is missing, tell the user the command the doctor printed and stop. If the whole machine needs setting up, follow `SETUP.md` in the brief2mp4 repository.
+
+**Windows.** The scripts are bash. Run them with Git Bash (`bash script.sh ...`; from PowerShell: `& "C:\Program Files\Git\bin\bash.exe" script.sh ...`). If Git for Windows is missing, ask the user to install it: `winget install -e --id Git.Git`. Write paths with forward slashes inside bash. **macOS.** Blender is often not on the PATH: use `/Applications/Blender.app/Contents/MacOS/Blender`.
 
 Work inside one project folder. Never write outside it.
 
-The scripts and templates named below sit next to this SKILL.md. Call them by their full path, for example `<this skill's folder>/scripts/finish.sh`; use the folder this SKILL.md was loaded from. A script install puts it in `~/.claude/skills/brief2mp4/` or `~/.codex/skills/brief2mp4/`; a plugin install puts it in the app's plugin cache.
+The scripts, templates and the 3D pack named below sit next to this SKILL.md. Call them by their full path, for example `<this skill's folder>/scripts/finish.sh`; use the folder this SKILL.md was loaded from. A script install puts it in `~/.claude/skills/brief2mp4/` or `~/.codex/skills/brief2mp4/`; a plugin install puts it in the app's plugin cache.
 
 ## 1. Spec: write SPEC.md before any code
 
@@ -50,6 +50,8 @@ If the brief leaves a choice open, make it, write it under **Decisions** in SPEC
 
 A blank spec to copy is in `templates/SPEC.md`.
 
+If the brief names a kind of video (explainer, maths, tutorial intro, skit, Short or Reel, data story, launch, logo sting, lyric video) or is vague about structure, read `references/formats.md` first and use its beat sheet, route and checks for that format. Vertical videos have safe zones; that file lists them.
+
 ## 2. Pick the tool
 
 | The brief asks for | Use | Reference |
@@ -57,17 +59,28 @@ A blank spec to copy is in `templates/SPEC.md`.
 | Type, layouts, UI, charts, icons, 2D shapes, captions | HyperFrames (HTML + CSS + GSAP) | `references/hyperframes.md` |
 | Stylised 3D, particles, many objects, flying cameras | Three.js inside HyperFrames | `references/threejs.md` |
 | Realistic products, materials, soft light and shadows | Blender, scripted with Python, run headless | `references/blender.md` |
+| A product or object that falls and settles, explodes into parts, turns on a turntable; a logo made 3D; a CAD part | The 3D pack, if installed (see below) | `3d/README-3D.md` |
 | Joining clips, adding sound, exact duration, loudness, encoding | ffmpeg (`scripts/finish.sh`) | `references/ffmpeg.md` |
 
 Mixing is normal: render a Blender shot to frames, then use it as a video layer under HyperFrames type, or join HyperFrames and Blender clips with ffmpeg. Every path ends with `scripts/finish.sh` and `scripts/check_delivery.sh`.
 
-Starters that already render: `templates/threejs/index.html` and `templates/blender/scene.py`. Copy one into the project and change it, rather than starting from an empty file.
+### The 3D pack (optional)
+
+Run `bash <this skill's folder>/scripts/detect_3d.sh`. If it prints `3d: ready`, build 3D product beats with it: `model` (CAD or mesh spec to GLB), `material` (presets), `physics` (a baked, deterministic Jolt track), `hf` (shot JSON to a HyperFrames project) and `blender` (photoreal hero). Read `3d/README-3D.md` first: it maps brief language to shot JSON ("parts fall and settle" is physics plus `camera.auto`, "show what's inside" is `explode`, "hero product" is `blender --look dramatic`) and lists the look rules (Neutral tone mapping, a dim environment around 0.35, a shadow-catcher floor, linear colours, bloom only for emissive parts).
+
+Snapshot every 3D shot before the full render (`npx hyperframes snapshot --at 1,3,5`) and look at the frames: a camera framing the fall instead of the landing zone, or parts too small, shows up in seconds.
+
+If it prints `3d: not installed`, use the Three.js template for 3D beats, animate physics and exploded views by hand, and say so in REPORT.md. Mention once how to add the pack: `bash <this skill's folder>/3d/install_3d.sh --components core` (Windows: `powershell -ExecutionPolicy Bypass -File <this skill's folder>\3d\install_3d.ps1 -Components core`). This works for plugin and script installs alike.
+
+For briefs that mix tools, read `references/pipelines.md` (architecture, recipes for each mix, how layers meet in HyperFrames). For tools outside this stack (Remotion, Motion Canvas, Manim, Lottie, Rive, PixiJS, R3F, Babylon.js and more), read `references/ecosystem.md`: when each one beats the default, and how to bring its output in frame-exact.
+
+Starters that already render: `templates/threejs/index.html` (run `scripts/vendor_libs.sh <project> --three` after copying it) and `templates/blender/scene.py`. Copy one into the project and change it, rather than starting from an empty file.
 
 ## 3. Build
 
 Rules for every tool:
 
-- **The picture is a pure function of time.** No wall clock, no `Math.random()` (use a seeded generator), no network calls while rendering. Render the same frame twice and you must get the same pixels.
+- **The picture is a pure function of time.** No wall clock, no `Math.random()` (use a seeded generator), no network calls while rendering: vendor GSAP and fonts into the project (`references/hyperframes.md` shows how). Render the same frame twice and you must get the same pixels.
 - **Every element has a job in the beat sheet.** If you cannot say which beat it serves, cut it.
 - **Text is readable.** Body text at least 40 px tall at 1080p, headlines 90 px or more. Keep 5% safe margins (96 px left and right, 54 px top and bottom at 1920x1080). No text touches or crosses the frame edge. Hold any line on screen for at least (words / 3) + 0.5 seconds.
 - **Motion is eased.** Use ease-out for things arriving and ease-in for things leaving; linear only for constant spins and turntables. Most UI moves take 0.3-0.8 s. One clear hero moment beats ten small effects.
@@ -79,7 +92,7 @@ Rules for every tool:
 After every full render, do all three:
 
 1. **Measure.** `scripts/check_delivery.sh final.mp4 --seconds <N> [--size WxH] [--fps N] [--silent-ok]` must end with `RESULT: PASS`. A FAIL is a fix, not a footnote.
-2. **Look.** `scripts/contact_sheet.sh final.mp4 --at <beat starts, hero moment, last second>` writes one PNG per moment. Open and view each image. For every frame ask: is the text spelled exactly as the spec says? Is anything cut off or overlapping? Are the colours from the palette? Is the beat that should be on screen at this time actually there?
+2. **Look.** `scripts/contact_sheet.sh final.mp4 --at <beat starts, hero moment, last second>` writes one PNG per moment. Open and view each image. For every frame ask: is the text spelled exactly as the spec says? Is anything cut off or overlapping? Are the colours from the palette? Is the beat that should be on screen at this time actually there? To measure instead of eyeballing (text height, distance from the edge, safe zones on a vertical video), run `python3 scripts/bounds.py <still.png> --bg "#rrggbb" [--region x0,y0,x1,y1] [--margin 96,54 | --safe top=288,bottom=672,left=64,right=192]`: it prints the pixel box of everything that is not background and whether it sits inside the zone.
 3. **Walk the list.** Go through **Done when** line by line and mark each **met** or **not met**, with the evidence: the command output line, or the frame file name.
 
 If you cannot view images in this environment, say so plainly in the report. Never claim a visual check you did not do.
@@ -115,5 +128,9 @@ That message means: re-read the **original brief** (not your spec), go through i
 - `references/threejs.md`: time-driven 3D, seeded randomness, text over 3D, performance
 - `references/blender.md`: headless Blender, engines, light, camera, text, frames
 - `references/ffmpeg.md`: finishing, joining, overlays, sound, loudness, inspection
-- `scripts/finish.sh`, `scripts/check_delivery.sh`, `scripts/contact_sheet.sh`, `scripts/sound_bed.sh`
+- `references/formats.md`: beat sheets, routes and checks per format (explainer, maths, tutorial, story, Short, data, launch, logo, lyric, captions)
+- `references/pipelines.md`: architecture diagram, route per beat, recipes for mixed pipelines, methods
+- `references/ecosystem.md`: 45+ open-source motion, 3D and agent-skill repos, when to use each, how to connect them
+- `3d/README-3D.md`: the optional 3D pack (components, commands, shot JSON, brief-to-shot mapping, look rules)
+- `scripts/finish.sh`, `scripts/check_delivery.sh`, `scripts/contact_sheet.sh`, `scripts/sound_bed.sh`, `scripts/doctor.sh`, `scripts/detect_3d.sh`, `scripts/bounds.py`, `scripts/vendor_libs.sh`
 - `templates/SPEC.md`, `templates/threejs/index.html`, `templates/blender/scene.py`

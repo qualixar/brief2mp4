@@ -9,20 +9,22 @@
 # Options
 #   --seconds N   length (required)
 #   --bpm N       pulse tempo (default 100)
-#   --hits LIST   extra low "boom" accents at these seconds (e.g. on a reveal)
+#   --hits LIST   extra low "boom" accents at these seconds (e.g. on a reveal or a landing)
+#   --ticks LIST  short bright clicks at these seconds (e.g. a cut, a new label, a UI tap)
 set -euo pipefail
 
 OUT="${1:-}"; shift || true
-SECONDS_="" BPM=100 HITS=""
+SECONDS_="" BPM=100 HITS="" TICKS=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --seconds) SECONDS_="$2"; shift 2 ;;
     --bpm) BPM="$2"; shift 2 ;;
     --hits) HITS="$2"; shift 2 ;;
+    --ticks) TICKS="$2"; shift 2 ;;
     *) echo "sound_bed.sh: unknown option $1" >&2; exit 2 ;;
   esac
 done
-[[ -n "$OUT" && -n "$SECONDS_" ]] || { echo "usage: sound_bed.sh OUT.wav --seconds N [--bpm N] [--hits t1,t2]" >&2; exit 2; }
+[[ -n "$OUT" && -n "$SECONDS_" ]] || { echo "usage: sound_bed.sh OUT.wav --seconds N [--bpm N] [--hits t1,t2] [--ticks t1,t2]" >&2; exit 2; }
 
 BEAT="$(awk -v b="$BPM" 'BEGIN{print 60/b}')"
 # Pad: an A-minor-ish chord with a slow swell. Pulse: a soft low thump on every beat.
@@ -33,6 +35,13 @@ if [[ -n "$HITS" ]]; then
   IFS=',' read -r -a H <<< "$HITS"
   for h in "${H[@]}"; do
     EXPR="${EXPR}+0.5*sin(2*PI*45*(t-${h}))*exp(-4*(t-${h}))*gte(t\,${h})"
+  done
+fi
+
+if [[ -n "$TICKS" ]]; then
+  IFS=',' read -r -a K <<< "$TICKS"
+  for k in "${K[@]}"; do
+    EXPR="${EXPR}+0.35*sin(2*PI*2400*(t-${k}))*exp(-90*(t-${k}))*gte(t\,${k})"
   done
 fi
 

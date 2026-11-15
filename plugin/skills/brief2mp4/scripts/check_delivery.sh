@@ -70,10 +70,12 @@ else
 fi
 
 # Picture health: long black stretches and long frozen stretches.
-black="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "blackdetect=d=0.5:pic_th=0.98" -an -f null - 2>&1 | grep -c black_start || true)"
+# pix_th=0.03 counts only true black (luma within 3% of black), so a dark designed background
+# such as #101114 is not mistaken for a black frame.
+black="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "blackdetect=d=0.5:pic_th=0.98:pix_th=0.03" -an -f null - 2>&1 | grep -c black_start || true)"
 [[ "$black" == 0 ]] && pass "no black stretch over 0.5 s" || warn "$black black stretch(es) over 0.5 s: intended?"
 frozen="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "freezedetect=n=0.001:d=1.5" -an -f null - 2>&1 | grep -c freeze_start || true)"
-[[ "$frozen" == 0 ]] && pass "nothing frozen over 1.5 s" || warn "$frozen frozen stretch(es) over 1.5 s: a hold the brief asked for, or dead air?"
+[[ "$frozen" == 0 ]] && pass "nothing frozen over 1.5 s" || warn "$frozen frozen stretch(es) over 1.5 s: expected where the brief asks for a hold (say so in REPORT.md), otherwise dead air"
 
 echo "----"
 if [[ "$FAILS" == 0 ]]; then echo "RESULT: PASS ($FILE)"; exit 0; else echo "RESULT: FAIL, $FAILS check(s) ($FILE)"; exit 1; fi

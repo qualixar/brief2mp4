@@ -1,0 +1,111 @@
+<!doctype html>
+<!-- Source of assets/architecture.png. Render: bash docs/diagrams/render.sh -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+:root{--paper:#F2EDE4;--card:#FBF8F2;--ink:#16130F;--mute:#6E675C;--line:#D9D1C3;--acc:#FF5A1F;--acc2:#FFE3D6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1600px;height:900px;background:var(--paper);font-family:Inter,sans-serif;color:var(--ink);position:relative;overflow:hidden}
+h1{position:absolute;left:64px;top:46px;font:700 46px 'Space Grotesk';letter-spacing:-.5px}
+h1 span{color:var(--acc)}
+.sub{position:absolute;left:66px;top:108px;font:400 20px Inter;color:var(--mute)}
+.card{position:absolute;background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:18px 18px 16px}
+.n{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--paper);font:700 16px 'Space Grotesk';margin-bottom:10px}
+.t{font:700 22px 'Space Grotesk';margin-bottom:6px}
+.d{font:400 14.5px/1.42 Inter;color:var(--mute)}
+.mono{font:500 13px 'JetBrains Mono';color:var(--ink);background:var(--paper);border-radius:6px;padding:2px 6px;display:inline-block;margin-top:8px}
+.lane{position:absolute;left:18px;right:18px;height:66px;border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px}
+.lane b{font:600 15.5px Inter;display:block}
+.lane i{font:400 13px Inter;color:var(--mute);font-style:normal}
+.lane .tag{position:absolute;right:10px;top:10px;font:500 11px 'JetBrains Mono';color:var(--mute)}
+.lane.opt{border-style:dashed}
+.acc{border-color:var(--acc)!important}
+.accbg{background:var(--acc2)}
+.stack{position:absolute;left:18px;right:18px;top:216px;height:170px}.stack div{position:absolute;left:0;right:0;height:34px;border:1.5px solid var(--ink);border-radius:8px;background:var(--card);font:500 13px Inter;padding:8px 10px}.stack div:nth-child(1){margin-left:0}.stack div:nth-child(2){margin-left:6px}.stack div:nth-child(3){margin-left:12px}.stack div:nth-child(4){margin-left:18px}
+.loop{position:absolute;font:600 15px Inter;color:var(--acc);background:var(--paper);padding:0 8px}
+.foot{position:absolute;left:64px;right:64px;bottom:40px;display:flex;gap:14px}
+.pill{border:1.5px solid var(--ink);border-radius:999px;padding:9px 18px;font:500 15px Inter;background:var(--card)}
+.pill em{font-style:normal;color:var(--acc);font-weight:600}
+svg{position:absolute;left:0;top:0}
+</style></head><body>
+<h1>How <span>brief2mp4</span> works</h1>
+<div class="sub">One loop an agent runs in Claude Code or Codex: every line of your brief becomes a check, and nothing ships until the checks pass.</div>
+
+<svg width="1600" height="900" viewBox="0 0 1600 900">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16130F"/></marker>
+  <marker id="o" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FF5A1F"/></marker></defs>
+  <g stroke="#16130F" stroke-width="2.5" fill="none" marker-end="url(#a)">
+    <path d="M254 420 H292"/>
+    <path d="M494 420 H532"/>
+    <path d="M884 420 H922"/>
+    <path d="M1124 300 H1160"/>
+    <path d="M1252 380 V412"/>
+  </g>
+  <g stroke="#FF5A1F" stroke-width="2.5" fill="none" stroke-dasharray="7 6" marker-end="url(#o)">
+    <path d="M1252 710 V752 H1024 V664"/>
+  </g>
+  <g stroke="#16130F" stroke-width="2.5" fill="none" marker-end="url(#a)">
+    <path d="M1344 570 H1372"/>
+  </g>
+</svg>
+
+<!-- 1 brief -->
+<div class="card" style="left:64px;top:300px;width:190px;height:240px">
+  <div class="n">1</div><div class="t">Your brief</div>
+  <div class="d">Length, size, palette, the exact words, what happens when, and a "done when" list.</div>
+  <div class="mono">BRIEF.md</div>
+</div>
+<!-- 2 spec -->
+<div class="card" style="left:294px;top:300px;width:200px;height:240px">
+  <div class="n">2</div><div class="t">Spec</div>
+  <div class="d">Delivery table, exact text, look, a timed beat sheet, one checkable line per requirement.</div>
+  <div class="mono">SPEC.md</div>
+</div>
+<!-- 3 route -->
+<div class="card" style="left:534px;top:170px;width:350px;height:490px">
+  <div class="n">3</div><div class="t">Route each beat</div>
+  <div class="d" style="margin-bottom:8px">Formats guide picks the beat sheet; each beat goes to the tool that fits it.</div>
+  <div class="lane" style="top:150px"><span class="tag">2D</span><b>HyperFrames</b><i>type, UI, charts, explainers, Shorts</i></div>
+  <div class="lane" style="top:228px"><span class="tag">3D</span><b>Three.js</b><i>stylised 3D, particles, camera moves</i></div>
+  <div class="lane opt" style="top:306px"><span class="tag">optional</span><b>3D pack</b><i>CAD parts, materials, physics, explode</i></div>
+  <div class="lane opt" style="top:384px"><span class="tag">optional</span><b>Blender</b><i>photoreal products, glass, metal</i></div>
+</div>
+<!-- 4 compose -->
+<div class="card acc accbg" style="left:924px;top:170px;width:200px;height:490px">
+  <div class="n" style="background:var(--acc)">4</div><div class="t">Compose</div>
+  <div class="d" style="color:var(--ink)">HyperFrames is the spine: every layer meets on one timeline. Every frame is a function of time.</div>
+  <div class="stack">
+    <div style="top:0">Type &amp; captions</div>
+    <div style="top:42px">Charts &amp; diagrams</div>
+    <div style="top:84px">3D canvas / clips</div>
+    <div style="top:126px">Sound bed</div>
+  </div>
+  <div class="mono" style="position:absolute;left:18px;bottom:16px">render.mp4</div>
+</div>
+<!-- 5 finish -->
+<div class="card" style="left:1162px;top:170px;width:180px;height:210px">
+  <div class="n">5</div><div class="t">Finish</div>
+  <div class="d">ffmpeg: exact length, H.264 + AAC, -14 LUFS.</div>
+  <div class="mono">finish.sh</div>
+</div>
+<!-- 6 check -->
+<div class="card acc" style="left:1162px;top:414px;width:180px;height:296px">
+  <div class="n" style="background:var(--acc)">6</div><div class="t">Self-check</div>
+  <div class="d"><b style="color:var(--ink)">Measure</b> the file: PASS, WARN or FAIL.<br><b style="color:var(--ink)">Look</b> at stills at every beat. Mark each brief line met or not, with evidence.</div>
+</div>
+<div class="loop" style="left:1046px;top:762px">fix the worst miss, render again (max 3 rounds)</div>
+<!-- 7 deliver -->
+<div class="card" style="left:1374px;top:470px;width:162px;height:200px;background:var(--ink);color:var(--paper)">
+  <div class="n" style="background:var(--acc)">7</div><div class="t">Deliver</div>
+  <div class="d" style="color:#CFC7B8">Every line met.</div>
+  <div class="mono" style="background:#2A2620;color:var(--paper)">final.mp4</div>
+  <div class="mono" style="background:#2A2620;color:var(--paper)">REPORT.md</div>
+</div>
+
+<div class="foot">
+  <div class="pill"><em>Local</em>: renders on your machine</div>
+  <div class="pill"><em>macOS · Windows · Linux</em></div>
+  <div class="pill">Follow-up: <em>"Check it against the brief."</em></div>
+  <div class="pill"><em>MIT</em> licence</div>
+</div>
+</body></html>
