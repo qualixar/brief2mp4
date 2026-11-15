@@ -12,7 +12,7 @@ set -euo pipefail
 
 NAME="brief2mp4"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC="$HERE/skill/$NAME"
+SRC="$HERE/plugin/skills/$NAME"
 VERSION="$(cat "$HERE/VERSION" 2>/dev/null || echo dev)"
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 CODEX_DIR="${CODEX_HOME:-$HOME/.codex}/skills"

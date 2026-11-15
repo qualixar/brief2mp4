@@ -23,7 +23,7 @@ On macOS Blender is often not on the PATH: use `/Applications/Blender.app/Conten
 
 Work inside one project folder. Never write outside it.
 
-The scripts and templates named below sit next to this SKILL.md. Call them by their full path, for example `<this skill's folder>/scripts/finish.sh`; after installing they are in `~/.claude/skills/brief2mp4/` or `~/.codex/skills/brief2mp4/`.
+The scripts and templates named below sit next to this SKILL.md. Call them by their full path, for example `<this skill's folder>/scripts/finish.sh`; use the folder this SKILL.md was loaded from. A script install puts it in `~/.claude/skills/brief2mp4/` or `~/.codex/skills/brief2mp4/`; a plugin install puts it in the app's plugin cache.
 
 ## 1. Spec: write SPEC.md before any code
 

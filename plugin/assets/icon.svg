@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>brief2mp4</title>
+  <rect x="16" y="16" width="480" height="480" rx="104" fill="#16130F"/>
+  <g transform="translate(-14 -19)">
+    <g fill="#F2EDE4">
+      <rect x="96" y="150" width="216" height="40" rx="20"/>
+      <rect x="96" y="236" width="216" height="40" rx="20"/>
+      <rect x="96" y="322" width="250" height="40" rx="20"/>
+    </g>
+    <path d="M330 270 Q330 252 346 261 L430 316 Q444 326 430 336 L346 391 Q330 400 330 382 Z" fill="#FF5A1F"/>
+  </g>
+</svg>
