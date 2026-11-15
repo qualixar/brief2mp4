@@ -13,19 +13,25 @@
 
 It covers kinetic type and 2D motion (HyperFrames), stylised 3D (Three.js) and realistic product shots (Blender), and finishes every file with ffmpeg. Everything runs on your own machine.
 
-## What it made from one brief
-
-This is example brief 01, pasted as written. The agent wrote a spec, built it in HyperFrames, rendered, finished the file and checked it, with no edits by hand.
-
 <p align="center">
-  <img src="assets/demo-brief01.gif" alt="Kinetic type film: Ideas are cheap. Finished is rare. Finish something today." width="800">
+  <a href="https://youtu.be/l9mEZQon6JM"><img src="assets/video-thumbnail.jpg" alt="Watch the video: Fable 5.2 vs Opus 5.5 vs GPT-6.1, who makes better motion graphics?" width="720"></a>
 </p>
 
-The file it delivered measures 12.000 s, 1920x1080, 30 fps, H.264 with AAC 48 kHz stereo, and the delivery check passed. Its [report](examples/01-kinetic-type/SAMPLE-REPORT.md) lists each requirement of the brief with the evidence for it: which still shows which line, the measured headline height (126 px against a 120 px minimum), the text bounds against the safe margins, the loudness at each sound accent.
+<p align="center">
+  <b><a href="https://youtu.be/l9mEZQon6JM">▶ Watch the video</a></b> &nbsp;·&nbsp; <b><a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched (Google Drive)</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 13-page guide (PDF)</a></b>
+</p>
 
-## Watch the video
+## What Claude Code can make from a written brief
 
-The video that goes with this repo is on YouTube: [youtu.be/l9mEZQon6JM](https://youtu.be/l9mEZQon6JM).
+<p align="center">
+  <img src="assets/r4-fable-four-worlds.webp" alt="Fable 5.2, Round 4: one camera move through a desert, an underwater city, neon rain and space" width="800">
+</p>
+
+Round 4 of the video: Fable 5.2 in Claude Code got a written brief for a 60-second film, one continuous camera move through four worlds with its own music, and delivered this. Excerpts above; the [full film and the other entries are on Google Drive](https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing), untouched, with checksums.
+
+That was a sealed contest run, made without this skill. brief2mp4 packages the same loop the brief demands (spec, build, measure, check every line, fix) so you can run it on your own briefs. The [guide](https://qualixar.com/learn/guides/brief2mp4-guide) has every brief, setting and result from the video.
+
+**Proof the skill itself works:** example brief 01, pasted as written, came back as a 12.000 s, 1920x1080, 30 fps file that passed the delivery check. Its [report](examples/01-kinetic-type/SAMPLE-REPORT.md) lists every requirement with its evidence: which still shows which line, the measured headline height (126 px against a 120 px minimum), the text bounds and the loudness at each sound accent.
 
 ## Install
 
