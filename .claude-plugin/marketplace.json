@@ -5,7 +5,7 @@
     "url": "https://github.com/qualixar"
   },
   "metadata": {
-    "description": "brief2mp4: write a brief, get a checked MP4. One skill for Claude Code and Codex."
+    "description": "brief2mp4 and brief2motion: write a brief, get a checked MP4 or live web motion. Skills for Claude Code and Codex."
   },
   "plugins": [
     {
@@ -30,6 +30,33 @@
         "physics",
         "agent-skills",
         "text-to-video",
+        "skill"
+      ],
+      "category": "productivity"
+    },
+    {
+      "name": "brief2motion",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/qualixar/brief2motion.git"
+      },
+      "description": "Sibling skill: turn a plain brief into live, measured web motion. Dust that forms your face, product or logo, a paper plane across the page, scroll scenes.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Varun Pratap Bhardwaj"
+      },
+      "homepage": "https://github.com/qualixar/brief2motion",
+      "repository": "https://github.com/qualixar/brief2motion",
+      "license": "MIT",
+      "keywords": [
+        "motion-graphics",
+        "web-animation",
+        "particles",
+        "halftone",
+        "threejs",
+        "gsap",
+        "scroll",
+        "agent-skills",
         "skill"
       ],
       "category": "productivity"

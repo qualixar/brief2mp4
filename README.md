@@ -294,6 +294,16 @@ examples/                          seven briefs; 01, 05, 06 and 07 with sample r
 tests/                             fast checks and render tests (bash tests/run_tests.sh [--slow])
 ```
 
+## Sibling skill: brief2motion
+
+Want the motion live on a website instead of in a video file? [brief2motion](https://github.com/qualixar/brief2motion) turns a plain brief into a web page that moves: dust that forms your face, product or logo, a paper plane across the page, scenes that play as you scroll. It installs from this same marketplace:
+
+```
+/plugin install brief2motion@brief2mp4
+```
+
+brief2motion can hand its page back to brief2mp4 when you want a video of it too.
+
 ## Contributing
 
 Made something with it? Post the brief and the video in [Show and tell](https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell); the best ones go into the examples table with your name on them. Bad results are the most useful bug reports: open a **Brief result** issue with the brief, the app and model, and the `REPORT.md`. Code changes are welcome too; see [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.md](SECURITY.md). Releases are listed in [CHANGELOG.md](CHANGELOG.md).
