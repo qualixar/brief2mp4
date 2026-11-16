@@ -32,7 +32,7 @@
   <a href="assets/example08-five-worlds.mp4"><img src="assets/example08-five-worlds.webp" alt="Example 08: the words of a brief lift off the page into a 3D city of light, the camera flies into a 2D chart world, rides a bar up into a spiral galaxy of particles, and the galaxy becomes the full stop in brief2mp4. One camera move, no cuts." width="100%"></a>
 </p>
 
-<p align="center"><b>One brief, five worlds, no cuts.</b> This is <a href="examples/08-brief-becomes-world/BRIEF.md">example 08</a>: the brief was pasted as written and the skill made the video, 2D type and charts in HyperFrames, the city and 27,000 particles in Three.js, finished with ffmpeg. Its <a href="examples/08-brief-becomes-world/SAMPLE-REPORT.md">report</a> shows 0 scene cuts and a first-to-last frame SSIM of 0.97, so it loops. <a href="assets/example08-five-worlds.mp4">Full-quality MP4 with sound</a>.</p>
+<p align="center"><b>One brief, five worlds, no cuts.</b> This is <a href="examples/08-brief-becomes-world/BRIEF.md">example 08</a>: the brief was pasted as written and the skill made the video, 2D type and charts in HyperFrames, the city and 27,000 particles in Three.js, finished with ffmpeg. Its <a href="examples/08-brief-becomes-world/SAMPLE-REPORT.md">report</a> shows 0 scene cuts and a first-to-last frame SSIM of 0.97, so it loops. <a href="examples/08-brief-becomes-world/README.md"><b>Make it yourself and check it</b></a> · <a href="assets/example08-five-worlds.mp4">Full-quality MP4 with sound</a>.</p>
 
 <p align="center"><b>▶ The 90-second story:</b> three AIs, one brief, and why brief2mp4 checks its own work. Press play, sound on.</p>
 
@@ -219,7 +219,7 @@ Every download is checked before anything is unpacked: its SHA-256 must match bo
 | 05 | [2D explainer](examples/05-2d-explainer/BRIEF.md): "How a cache works" | HyperFrames | 20 s |
 | 06 | [Vertical Short](examples/06-vertical-short/BRIEF.md): "3 easing rules", 1080x1920 with safe zones | HyperFrames | 15 s |
 | 07 | [Edited tutorial](examples/07-edit-tutorial/BRIEF.md): two clips cut together with a title and a ducked voice-over mix | edit pack + HyperFrames | 14 s |
-| 08 | [Five worlds](examples/08-brief-becomes-world/BRIEF.md): a brief's words become a 3D city, a 2D chart world and a galaxy in one camera move ([sample report](examples/08-brief-becomes-world/SAMPLE-REPORT.md), [video](assets/example08-five-worlds.mp4)) | HyperFrames + Three.js | 25 s |
+| 08 | [Five worlds](examples/08-brief-becomes-world/BRIEF.md): a brief's words become a 3D city, a 2D chart world and a galaxy in one camera move ([how to make and check it](examples/08-brief-becomes-world/README.md), [sample report](examples/08-brief-becomes-world/SAMPLE-REPORT.md), [video](assets/example08-five-worlds.mp4)) | HyperFrames + Three.js | 25 s |
 
 ## Write a brief
 
