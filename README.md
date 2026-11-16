@@ -7,6 +7,7 @@
 <p align="center"><b>Text to motion graphics for Claude Code and Codex. Write a video brief, get a finished MP4 that has been checked against every line of it.</b><br>2D explainers · maths animations · tutorials · Shorts and Reels · data stories · product launches · logo stings · kinetic type · 3D products</p>
 
 <p align="center">
+  <a href="https://github.com/qualixar/brief2mp4/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/qualixar/brief2mp4?style=flat&color=FF5A1F"></a>
   <a href="https://github.com/qualixar/brief2mp4/releases"><img alt="Release" src="https://img.shields.io/github/v/release/qualixar/brief2mp4?color=FF5A1F"></a>
   <a href="https://github.com/qualixar/brief2mp4/actions/workflows/test.yml"><img alt="Tests" src="https://github.com/qualixar/brief2mp4/actions/workflows/test.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-16130F"></a>
@@ -27,6 +28,10 @@
   <a href="#faq">FAQ</a>
 </p>
 
+| You give it | You get back |
+|---|---|
+| A written brief: length, size, the exact words on screen, what happens when, and a "done when" list. | `final.mp4`, plus a `REPORT.md` that goes through your brief line by line with the measurement or still that backs each one. Example 01's report shows a 126 px headline against a 120 px minimum. |
+
 brief2mp4 is a free, MIT-licensed agent skill. You paste a written brief (length, size, exact words, what happens when). The agent writes a spec with a checkable "done when" list, routes each beat to the right tool (HyperFrames for type and 2D motion, Three.js for stylised 3D, an optional 3D pack for CAD models, materials and physics, Blender for photoreal shots), renders, finishes the file with ffmpeg, measures it, looks at real frames, fixes what misses and hands you `final.mp4` with a `REPORT.md` that shows the evidence for every line. Everything runs on your own machine.
 
 <p align="center">
@@ -37,7 +42,7 @@ brief2mp4 is a free, MIT-licensed agent skill. You paste a written brief (length
   <b><a href="https://youtu.be/l9mEZQon6JM">▶ Watch the video</a></b> &nbsp;·&nbsp; <b><a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 69-page guide</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/research/blog/brief2mp4-deep-dive">How it was built</a></b>
 </p>
 
-<p align="center">⭐ <b>If brief2mp4 makes a video you keep, please <a href="https://github.com/qualixar/brief2mp4/stargazers">star the repo</a>.</b> It is the only signal I get that it worked for you, and it is how other people find it.</p>
+<p align="center">⭐ <b>Free and MIT. If brief2mp4 makes a video you keep, <a href="https://github.com/qualixar/brief2mp4">star the repo</a>.</b> It is the only signal I get that it worked for you, and it is how other Claude Code and Codex users find it. Made something? Post it in <a href="https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell">Show and tell</a>.</p>
 
 ## Quick start
 
@@ -67,6 +72,8 @@ When it says it is done, send one follow-up:
 > Check it against the brief.
 
 That makes the agent go back to your original brief line by line, show the evidence for each line, fix what falls short and render again. In our run of example 01 it caught headlines that cleared the 120 px minimum by only a few pixels, enlarged them and rendered again.
+
+**Why a star helps.** brief2mp4 is a one-person project with no ads and no paywall. A star tells the next person looking for a motion-graphics skill that someone else got it working, and it tells me which direction to keep building in. If it fell short on your brief, an issue with the `REPORT.md` helps just as much.
 
 ### Requirements
 
@@ -279,6 +286,10 @@ tests/                             fast checks and render tests (bash tests/run_
 ## Contributing
 
 Made something with it? Post the brief and the video in [Show and tell](https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell); the best ones go into the examples table with your name on them. Bad results are the most useful bug reports: open a **Brief result** issue with the brief, the app and model, and the `REPORT.md`. Code changes are welcome too; see [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.md](SECURITY.md). Releases are listed in [CHANGELOG.md](CHANGELOG.md).
+
+## Star history
+
+<a href="https://star-history.com/#qualixar/brief2mp4&Date"><img alt="Star history chart for qualixar/brief2mp4" src="https://api.star-history.com/svg?repos=qualixar/brief2mp4&type=Date" width="600"></a>
 
 ## Licence
 
