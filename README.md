@@ -129,6 +129,23 @@ Examples 05 (a 20 s explainer) and 06 (a 15 s vertical Short), each made by runn
 
 Every format has a beat sheet, a route and its own checks in [references/formats.md](plugin/skills/brief2mp4/references/formats.md), which the agent reads when your brief names the kind of video.
 
+### Art forms: ask for a look by name
+
+<p align="center">
+  <img src="assets/art-forms.jpg" alt="A contact sheet of 31 small animation looks: stop-motion blocks, a paper cut-out landscape, felt shapes, origami, shadow puppets on a lamp-lit screen, collage, risograph print, a flat explainer, whiteboard, chalkboard, watercolour, ink wash, line art, rotoscope, a motion comic panel, mid-century cartoon, rubber-hose cartoon, linocut, isometric blocks, pixel art, a blueprint, a neon sign, kinetic type, a bar chart, a lyric video, VHS damage, a clay figure, a cel-shaded shape, a low-poly hill, a voxel tree and a product render." width="100%">
+</p>
+
+Say "claymation", "paper cut-out", "anime", "like a blueprint" or "shadow puppets" and the skill has a recipe for it. [references/art-forms.md](plugin/skills/brief2mp4/references/art-forms.md) indexes 30 art forms; each has a page with what makes it read as that form, its timing, how to build it in HyperFrames, canvas, SVG or Three.js, the assets and sound it needs, what makes it look wrong, and its sources. The picture above is one frame from each of the 31 demos in [`art-forms/looks.js`](plugin/skills/brief2mp4/art-forms/looks.js), drawn by the test that checks them.
+
+| Family | Art forms |
+|---|---|
+| Craft and handmade | claymation, stop-motion, paper cut-out, felt, origami, shadow puppetry, collage, risograph |
+| Drawn and painted | anime and cel shading, flat vector explainer, whiteboard and chalkboard, watercolour, ink wash, line art, rotoscope, motion comic, UPA mid-century, rubber-hose, linocut |
+| Geometry, pixels and 3D | isometric, low-poly, voxel, pixel art, 3D product render |
+| Type, data and retro | kinetic typography, infographic, lyric video, VHS and glitch, blueprint, neon sign |
+
+Three rules carry all of them: the picture is a function of time, handmade looks hold their drawings at 8 to 12 changes a second while the video stays at 24 or 30, and every wobble, flicker and misregistration is seeded by the drawing number, so two renders of the same frame match. `python3 plugin/skills/brief2mp4/scripts/art_route.py BRIEF.md` proposes a form from a brief and says why. The demos are browser pictures checked for determinism; they are starting points for a scene, not finished films.
+
 **Proof the skill works:** example brief 01, pasted as written, came back as a 12.000 s, 1920x1080, 30 fps file that passed the delivery check. Its [report](examples/01-kinetic-type/SAMPLE-REPORT.md) lists every requirement with its evidence: which still shows which line, the measured headline height (126 px against a 120 px minimum), the text bounds and the loudness at each sound accent.
 
 ## How it works
