@@ -2,7 +2,8 @@
 // tests/art_forms/check_looks.mjs: prove every art-form look in looks.js draws, moves and repeats exactly.
 //   node tests/art_forms/check_looks.mjs                 check all, print PASS or FAIL per look
 //   node tests/art_forms/check_looks.mjs --sheet out.jpg  also write a contact sheet (one frame per look)
-//   node tests/art_forms/check_looks.mjs riso felt        only these
+//   node tests/art_forms/check_looks.mjs --frames dir      also write one PNG per look
+//   node tests/art_forms/check_looks.mjs risograph felt   only these
 // For each look, in headless Chrome: draw t = 0.4, 1.5 and 2.3 s; the three pictures must differ (it animates) and
 // must not be blank; then draw 1.5 s again, which must match the first 1.5 s pixel for pixel (it is a pure function
 // of time and keeps no state). One browser, one look at a time. Needs Chrome and, for the five 3D looks, the network
@@ -19,7 +20,9 @@ const DIR = path.resolve(HERE, '..', '..', 'plugin', 'skills', 'brief2mp4', 'art
 const DEPS = process.env.BRIEF2MP4_DEPS || path.join(os.homedir(), '.cache', 'brief2mp4', 'deps');
 const PW = '1.65.1';
 const args = process.argv.slice(2), si = args.indexOf('--sheet'), sheet = si >= 0 ? args[si + 1] : null;
-const only = args.filter((a, i) => !a.startsWith('--') && i !== si + 1);
+const fi = args.indexOf('--frames'), framesDir = fi >= 0 ? args[fi + 1] : null;   // --frames <dir>: one PNG per look, at 2.2 s
+const only = args.filter((a, i) => !a.startsWith('--') && !(si >= 0 && i === si + 1) && !(fi >= 0 && i === fi + 1));
+if (framesDir) fs.mkdirSync(framesDir, { recursive: true });
 
 async function playwright() {
   const entry = path.join(DEPS, 'node_modules', 'playwright-core', 'index.mjs');
@@ -70,7 +73,7 @@ for (const id of ids) {
     const moves = new Set([a.hash, b.hash, c.hash]).size === 3, repeats = b.hash === b2.hash, painted = Math.max(a.painted, b.painted, c.painted) > 0.005;
     ok = moves && repeats && painted && errors.length === 0;
     detail = `moves=${moves}, same t twice matches=${repeats}, painted ${(Math.max(a.painted, b.painted, c.painted) * 100).toFixed(0)}%${errors.length ? `, errors: ${errors[0].slice(0, 140)}` : ''}`;
-    if (sheet) { await page.evaluate((x) => window.__draw(x.t), { t: 2.2 }); thumbs.push({ id, png: (await page.locator(`#c-${id}`).screenshot()).toString('base64') }); }
+    if (sheet || framesDir) { await page.evaluate((x) => window.__draw(x.t), { t: 2.2 }); const png = await page.locator(`#c-${id}`).screenshot(); if (sheet) thumbs.push({ id, png: png.toString('base64') }); if (framesDir) fs.writeFileSync(path.join(framesDir, `${id}.png`), png); }
   } catch (e) { detail = String(e.message || e).split('\n')[0]; }
   results.push({ id, ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${id}  (${detail})`);
   await page.close();
