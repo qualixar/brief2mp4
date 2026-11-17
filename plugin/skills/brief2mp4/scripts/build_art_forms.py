@@ -17,8 +17,8 @@ from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
 REF = SKILL / 'references'
-DATA = json.loads((REF / 'art-forms.json').read_text())
-LOOKS_JS = (SKILL / 'art-forms' / 'looks.js').read_text()
+DATA = json.loads((REF / 'art-forms.json').read_text(encoding='utf-8'))
+LOOKS_JS = (SKILL / 'art-forms' / 'looks.js').read_text(encoding='utf-8').replace('\r\n', '\n')
 
 
 def look_source(look_id):
@@ -110,14 +110,14 @@ def main():
     check = '--check' in sys.argv
     stale = 0
     for path, text in files.items():
-        if path.exists() and path.read_text() == text:
+        if path.exists() and path.read_text(encoding='utf-8').replace('\r\n', '\n') == text:   # a Windows checkout may hold CRLF
             continue
         if check:
             print('out of date: %s' % path.relative_to(SKILL))
             stale += 1
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(text)
+            path.write_text(text, encoding='utf-8', newline='\n')
     if check:
         print('art forms: %d generated files are current' % len(files) if not stale else '%d generated file(s) out of date: run python3 scripts/build_art_forms.py' % stale)
         sys.exit(1 if stale else 0)

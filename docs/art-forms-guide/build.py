@@ -15,7 +15,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 SKILL = REPO / 'plugin' / 'skills' / 'brief2mp4'
-DATA = json.loads((SKILL / 'references' / 'art-forms.json').read_text())
+DATA = json.loads((SKILL / 'references' / 'art-forms.json').read_text(encoding='utf-8'))
 FORMS = DATA['forms']
 E = html.escape
 
@@ -202,10 +202,10 @@ doc = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>brief
 <meta name="author" content="Varun Pratap Bhardwaj"><meta name="description" content="%d art forms for animated video, with the rules, timing and build recipe for each.">
 <meta name="keywords" content="animation styles, claymation, paper cut-out, cel shading, stop motion, HyperFrames, three.js, Claude Code skill">
 <link rel="stylesheet" href="guide.css"></head><body>%s</body></html>''' % (len(FORMS), ''.join(parts))
-(HERE / 'brief2mp4-art-forms.html').write_text(doc)
+(HERE / 'brief2mp4-art-forms.html').write_text(doc, encoding='utf-8')
 text = re.sub(r'<pre>.*?</pre>', ' ', doc, flags=re.S)
 text = re.sub(r'<p class="src">.*?</p>', ' ', text, flags=re.S)
 text = re.sub(r'</(p|h1|h2|h3|li|td|th|figcaption|div|a|section)>', '\n', text)
 text = html.unescape(re.sub(r'<[^>]+>', '', text))
-(HERE / 'guide-prose.txt').write_text('\n'.join(line.strip() for line in text.splitlines() if line.strip()) + '\n')
+(HERE / 'guide-prose.txt').write_text('\n'.join(line.strip(, encoding='utf-8') for line in text.splitlines() if line.strip()) + '\n')
 print('%d sections, %d words of prose' % (len(SECTIONS) + 2, len(text.split())))

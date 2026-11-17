@@ -41,7 +41,7 @@ SUBJECTS = [
 
 
 def load():
-    return json.loads((REF / 'art-forms.json').read_text())
+    return json.loads((REF / 'art-forms.json').read_text(encoding='utf-8'))
 
 
 def route(brief, data=None):
@@ -103,12 +103,15 @@ def report(r):
 
 
 def main(argv):
+    for stream in (sys.stdout, sys.stdin):          # Windows consoles default to a legacy code page
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
     args = [a for a in argv if not a.startswith('--')]
     if '--help' in argv or '-h' in argv or not args:
         print('usage: python3 art_route.py <BRIEF.md | -> [--json]\n  Proposes an art form for a video brief, with reasons. "-" reads the brief from standard input.')
         return 0 if ('--help' in argv or '-h' in argv) else 2
     try:
-        brief = sys.stdin.read() if args[0] == '-' else Path(args[0]).read_text()
+        brief = sys.stdin.read() if args[0] == '-' else Path(args[0]).read_text(encoding='utf-8')
     except OSError as e:
         print('art_route.py: cannot read %s: %s' % (args[0], e), file=sys.stderr)
         return 2

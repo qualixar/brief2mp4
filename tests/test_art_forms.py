@@ -13,8 +13,8 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 SKILL = REPO / "plugin" / "skills" / "brief2mp4"
 REF = SKILL / "references"
-DATA = json.loads((REF / "art-forms.json").read_text())
-LOOKS_JS = (SKILL / "art-forms" / "looks.js").read_text()
+DATA = json.loads((REF / "art-forms.json").read_text(encoding='utf-8'))
+LOOKS_JS = (SKILL / "art-forms" / "looks.js").read_text(encoding="utf-8").replace("\r\n", "\n")
 sys.path.insert(0, str(SKILL / "scripts"))
 import art_route  # noqa: E402
 
@@ -64,12 +64,12 @@ def test_stepped_looks_quantise_time():
 
 
 def test_generated_pages_are_current():
-    out = subprocess.run([sys.executable, str(SKILL / "scripts" / "build_art_forms.py"), "--check"], capture_output=True, text=True)
+    out = subprocess.run([sys.executable, str(SKILL / "scripts" / "build_art_forms.py"), "--check"], capture_output=True, text=True, encoding="utf-8")
     assert out.returncode == 0, out.stdout
     for form in DATA["forms"]:
-        page = (REF / "art-forms" / f"{form['id']}.md").read_text()
+        page = (REF / "art-forms" / f"{form['id']}.md").read_text(encoding='utf-8')
         assert "## Tested demo" in page and "```js" in page and "## Sources" in page
-    index = (REF / "art-forms.md").read_text()
+    index = (REF / "art-forms.md").read_text(encoding='utf-8')
     assert all(f"art-forms/{f['id']}.md" in index for f in DATA["forms"])
 
 
@@ -103,14 +103,14 @@ def test_router_says_so_when_nothing_fits():
 def test_router_command_line(tmp_path):
     script = str(SKILL / "scripts" / "art_route.py")
     brief = tmp_path / "BRIEF.md"
-    brief.write_text("A voxel style trailer for our game")
-    out = subprocess.run([sys.executable, script, str(brief), "--json"], capture_output=True, text=True)
+    brief.write_text("A voxel style trailer for our game", encoding='utf-8')
+    out = subprocess.run([sys.executable, script, str(brief), "--json"], capture_output=True, text=True, encoding="utf-8")
     assert out.returncode == 0 and json.loads(out.stdout)["form"] == "voxel"
-    piped = subprocess.run([sys.executable, script, "-"], input="neon sign that says OPEN", capture_output=True, text=True)
+    piped = subprocess.run([sys.executable, script, "-"], input="neon sign that says OPEN", capture_output=True, text=True, encoding="utf-8")
     assert piped.returncode == 0 and piped.stdout.startswith("Art form: Neon sign")
-    empty = subprocess.run([sys.executable, script, "-"], input="  ", capture_output=True, text=True)
+    empty = subprocess.run([sys.executable, script, "-"], input="  ", capture_output=True, text=True, encoding="utf-8")
     assert empty.returncode == 2
-    assert subprocess.run([sys.executable, script, "--help"], capture_output=True, text=True).returncode == 0
+    assert subprocess.run([sys.executable, script, "--help"], capture_output=True, text=True, encoding="utf-8").returncode == 0
 
 
 @pytest.mark.slow
