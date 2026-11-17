@@ -1,0 +1,62 @@
+/* brief2motion guide: print stylesheet for WeasyPrint. A4, the brief2mp4 family look. */
+@font-face { font-family: Inter; src: url('fonts/inter-400.woff2'); font-weight: 400; }
+@font-face { font-family: Inter; src: url('fonts/inter-700.woff2'); font-weight: 700; }
+@font-face { font-family: Space; src: url('fonts/space-grotesk-700.woff2'); font-weight: 700; }
+@font-face { font-family: Mono; src: url('fonts/DejaVuSansMono.ttf'); }
+@page { size: A4; margin: 16mm 16mm 18mm; background: #F2EDE4;
+  @bottom-left { content: 'QUALIXAR   /   BRIEF2MP4   /   THE ART FORMS GUIDE'; font: 7pt Inter; color: #756F65; letter-spacing: .4pt; }
+  @bottom-right { content: counter(page); font: 700 9pt Inter; color: #16130F; } }
+@page :first { background: #16130F; @bottom-left { content: none; } @bottom-right { content: none; } }
+* { box-sizing: border-box; }
+body { margin: 0; color: #16130F; font: 400 9.8pt/1.5 Inter, sans-serif; }
+a { color: inherit; text-decoration: none; }
+p { margin: 0 0 2.8mm; orphans: 3; widows: 3; }
+h1 { font: 700 25pt/1.06 Space, Inter, sans-serif; letter-spacing: -.7pt; margin: 3mm 0 4mm; max-width: 165mm; bookmark-level: 1; }
+h2 { font: 700 13.5pt/1.2 Space, Inter, sans-serif; margin: 5.5mm 0 2.2mm; break-after: avoid; bookmark-level: 2; }
+h3 { font: 700 10pt/1.3 Inter, sans-serif; margin: 3.5mm 0 1.2mm; break-after: avoid; bookmark-level: none; }
+b, strong { font-weight: 700; }
+section { break-before: page; }
+section.cover { break-before: auto; color: #F2EDE4; height: 262mm; position: relative; }
+.eyebrow { font: 700 7pt Inter; letter-spacing: 1.3pt; text-transform: uppercase; color: #FF5A1F; border-top: 1pt solid #16130F; padding-top: 2.2mm; margin-bottom: 1mm; }
+.eyebrow span { float: right; color: #756F65; letter-spacing: .5pt; }
+.cover .eyebrow { border-color: #F2EDE4; } .cover .eyebrow span { color: #C9C1B5; }
+.cover h1 { font-size: 60pt; letter-spacing: -2.2pt; margin-top: 16mm; color: #F2EDE4; }
+.cover h1 i { font-style: normal; color: #FF5A1F; }
+.cover .deck { font: 700 23pt/1.14 Space; max-width: 150mm; margin-top: 4mm; }
+.cover .strap { font-size: 11pt; color: #C9C1B5; max-width: 150mm; margin-top: 6mm; }
+.cover img.mark { width: 46mm; margin-top: 16mm; }
+.cover .by { position: absolute; bottom: 0; left: 0; right: 0; font-size: 8.5pt; color: #C9C1B5; border-top: .5pt solid #5c564c; padding-top: 3mm; }
+.lead { font-size: 11.5pt; line-height: 1.45; max-width: 160mm; margin-bottom: 4mm; }
+pre { font: 7.6pt/1.5 Mono, monospace; white-space: pre-wrap; overflow-wrap: anywhere; background: #16130F; color: #F2EDE4; padding: 3.5mm; border-radius: 1.6mm; margin: 2.5mm 0 3.5mm; break-inside: avoid; }
+code { font: 8.3pt Mono, monospace; color: #385E8A; overflow-wrap: anywhere; }
+pre code { color: inherit; font-size: inherit; }
+table { border-collapse: collapse; width: 100%; font-size: 8.6pt; line-height: 1.38; margin: 2.5mm 0 4mm; }
+thead { display: table-header-group; }
+th { text-align: left; color: #756F65; font-size: 7.3pt; text-transform: uppercase; letter-spacing: .3pt; border-bottom: 1.2pt solid #16130F; padding: 1.8mm 2mm 1.8mm 0; }
+td { vertical-align: top; border-bottom: .5pt solid #C9C1B5; padding: 2mm 2.5mm 2mm 0; }
+tr { break-inside: avoid; }
+ul, ol { padding-left: 4.5mm; margin: 1.5mm 0 3.5mm; }
+li { margin-bottom: 1.3mm; padding-left: .8mm; }
+figure { margin: 3mm 0 4mm; break-inside: avoid; }
+figure img { width: 100%; display: block; border: .5pt solid #C9C1B5; }
+figcaption { font-size: 7.8pt; line-height: 1.4; color: #756F65; margin-top: 1.6mm; }
+.two { display: flex; gap: 5mm; } .two > * { flex: 1; min-width: 0; }
+.three { display: flex; gap: 4mm; } .three > * { flex: 1; min-width: 0; }
+aside { border-left: 2.5pt solid #FF5A1F; background: #E9E2D6; padding: 3mm 4mm; margin: 3.5mm 0; break-inside: avoid; }
+aside b { font-size: 8.8pt; } aside p { margin: 1.4mm 0 0; font-size: 9.2pt; }
+.toc a { display: block; border-bottom: .5pt solid #C9C1B5; padding: 1.9mm 0; font-size: 10pt; }
+.toc a::after { content: target-counter(attr(href), page); float: right; font: 700 10.5pt Space; color: #FF5A1F; }
+.style { break-inside: avoid; border-top: 1pt solid #16130F; padding-top: 2.2mm; margin-bottom: 3.5mm; }
+.style h2 { margin-top: 0; }
+.style .fam { font: 700 7pt Inter; letter-spacing: 1pt; text-transform: uppercase; color: #756F65; }
+.style img { width: 100%; border: .5pt solid #C9C1B5; border-radius: 1.2mm; }
+.style .cols { display: flex; gap: 5mm; margin-top: 2mm; } .style .cols > div { flex: 1; min-width: 0; font-size: 8.4pt; line-height: 1.38; }
+.style .cols > div.pic { flex: 1.15; }
+.style h3 { font-size: 7.6pt; text-transform: uppercase; letter-spacing: .4pt; color: #756F65; margin: 2mm 0 .8mm; }
+.style ul { margin: 0 0 1.5mm; padding-left: 3.6mm; } .style li { margin-bottom: .6mm; }
+.style p { margin-bottom: 1.2mm; }
+.metric { font: 700 26pt/1.05 Space; color: #FF5A1F; }
+.metrics { display: flex; gap: 5mm; border-top: 1pt solid #C9C1B5; padding-top: 3.5mm; margin: 4mm 0; }
+.metrics > div { flex: 1; } .metrics p { font-size: 8.3pt; margin-top: 1.5mm; }
+.small { font-size: 8.6pt; } .muted { color: #756F65; }
+.src { font-size: 7.4pt; color: #756F65; overflow-wrap: anywhere; }

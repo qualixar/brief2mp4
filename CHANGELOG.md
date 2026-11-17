@@ -2,6 +2,23 @@
 
 All notable changes to brief2mp4. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-11-18
+
+### Added
+- **Art forms.** Thirty looks for animated video, each with its own reference page: what makes it read as that form, its timing, how to build it in HyperFrames, canvas, SVG or Three.js, the assets it needs, the sound that fits, what makes it look wrong, and sources. Craft and handmade (claymation, stop-motion, paper cut-out, felt, origami, shadow puppetry, collage, risograph), drawn and painted (anime and cel shading, flat explainer, whiteboard and chalkboard, watercolour, ink wash, line art, rotoscope, motion comic, UPA mid-century, rubber-hose, linocut), geometry and 3D (isometric, low-poly, voxel, pixel art, product render), type, data and retro (kinetic typography, infographic, lyric video, VHS and glitch, blueprint, neon sign).
+- `art-forms/looks.js`: 31 small demos, one per look, each a pure function of time, with `art-forms/gallery.html` to view them.
+- `scripts/art_route.py`: proposes an art form from a brief and says why, or says that none fits.
+- `scripts/build_art_forms.py`: generates the index and the 30 pages from `references/art-forms.json` and the demo code, so they cannot drift apart.
+- Tests: `tests/test_art_forms.py` (data, generated pages, router, and a ban on clocks and unseeded randomness in the demos) and `tests/art_forms/check_looks.mjs`, which draws every look in headless Chrome and checks that it paints, changes over time and gives identical pixels when the same time is drawn twice.
+
+- `docs/art-forms-guide/`: a 35-page companion guide as a PDF, with its editable HTML, CSS and Python source.
+
+### Changed
+- **brief2motion comes with brief2mp4.** The plugin now lists brief2motion 1.0.0 as a dependency, so installing or updating brief2mp4 in Claude Code installs brief2motion too: briefs for websites and briefs for videos, one install. The marketplace entry for brief2motion moves to 1.0.0.
+
+### Notes
+- Tested on macOS with Chrome 157. The demos are checked as browser pictures; no art-form video was rendered through HyperFrames for this change.
+
 ## [0.3.0] - 2026-11-15
 
 ### Added

@@ -4,7 +4,7 @@
 
 <h1 align="center">brief2mp4</h1>
 
-<p align="center"><b>Text to motion graphics for Claude Code and Codex. Write a video brief, get a finished MP4 that has been checked against every line of it.</b><br>2D explainers · maths animations · tutorials · Shorts and Reels · data stories · product launches · logo stings · kinetic type · 3D products</p>
+<p align="center"><b>Text to motion graphics for Claude Code and Codex. Write a video brief, get a finished MP4 that has been checked against every line of it.</b><br>2D explainers · maths animations · tutorials · Shorts and Reels · data stories · product launches · logo stings · kinetic type · 3D products · 30 art forms from claymation and paper cut-out to anime and pixel art</p>
 
 <p align="center">
   <a href="https://github.com/qualixar/brief2mp4/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/qualixar/brief2mp4?style=flat&color=FF5A1F"></a>
@@ -22,6 +22,8 @@
   <a href="#how-it-works">How it works</a> ·
   <a href="#the-3d-pack">3D pack</a> ·
   <a href="#the-edit-pack">Edit pack</a> ·
+  <a href="#art-forms-ask-for-a-look-by-name">Art forms</a> ·
+  <a href="#brief2motion-websites-that-move-installed-with-brief2mp4">brief2motion</a> ·
   <a href="#examples">Examples</a> ·
   <a href="#write-a-brief">Write a brief</a> ·
   <a href="docs/README.md">Docs</a> ·
@@ -49,10 +51,12 @@ brief2mp4 is a free, MIT-licensed agent skill. You paste a written brief (length
 </p>
 
 <p align="center">
-  <b><a href="https://youtu.be/l9mEZQon6JM">▶ Watch the video</a></b> &nbsp;·&nbsp; <b><a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 69-page guide</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/research/blog/brief2mp4-deep-dive">How it was built</a></b>
+  <b><a href="https://youtu.be/l9mEZQon6JM">▶ Watch the video</a></b> &nbsp;·&nbsp; <b><a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 104-page guide</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/research/blog/brief2mp4-deep-dive">How it was built</a></b>
 </p>
 
 <p align="center">⭐ <b>Free and MIT. If brief2mp4 makes a video you keep, <a href="https://github.com/qualixar/brief2mp4">star the repo</a>.</b> It is the only signal I get that it worked for you, and it is how other Claude Code and Codex users find it. Made something? Post it in <a href="https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell">Show and tell</a>.</p>
+
+<p align="center"><b>New in 0.4.0:</b> 30 animation art forms (claymation, paper cut-out, anime, watercolour, pixel art and more), and <a href="#brief2motion-websites-that-move-installed-with-brief2mp4"><b>brief2motion now installs with brief2mp4</b></a>: one install, briefs for videos and briefs for websites.</p>
 
 ## Quick start
 
@@ -128,6 +132,23 @@ Round 4 of the video: Fable 5.2 in Claude Code got a written brief for a 60-seco
 Examples 05 (a 20 s explainer) and 06 (a 15 s vertical Short), each made by running the skill on the brief as written: both passed `check_delivery.sh`, and their [sample](examples/05-2d-explainer/SAMPLE-REPORT.md) [reports](examples/06-vertical-short/SAMPLE-REPORT.md) list the evidence for every line, including the fixes the self-check forced.
 
 Every format has a beat sheet, a route and its own checks in [references/formats.md](plugin/skills/brief2mp4/references/formats.md), which the agent reads when your brief names the kind of video.
+
+### Art forms: ask for a look by name
+
+<p align="center">
+  <img src="assets/art-forms.jpg" alt="A contact sheet of 31 small animation looks: stop-motion blocks, a paper cut-out landscape, felt shapes, origami, shadow puppets on a lamp-lit screen, collage, risograph print, a flat explainer, whiteboard, chalkboard, watercolour, ink wash, line art, rotoscope, a motion comic panel, mid-century cartoon, rubber-hose cartoon, linocut, isometric blocks, pixel art, a blueprint, a neon sign, kinetic type, a bar chart, a lyric video, VHS damage, a clay figure, a cel-shaded shape, a low-poly hill, a voxel tree and a product render." width="100%">
+</p>
+
+Say "claymation", "paper cut-out", "anime", "like a blueprint" or "shadow puppets" and the skill has a recipe for it. [references/art-forms.md](plugin/skills/brief2mp4/references/art-forms.md) indexes 30 art forms; each has a page with what makes it read as that form, its timing, how to build it in HyperFrames, canvas, SVG or Three.js, the assets and sound it needs, what makes it look wrong, and its sources. The picture above is one frame from each of the 31 demos in [`art-forms/looks.js`](plugin/skills/brief2mp4/art-forms/looks.js), drawn by the test that checks them.
+
+| Family | Art forms |
+|---|---|
+| Craft and handmade | claymation, stop-motion, paper cut-out, felt, origami, shadow puppetry, collage, risograph |
+| Drawn and painted | anime and cel shading, flat vector explainer, whiteboard and chalkboard, watercolour, ink wash, line art, rotoscope, motion comic, UPA mid-century, rubber-hose, linocut |
+| Geometry, pixels and 3D | isometric, low-poly, voxel, pixel art, 3D product render |
+| Type, data and retro | kinetic typography, infographic, lyric video, VHS and glitch, blueprint, neon sign |
+
+Three rules carry all of them: the picture is a function of time, handmade looks hold their drawings at 8 to 12 changes a second while the video stays at 24 or 30, and every wobble, flicker and misregistration is seeded by the drawing number, so two renders of the same frame match. `python3 plugin/skills/brief2mp4/scripts/art_route.py BRIEF.md` proposes a form from a brief and says why. The demos are browser pictures checked for determinism; they are starting points for a scene, not finished films. The [art forms guide](docs/art-forms-guide/brief2mp4-art-forms.pdf) (PDF, 35 pages) covers every form with a picture, and its HTML, CSS and Python source is in the same folder.
 
 **Proof the skill works:** example brief 01, pasted as written, came back as a 12.000 s, 1920x1080, 30 fps file that passed the delivery check. Its [report](examples/01-kinetic-type/SAMPLE-REPORT.md) lists every requirement with its evidence: which still shows which line, the measured headline height (126 px against a 120 px minimum), the text bounds and the loudness at each sound accent.
 
@@ -294,23 +315,26 @@ examples/                          seven briefs; 01, 05, 06 and 07 with sample r
 tests/                             fast checks and render tests (bash tests/run_tests.sh [--slow])
 ```
 
-## Sibling skill: brief2motion
+## brief2motion: websites that move, installed with brief2mp4
 
-Want the motion live on a website instead of in a video file? [brief2motion](https://github.com/qualixar/brief2motion) turns a plain brief into a web page that moves: dust that forms your face, product or logo, a paper plane across the page, scenes that play as you scroll. It installs from this same marketplace:
+brief2mp4 makes the video. Its sister skill [brief2motion](https://github.com/qualixar/brief2motion) makes the website: write a plain brief and get a site with professional motion, checked in a real browser before you see it. It routes the brief to the right stack (GSAP scroll stories, three.js 3D product pages, Motion kinetic type, View Transitions, SVG and D3 data stories, Lottie, particles that form your product or face) and to one of 32 visual styles, from neubrutalism and glassmorphism to Swiss and Y2K.
+
+https://github.com/user-attachments/assets/8b780cc9-e70f-4c7c-b3ac-7fdb56ede3ff
+
+**You already have it.** From 0.4.0, brief2mp4 lists brief2motion as a plugin dependency, so Claude Code installs both:
 
 ```
-/plugin install brief2motion@brief2mp4
+/plugin marketplace add qualixar/brief2mp4
+/plugin install brief2mp4@brief2mp4
 ```
 
-brief2motion can hand its page back to brief2mp4 when you want a video of it too.
+Already on an older brief2mp4? Run `claude plugin update brief2mp4@brief2mp4` in a terminal, then `/reload-plugins` in Claude Code, and brief2motion is added. In Codex, add it on its own: `codex plugin marketplace add qualixar/brief2motion`, then `codex plugin add brief2motion@brief2motion`.
+
+Then ask in your own words: *"Build a launch page for our table radio: a 3D model that turns as I scroll, opens to show the parts, then lets me pick a colour."* Nine example sites, the stack references and a [free 53-page guide](https://qualixar.com/learn/guides/brief2motion-guide) are in the [brief2motion repo](https://github.com/qualixar/brief2motion). The two skills hand work to each other: brief2motion can film its page and pass it to brief2mp4 to finish as an MP4.
 
 ## Contributing
 
 Made something with it? Post the brief and the video in [Show and tell](https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell); the best ones go into the examples table with your name on them. Bad results are the most useful bug reports: open a **Brief result** issue with the brief, the app and model, and the `REPORT.md`. Code changes are welcome too; see [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.md](SECURITY.md). Releases are listed in [CHANGELOG.md](CHANGELOG.md).
-
-## Star history
-
-<a href="https://star-history.com/#qualixar/brief2mp4&Date"><img alt="Star history chart for qualixar/brief2mp4" src="https://api.star-history.com/svg?repos=qualixar/brief2mp4&type=Date" width="600"></a>
 
 ## Licence
 
