@@ -88,6 +88,9 @@
     character: speedLines,
   };
 
-  Object.assign(B, { SKINS, GRAIN });
+  // The scene stage asks a skin for its sky and its foreground (panel border, caption box) when it has them.
+  SKINS['paper-cutout'].sky = (c) => [{ d: c.rect, fill: c.color('sky'), stroke: null }];
+
+  Object.assign(B, { SKINS, GRAIN, skinKit: { roleOf, lineOf } });
   if (typeof module !== 'undefined' && module.exports) module.exports = B;
 })(globalThis);
