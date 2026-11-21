@@ -111,19 +111,26 @@ def test_a_true_freeze_warns(clips):
     assert any(l.startswith("WARN  1 frozen stretch") and "1.00s for 3.0s" in l for l in lines(proc)), proc.stdout
 
 
-def test_a_slow_drift_is_not_a_freeze_but_identical_frames_are():
-    base = bytes(range(64)) * (seams.W * seams.H // 64)
-    # each frame is 0.2 brighter than the last on average: under the per-frame limit, but it drifts away
-    drifting = [bytes(min(255, v + i // 5) for v in base) for i in range(60)]
+def feed_all(frame_list):
     t = seams.FreezeTracker()
-    for i in range(1, len(drifting)):
-        t.feed(i, drifting[i - 1], drifting[i])
-    assert all(n < 12 for _, n in t.finish(len(drifting))), "a slow drift must not read as a long freeze"
-    same = [base] * 60
-    t = seams.FreezeTracker()
-    for i in range(1, len(same)):
-        t.feed(i, same[i - 1], same[i])
-    assert t.finish(len(same)) == [(0, 60)]
+    for i in range(1, len(frame_list)):
+        t.feed(i, frame_list[i - 1], frame_list[i])
+    return t.finish(len(frame_list))
+
+
+def test_a_slow_drift_is_not_a_freeze_but_identical_and_noisy_frames_are():
+    n = seams.W * seams.H
+    base = bytes((k * 7) % 200 for k in range(n))
+    # every frame, a different fifth of the pixels gets 1 brighter: each step is only 0.2 (below the per-frame limit)
+    # but the picture keeps moving away from where it started, like a very slow pan
+    drifting = [bytes(base[k] + ((i - k % 5) // 5 + 1 if i >= k % 5 else 0) for k in range(n)) for i in range(60)]
+    assert seams.mad(drifting[0], drifting[1]) == pytest.approx(0.2, abs=0.01)
+    assert all(length < 12 for _, length in feed_all(drifting)), "a slow drift must not read as a long freeze"
+    assert feed_all([base] * 60) == [(0, 60)]
+    # sensor-style noise: 10% of pixels flip by 1 and back, with no drift at all: still frozen
+    noisy = [bytes(base[k] + (1 if (k % 10 == 0 and i % 2) else 0) for k in range(n)) for i in range(60)]
+    assert seams.mad(noisy[0], noisy[1]) == pytest.approx(0.1, abs=0.01)
+    assert feed_all(noisy) == [(0, 60)]
 
 
 def test_ssim_is_one_for_equal_frames_and_low_for_different_ones():
