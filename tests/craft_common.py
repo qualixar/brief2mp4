@@ -132,7 +132,7 @@ def text_png(path: Path, lines: list[str], size=(1280, 720), scale=14, origin=(8
     return path
 
 
-def still_video(path: Path, png: Path, seconds: float = 2, fps: int = 5) -> Path:
-    """Loop one PNG into a short H.264 clip."""
-    ffmpeg("-loop", "1", "-framerate", str(fps), "-i", png, "-t", seconds, *X264, path)
+def still_video(path: Path, png: Path, seconds: float = 2, fps: int = 5, soften: int = 8) -> Path:
+    """Loop one PNG into a short H.264 clip. The blur rounds the blocky bitmap letters so OCR can read them."""
+    ffmpeg("-loop", "1", "-framerate", str(fps), "-i", png, "-t", seconds, "-vf", f"gblur=sigma={soften}", *X264, path)
     return path
