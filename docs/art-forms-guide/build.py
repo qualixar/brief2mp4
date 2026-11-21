@@ -17,7 +17,14 @@ REPO = HERE.parent.parent
 SKILL = REPO / 'plugin' / 'skills' / 'brief2mp4'
 DATA = json.loads((SKILL / 'references' / 'art-forms.json').read_text(encoding='utf-8'))
 FORMS = DATA['forms']
+DEMOS = sum(len(f['looks']) for f in FORMS)        # every count in the prose comes from the data, never from a literal
+DATES = sorted(f.get('checked', DATA['checked']) for f in FORMS)
 E = html.escape
+
+
+def long_date(iso):
+    y, m, d = iso.split('-')
+    return '%d %s %s' % (int(d), ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][int(m) - 1], y)
 
 
 def inline(t):
@@ -62,7 +69,7 @@ section('what', 'A look is a set of rules', 'Orientation', '<p class="lead">%s</
     'Ask for "claymation" or "a paper cut-out" and you are asking for a short list of things: how edges look, how light falls, how often the picture changes. '
     'This guide writes those lists down for %d art forms, and shows how to build each one in code that renders the same way every time.' % len(FORMS)) + p(
     'It is a companion to brief2mp4, the skill that turns a written brief into a finished, checked MP4. The skill builds video from web pages: HTML, CSS and GSAP in HyperFrames, '
-    'canvas, SVG and Three.js. Every art form here has a reference page in the skill and a small demo that is tested in a real browser.') + '<figure><img src="../../assets/art-forms.jpg" alt=""><figcaption>One frame from each of the 31 demos, drawn by the test that checks them.</figcaption></figure>' + table(
+    'canvas, SVG and Three.js. Every art form here has a reference page in the skill and a small demo that is tested in a real browser.') + '<figure><img src="img/_overview.jpg" alt=""><figcaption>One frame from each of the %d demos, drawn by the test that checks them.</figcaption></figure>' % DEMOS + table(
     ['Family', 'Art forms'], [[DATA['families'][k], ', '.join(f['name'] for f in FORMS if f['family'] == k)] for k in DATA['families']], ['24%', '76%']) + note(
     'What the demos are', 'Small pictures that prove a technique: a few seconds, 960 by 540, drawn on a canvas or with Three.js. They are starting points for a scene, not finished films. '
     'No art-form video was rendered through HyperFrames for this guide.'))
@@ -102,6 +109,10 @@ section('choose', 'Choosing a look from a brief', 'The method', '<p class="lead"
         ['nostalgia', 'VHS and glitch, pixel art, rubber-hose, UPA mid-century', 'each one is a decade'],
         ['calm, reflective', 'watercolour, ink wash, line art', 'slow, sparse, quiet'],
         ['loud, independent', 'risograph, collage, motion comic', 'print energy and hard cuts'],
+        ['a night-time, retro-tech or sci-fi mood', 'synthwave, cyberpunk, CRT terminal, hologram HUD', 'light and screens set the mood'],
+        ['maths, a lesson, a derivation', 'maths diagram, chalkboard, whiteboard', 'the working builds on screen, term by term'],
+        ['an Indian story, a festival, a regional tradition', 'Madhubani, Warli, Pattachitra, Gond, kathputli puppets', 'the form carries the tradition; credit it, and commission artists where you can'],
+        ['history, memory, a documentary', 'archive documentary, newsreel, silent film, film noir', 'the medium of the period is the look'],
     ], ['30%', '34%', '36%']) + code('''
 $ python3 plugin/skills/brief2mp4/scripts/art_route.py BRIEF.md
 Art form: Shadow puppetry (inferred)
@@ -134,7 +145,10 @@ def form_block(f):
 LEADS = {'craft': 'Looks that show the hand: real materials, held drawings, small errors.',
          'drawn': 'Looks made of line and paint, from cel animation to ink on paper.',
          'geometry': 'Looks built from blocks, facets and pixels, and the clean studio shot.',
-         'type': 'Looks where words, numbers or the recording medium are the picture.'}
+         'type': 'Looks where words, numbers or the recording medium are the picture.',
+         'folk': 'Looks from living traditions of Indian folk painting and of print. Working artists keep them alive; these pages are code studies of the visual rules, not the craft itself.',
+         'screen': 'Looks of screens and of cinema: neon, phosphor, tape, film and the camera that sees heat.',
+         'abstract': 'Looks made from numbers and motion: particles, fields, blobs and patterns that the code grows.'}
 for fam, title in DATA['families'].items():
     group = [f for f in FORMS if f['family'] == fam]
     for i in range(0, len(group), 2):           # two forms to a page
@@ -151,7 +165,9 @@ section('tools', 'Tools that exist, by name', 'Reference', table(['Where', 'What
     ['CSS', '`mix-blend-mode: screen`, `plus-lighter`', 'glow that adds up: neon, chroma bleed'],
     ['CSS', '`image-rendering: pixelated`', 'pixel art scaled with hard edges'],
     ['Canvas', '`globalCompositeOperation`', 'the same blends on a canvas, and `destination-out` to cut marks out of a shape'],
-    ['Canvas', '`fill("evenodd")`', 'holes that are part of a figure: shadow puppets'],
+    ['Canvas', '`fill("evenodd")`', 'holes that are part of a figure: shadow puppets, lace-cut paper'],
+    ['Canvas', '`getImageData`, `putImageData`', 'looks computed pixel by pixel: dither, thermal, metaballs'],
+    ['Canvas', '`filter: blur()`', 'soft sand and metal, tilt-shift bands, reflections'],
     ['GSAP', '`ease: "steps(n)"`', 'held drawings in a tween'],
     ['Three.js', '`MeshToonMaterial` with a `gradientMap`', 'light in hard bands: cel shading'],
     ['Three.js', 'a second mesh, larger, back faces only', 'an outline (the inverted hull); `OutlineEffect` packages it'],
@@ -175,7 +191,7 @@ for f in FORMS:
             seen.add(u)
             srcs.append(u)
 section('sources', 'Sources and what was verified', 'Reference', '<p class="lead">%s</p>' % inline('What this guide rests on, and where its limits are.') + '<h2>Verified by running it</h2>' + ul([
-    'All 31 demos pass the browser test: each paints, changes over time and repeats exactly.',
+    'All %d demos pass the browser test: each paints, changes over time and repeats exactly.' % DEMOS,
     'The source of the demos contains no clock, timer or unseeded random call; a test enforces it.',
     'The router and the generated reference pages have unit tests.',
 ]) + '<h2>Not verified</h2>' + ul([
@@ -185,12 +201,12 @@ section('sources', 'Sources and what was verified', 'Reference', '<p class="lead
     'Lines marked "practice note" in the reference pages (most sound and pacing advice, some visual rules) are working advice, not sourced facts.',
     'Entries with a sourcing note are thinner than the rest: ' + ', '.join(f['name'] for f in FORMS if f['thin']) + '.',
 ]) + '<h2>Published sources</h2><p class="src">' + '<br>'.join(E(u) for u in srcs) + '</p>' + p(
-    'The repositories studied for techniques, with their licences, are listed in the changelog entry and in the project notes. No code from another project is copied into brief2mp4 for this work. Facts were checked on 17 November 2026.'))
+    'The repositories studied for techniques, with their licences, are listed in the changelog entry and in the project notes. No code from another project is copied into brief2mp4 for this work. Facts were checked between %s and %s.' % (long_date(DATES[0]), long_date(DATES[-1]))))
 
 toc = ''.join('<a href="#%s">%s</a>' % (sid, E(t)) for sid, t, _, _, in_toc in SECTIONS if in_toc)
 cover = '''<section class="cover"><div class="eyebrow">Qualixar<span>Companion guide · November 2026</span></div>
 <h1>brief<i>2</i>mp4</h1><div class="deck">The art forms guide</div>
-<div class="strap">%d looks for animated video, and how to build each one in code that renders the same way twice.<br>Claymation · paper cut-out · shadow puppetry · anime · watercolour · ink · risograph · pixel art · voxel · VHS · neon</div>
+<div class="strap">%d looks for animated video, and how to build each one in code that renders the same way twice.<br>Claymation · oil painting · Madhubani · manga · paper cut-out · shadow puppetry · stained glass · synthwave · silent film · particles · VHS · neon</div>
 <img class="mark" src="../../plugin/assets/icon.png" alt="">
 <div class="by">Varun Pratap Bhardwaj · github.com/qualixar/brief2mp4 · MIT licence</div></section>''' % len(FORMS)
 parts = [cover, '<section id="contents"><div class="eyebrow">Contents<span>brief2mp4</span></div><h1>Contents</h1><div class="toc">%s</div>%s</section>' % (toc, note(
@@ -207,5 +223,5 @@ text = re.sub(r'<pre>.*?</pre>', ' ', doc, flags=re.S)
 text = re.sub(r'<p class="src">.*?</p>', ' ', text, flags=re.S)
 text = re.sub(r'</(p|h1|h2|h3|li|td|th|figcaption|div|a|section)>', '\n', text)
 text = html.unescape(re.sub(r'<[^>]+>', '', text))
-(HERE / 'guide-prose.txt').write_text('\n'.join(line.strip(, encoding='utf-8') for line in text.splitlines() if line.strip()) + '\n')
+(HERE / 'guide-prose.txt').write_text('\n'.join(line.strip() for line in text.splitlines() if line.strip()) + '\n', encoding='utf-8')
 print('%d sections, %d words of prose' % (len(SECTIONS) + 2, len(text.split())))
