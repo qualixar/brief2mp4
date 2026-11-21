@@ -546,24 +546,22 @@
    "id": "whiteboard",
    "name": "Whiteboard and doodle",
    "aliases": [
-    "video scribing",
-    "chalkboard"
+    "video scribing"
    ],
    "family": "drawn",
-   "what": "Marker lines that draw themselves on a white board, in the order someone would draw them. The chalkboard is the same recipe, inverted.",
+   "what": "Marker lines that draw themselves on a white board, in the order someone would draw them: simple diagrams and a few handwritten words, one accent colour.",
    "origin": "Also called video scribing. A 2016 study found little evidence that it teaches better than other formats, so use it for its tone, not as a learning trick.",
    "rules": [
     "Black marker lines with a slight wobble",
     "Strokes appear in drawing order",
     "One or two accent colours",
-    "Chalk variant: a dark board, dusty broken strokes, a little smudge"
+    "A few handwritten words in one marker face, never paragraphs"
    ],
    "timing": "Each element draws on over 0.3 to 1.5 seconds, paced to the narration. The line boils at about 10 changes a second.",
    "fps": 10,
    "build": [
     "Draw-on: a polyline drawn up to a fraction of its length (SVG: `stroke-dashoffset`)",
     "Boil: nudge every point by a seeded amount keyed to `frameOf(t, 10)`",
-    "Chalk: three thin passes of the same stroke with different dash patterns at half opacity, over a speckled board",
     "rough.js (MIT) generates sketchy shapes and hatching to animate afterwards"
    ],
    "assets": "All in code. A marker or chalk typeface if the system has one.",
@@ -581,18 +579,14 @@
     "scribe",
     "sketch",
     "hand-drawn",
-    "marker",
-    "chalkboard",
-    "chalk",
-    "blackboard"
+    "marker"
    ],
    "sources": [
     "https://en.wikipedia.org/wiki/Whiteboard_animation",
     "https://github.com/rough-stuff/rough"
    ],
    "looks": [
-    "whiteboard",
-    "chalkboard"
+    "whiteboard"
    ],
    "thin": ""
   },
@@ -737,10 +731,8 @@
    "keywords": [
     "line art",
     "line drawing",
-    "one line",
     "minimal line",
     "outline",
-    "continuous line",
     "pen drawing"
    ],
    "sources": [
@@ -1522,6 +1514,469 @@
     "neon-sign"
    ],
    "thin": ""
+  },
+  {
+   "id": "pencil-sketch",
+   "name": "Pencil sketch",
+   "aliases": [
+    "graphite drawing",
+    "pencil drawing"
+   ],
+   "family": "drawn",
+   "what": "Graphite lines on toothed paper: thin hatching that builds tone, a doubled and searching outline, and a thumb-smudged shadow. It looks drawn by hand because no two lines are quite the same.",
+   "origin": "Pencil marks are made by abrasion, a trail of graphite left on the paper. A large, very pure graphite deposit was found at Borrowdale in Cumbria, England, in 1565 (some sources say as early as 1500). Hatching, tone from closely spaced parallel lines, originated in the Middle Ages and developed into cross-hatching, notably in fifteenth-century prints.",
+   "rules": [
+    "Thin grey lines with a slight wobble, and an outline drawn twice, a little differently each time",
+    "Tone comes only from line density: one set of hatching for light, a second set across it for shadow",
+    "A faint construction shape under the outline, as a sketcher would lay in first",
+    "A smudge where a thumb rubbed the shadow",
+    "Paper grain that breaks every line into specks"
+   ],
+   "timing": "Lines appear in drawing order over about 3 seconds: construction line, outline, then each hatching layer, then the smudge. The picture steps about 8 times a second and each step re-seeds the wobble, like a stop-motion sketch.",
+   "fps": 8,
+   "build": [
+    "Outline twice: two polylines with different seeded nudges of 1 to 2 px, keyed to `frameOf(t, 8)`, at different opacity",
+    "Hatching: parallel lines clipped to the shape with `ctx.clip(path)`; later layers use an even-odd clip so that they land only on the shadow side",
+    "Reveal each line from a fraction `k` of its length so the hatching sweeps on in order",
+    "Smudge: a radial gradient squashed to an ellipse and drawn with `multiply`",
+    "Tooth: specks in the paper colour drawn over the lines (`tooth()` in `looks-painted.js`)"
+   ],
+   "assets": "All in code. A scanned sheet of cartridge paper makes a better ground if the user has one.",
+   "sound": "A pencil scratch under each hatching pass, quiet room tone. Practice note.",
+   "pitfalls": [
+    "Hard black vector lines with no wobble",
+    "Perfectly even hatching that never re-seeds, which looks ruled by a machine",
+    "Shadow as a smooth gradient instead of lines"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "pencil",
+    "graphite",
+    "pencil drawing",
+    "sketchbook",
+    "cross-hatch"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Pencil",
+    "https://en.wikipedia.org/wiki/Hatching"
+   ],
+   "looks": [
+    "pencil-sketch"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "charcoal",
+   "name": "Charcoal",
+   "aliases": [
+    "charcoal drawing",
+    "vine charcoal"
+   ],
+   "family": "drawn",
+   "what": "Soft black dust smeared and rubbed on rough paper: dark masses with crumbling edges, greys made by rubbing, and highlights lifted out with an eraser.",
+   "origin": "Charcoal was often a component of cave painting, with examples at least 28,000 years old. Artists use vine charcoal (wood burned in a kiln without air) or compressed charcoal held by a gum or wax binder; its marks are much less permanent than graphite, so lines are easily erased and blended.",
+   "rules": [
+    "Soft, uneven dark masses; never a clean line or a hard outline",
+    "Edges crumble into specks and the paper grain shows through the black",
+    "Greys come from rubbing, not from a colour",
+    "Highlights are pale marks lifted out of the dark with an eraser: a sun, a glint on a trunk",
+    "One warm paper grey and black, nothing else"
+   ],
+   "timing": "Marks are laid in order over about 3 seconds: broad rubbed sky first, then the dark mass, then the line work, then the lifted highlights. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "Dabs: many overlapping low-opacity circles along a line, each with a seeded size and offset (`dabs()` in `looks-painted.js`); large dabs use a radial gradient so they stay soft",
+    "Rubbed sky: long, uneven strokes of varying width at low opacity",
+    "Eraser: paint pale strokes and a soft disc in the paper colour over the dark",
+    "Finish with coarse specks in the paper colour (`tooth()` with scale 2) and a dark vignette"
+   ],
+   "assets": "All in code. A scan of grey sketching paper helps if the user has one.",
+   "sound": "Dry scratching and a soft smudging rub, room tone. Practice note.",
+   "pitfalls": [
+    "Smooth airbrushed gradients with no grain",
+    "Crisp vector outlines on the tree or the figure",
+    "Pure black on pure white: charcoal lives on a warm grey ground"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "charcoal",
+    "charcoal drawing",
+    "vine charcoal",
+    "smudge",
+    "smudged"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Charcoal_(art)"
+   ],
+   "looks": [
+    "charcoal"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "oil-painting",
+   "name": "Oil painting and impasto",
+   "aliases": [
+    "oil paint",
+    "impasto"
+   ],
+   "family": "drawn",
+   "what": "Thick oil paint laid in visible, directional brush strokes: colour mixed on the canvas, strokes that follow the shape of the thing, and raised light ridges where the paint is heaped up.",
+   "origin": "Oil painting binds pigment in a drying oil. The oldest known oil paintings are 7th-century Buddhist works in Afghanistan, and by the height of the Renaissance oil had almost replaced egg tempera for panel painting in most of Europe. Impasto is paint laid on thickly enough that brush or painting-knife strokes show.",
+   "rules": [
+    "Visible brush strokes that follow the form: curved round a sun, straight along water",
+    "Each stroke has a light ridge on one side and a darker edge on the other, so the paint looks thick",
+    "Rich, mixed colour with small variations from stroke to stroke",
+    "Thick light daubs (impasto) on the brightest spots",
+    "A first blocked-in wash under the strokes"
+   ],
+   "timing": "A first wash blocks the colour in, then strokes cover the canvas over about 3 seconds, the brightest daubs last. The picture steps about 12 times a second, like a timelapse of a painter.",
+   "fps": 12,
+   "build": [
+    "Draw each stroke as a short thick line with round caps, three times: a dark copy offset down and right, the colour, and a thin lighter copy offset up and left (`brush()` in `looks-painted.js`)",
+    "Choose each stroke's angle from a flow field: tangent to circles round a focus, level over water",
+    "Choose colour from position with a seeded jitter per stroke so no two match",
+    "Reveal each stroke from a seeded start time so the canvas fills at random places"
+   ],
+   "assets": "All in code. Three.js can use a normal map from the stroke ridges for a real impasto light, but the 2D version reads well.",
+   "sound": "Brush on canvas, a slow room tone, a calm piano or strings bed. Practice note.",
+   "pitfalls": [
+    "Strokes all the same angle, which reads as a filter",
+    "Smooth gradients inside the strokes",
+    "No ridge highlights, which makes the paint look flat and digital"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "oil paint",
+    "oil painting",
+    "impasto",
+    "brushstroke",
+    "painterly"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Oil_painting",
+    "https://en.wikipedia.org/wiki/Impasto"
+   ],
+   "looks": [
+    "oil-painting"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "gouache",
+   "name": "Gouache storybook",
+   "aliases": [
+    "gouache",
+    "picture book illustration",
+    "matte opaque paint"
+   ],
+   "family": "drawn",
+   "what": "Flat, matte, opaque layers of paint with hand-cut edges and faint brush streaks: the look of a printed picture book. Each colour is laid over the last, with no gradients and no transparency.",
+   "origin": "Gouache is an opaque water-medium paint of pigment, water and a binder such as gum arabic, with a high ratio of pigment to binder. It has been used for at least twelve centuries, dries to a matte finish, and is used by commercial artists for posters, illustrations and comics.",
+   "rules": [
+    "Flat, fully opaque shapes in a small palette",
+    "Matte finish: no gloss and no shading gradients",
+    "Hand-cut edges, slightly uneven, never a perfect curve",
+    "Faint horizontal brush streaks inside each shape",
+    "Back to front: sky, far hills, near hills, then the subject, then small bright details"
+   ],
+   "timing": "Layers go on one after another, each over about half a second: back to front over about 3 seconds, with small things such as stars and smoke last. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "One filled path per colour, built with `cut()` (corners nudged by a seed) or `blob()`",
+    "Clip to the path and draw 20 to 30 faint light and dark streaks across it (`flatShape()` in `looks-painted.js`)",
+    "Reveal each layer with a clip that grows: up from the bottom for ground, across for objects",
+    "Add paper tooth last at low strength",
+    "Glow from a window is two or three flat circles of falling opacity, not a gradient"
+   ],
+   "assets": "All in code. Real gouache scans make a stronger texture if the user owns them.",
+   "sound": "Soft acoustic guitar or a music box, a wooden or paper foley on each layer. A storybook narration suits it. Practice note.",
+   "pitfalls": [
+    "Gradients or soft shadows, which turn it into a digital illustration",
+    "Black outlines round every shape: gouache is edge to edge colour",
+    "Too many colours: a storybook palette is five or six"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "gouache",
+    "storybook",
+    "picture book",
+    "matte paint",
+    "opaque paint"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Gouache"
+   ],
+   "looks": [
+    "gouache"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "crayon",
+   "name": "Crayon and oil pastel",
+   "aliases": [
+    "wax crayon",
+    "oil pastel",
+    "crayon drawing"
+   ],
+   "family": "drawn",
+   "what": "Waxy, broken strokes of bright colour on toothed paper, scribbled in one slanted direction with fat outlines pushed past the edges. It looks like a child's drawing with real pressure in it.",
+   "origin": "A crayon is a stick of pigmented wax, in the modern English-speaking world mostly paraffin. In 1924 two Japanese teachers set out to make a high-viscosity crayon, the oil pastel, which binds pigment in wax and non-drying oil, so that children could draw freely in colour.",
+   "rules": [
+    "Scribbled fills in one slanted direction, each pass with its own pressure",
+    "Paper tooth shows through the wax as speckles of paper colour",
+    "Fat outlines in a darker shade of the fill, pushed a little past the edge",
+    "Bright, simple, saturated colour: red roof, blue door, green grass",
+    "Simple subjects drawn the way a child would: sun with rays, house, tree"
+   ],
+   "timing": "Each area is scribbled in over 0.3 to 0.9 seconds, sky and grass first, the subject after, small details last, about 4 seconds in all. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "Scribble: near-parallel passes inside a rotated box, each stroke its own opacity and width (`scribble()` in `looks-painted.js`), clipped to the shape",
+    "A second, lighter, dashed pass at another angle across the first",
+    "Outlines: a fat, darker stroke with a seeded wobble that is re-seeded on each step",
+    "Tooth: coarse specks in the paper colour drawn over everything (`tooth()` with scale 2)"
+   ],
+   "assets": "All in code. A scan of cream sugar paper helps if the user has one.",
+   "sound": "A waxy scratching sound under each scribble, a ukulele or xylophone bed. Practice note.",
+   "pitfalls": [
+    "Clean flat fills with no stroke direction",
+    "Thin precise outlines",
+    "Tooth specks so fine that they read as film noise"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "crayon",
+    "wax crayon",
+    "oil pastel",
+    "childlike drawing",
+    "scribbled"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Crayon",
+    "https://en.wikipedia.org/wiki/Oil_pastel"
+   ],
+   "looks": [
+    "crayon"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "chalkboard",
+   "name": "Chalkboard",
+   "aliases": [
+    "blackboard",
+    "chalk drawing",
+    "chalk art"
+   ],
+   "family": "drawn",
+   "what": "White and coloured chalk on a dark green-black board: dusty, broken lines that draw themselves, ghosts of old eraser swipes, and a stub of chalk at the tip of each line.",
+   "origin": "A blackboard or chalkboard is a reusable surface written on with chalk (calcium sulphate or calcium carbonate). Early boards were slate; later ones are often dark matte paint, black or dark green. The first attested use of chalk on a blackboard in the United States dates to 21 September 1801.",
+   "rules": [
+    "Dark green-black board with a soft lit patch and faint eraser swipes",
+    "Dusty, broken chalk lines: three thin passes and a soft halo, never a solid line",
+    "One or two chalk colours besides white",
+    "A wooden ledge with fallen dust under the board",
+    "Hand-lettered words, few and large"
+   ],
+   "timing": "Each line draws on over 0.3 to 0.8 seconds, in the order a teacher would draw it, about 4 seconds in all. The line boils at about 10 changes a second.",
+   "fps": 10,
+   "build": [
+    "Chalk: three passes of the same stroke with different dash patterns at half opacity plus a wide faint halo, each nudged by a seeded amount keyed to `frameOf(t, 10)` (`chalk()` in `looks-painted.js`)",
+    "A rounded stub drawn at the tip while the line is still drawing",
+    "Board: base colour, a radial light, grain, and a few big translucent ellipses for old swipes",
+    "Specks in the board colour drawn over the chalk eat holes in it"
+   ],
+   "assets": "All in code. A chalk typeface if the system has one; the demo falls back to a handwriting face.",
+   "sound": "Chalk squeak and tap under each line, voice-led. Practice note.",
+   "pitfalls": [
+    "A pure black board and perfect white vector lines",
+    "A hand that covers the drawing",
+    "Paragraphs of text"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "chalk",
+    "chalkboard",
+    "blackboard",
+    "chalk dust",
+    "chalk lettering"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Blackboard"
+   ],
+   "looks": [
+    "chalkboard"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "one-line",
+   "name": "One continuous line",
+   "aliases": [
+    "single line drawing",
+    "one line drawing",
+    "continuous line drawing"
+   ],
+   "family": "drawn",
+   "what": "A whole subject drawn by one unbroken line on a flat colour: the pen never lifts, crosses itself where it must, and the finished drawing is a single curve.",
+   "origin": "In a continuous-line drawing the artist looks at both the subject and the paper, moving the medium over the paper to create a silhouette of the object. It belongs to the contour-drawing family, and line art in general is made of distinct lines placed against a plain background.",
+   "rules": [
+    "One line, constant width, round ends, that never breaks",
+    "A flat single-colour ground and a single ink colour",
+    "The line crosses itself and doubles back rather than lifting",
+    "A pen dot at the tip while it draws",
+    "Plenty of empty space round the subject"
+   ],
+   "timing": "The line draws on at an even speed over about 3.5 seconds, eased at the start and the end, then the drawing holds. Full frame rate: a clean ink line should not step.",
+   "fps": null,
+   "build": [
+    "Build the path as a smooth spline through hand-placed points (`spline()` in `looks-painted.js`)",
+    "Resample it to points evenly spaced by length, so the pen moves at a steady speed",
+    "Draw it to a fraction `k` of its length with `strokePart()`; round caps and joins",
+    "Put a filled dot at the point where the line currently ends",
+    "SVG route: `stroke-dashoffset` on a single path"
+   ],
+   "assets": "All in code. Place the control points on a sketch of the subject first.",
+   "sound": "A pen on paper under the draw-on, then silence. A single sustained note or a gentle piano. Practice note.",
+   "pitfalls": [
+    "Lifting the pen: a second path makes it a normal line drawing",
+    "Jitter or boil, which fights the idea of one smooth line",
+    "Too much detail: the form must read from the outline alone"
+   ],
+   "route": "HyperFrames (SVG or canvas)",
+   "blender": "",
+   "keywords": [
+    "one line",
+    "single line",
+    "continuous line",
+    "unbroken line",
+    "without lifting the pen"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Contour_drawing",
+    "https://en.wikipedia.org/wiki/Line_art"
+   ],
+   "looks": [
+    "one-line"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "paint-on-glass",
+   "name": "Paint-on-glass",
+   "aliases": [
+    "paint on glass animation",
+    "oil on glass",
+    "glass painting animation"
+   ],
+   "family": "drawn",
+   "what": "Oil paint smeared on a lit sheet of glass: translucent colour that glows against the light, deeper where it is thick, finger streaks dragged behind, and shapes that melt from one thing into the next.",
+   "origin": "A technique for animated films made by manipulating slow-drying oil paints on sheets of glass; gouache mixed with glycerine is sometimes used instead. The best-known practitioner is the Russian animator Aleksandr Petrov, who has used it in seven films, all of which have won awards.",
+   "rules": [
+    "Translucent colour over a bright backlight: paint multiplies, so overlaps go darker",
+    "A thicker, darker rim round each daub",
+    "Finger streaks trailing behind moving shapes",
+    "Lines scratched through the paint that let the light through",
+    "One shape morphs into another instead of cutting"
+   ],
+   "timing": "One frame at a time, about 12 changes a second. The picture is smeared and re-pushed on each step, so streaks and edges move a little every frame.",
+   "fps": 12,
+   "build": [
+    "Draw the lamp as a radial gradient, then paint everything with `globalCompositeOperation = 'multiply'`",
+    "Each daub: a filled shape, a darker rim stroke, and a dozen gradient-faded streaks (`daub()` in `looks-painted.js`), with streak lengths re-seeded on each step",
+    "Morph by interpolating the shape parameters (size, angle, colour) with `easeInOut`",
+    "Scratches: switch to `source-over` and draw thin cream lines clipped to the shape"
+   ],
+   "assets": "All in code. Real glass-paint scans work as a texture layer over the lamp.",
+   "sound": "A wet, squelching foley on every move, a slow and dreamy bed. Practice note.",
+   "pitfalls": [
+    "Opaque colour, which loses the glow",
+    "Sharp vector outlines round the shapes",
+    "Cuts between forms: the look depends on continuous morphing"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "paint on glass",
+    "oil on glass",
+    "glass painting",
+    "backlit paint",
+    "smeared paint"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Paint-on-glass_animation"
+   ],
+   "looks": [
+    "paint-on-glass"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "sand-art",
+   "name": "Sand animation",
+   "aliases": [
+    "sand art",
+    "sand drawing",
+    "sand painting animation"
+   ],
+   "family": "drawn",
+   "what": "Light shining through a thin layer of sand on a light table: figures are wiped out as bright lines, thin sand glows amber, and the piles at the edges stay dark. A figure morphs as the sand is pushed.",
+   "origin": "A form of stop motion in which sand is shaped under a camera, often lit from behind by a lightbox so that the thickness of the sand gives shading and lines. Sand art is older than film: Navajo, Aboriginal Australian and Tibetan cultures made it, and the Japanese bonseki has been practised since at least the 7th century. Swiss animators Gisèle and Nag Ansorge and the American Caroline Leaf took it up for films in the 1960s.",
+   "rules": [
+    "An amber, grainy field lit from behind, brightest at the centre and darker at the edges",
+    "Figures are bright wiped lines with a soft glow, with darker piles of sand at the sides",
+    "A small heap of sand ahead of the finger while a line is drawn",
+    "Loose grains over everything, light and dark",
+    "One form flows into the next as the sand is pushed"
+   ],
+   "timing": "Lines are wiped on over 0.5 to 1.5 seconds each and the figure morphs over about 2 seconds. The picture steps about 12 times a second.",
+   "fps": 12,
+   "build": [
+    "Fill with a warm amber, add blotches of lighter and darker sand with radial gradients, then a soft central glow",
+    "Each wiped line: a dark wide pass, an amber glow pass, a bright core pass (`wipe()` in `looks-painted.js`)",
+    "Morph the outline by interpolating radius functions of the angle (`sandFigure()`), so sun rays become petals",
+    "Finish with light and dark grain and a dark multiplied vignette"
+   ],
+   "assets": "All in code. Real sand photographed on a light table makes a good grain layer.",
+   "sound": "A soft, dry, whispering rub under each wipe, a slow music bed that suits a story. Practice note.",
+   "pitfalls": [
+    "Clean vector lines on a flat colour, which is not sand",
+    "A dark background with no glow",
+    "Figures that appear without being wiped on"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "sand art",
+    "sand drawing",
+    "sand story",
+    "light table",
+    "lightbox"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Sand_animation"
+   ],
+   "looks": [
+    "sand-art"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
   }
  ]
 }

@@ -1,4 +1,4 @@
-# Art forms: 30 looks for animated video, and how to build each
+# Art forms: 39 looks for animated video, and how to build each
 
 Read this when a brief names a look ("claymation", "paper cut-out", "anime", "like a blueprint") or describes a feeling that a look would carry. It is the index. Each art form has its own page in `references/art-forms/` with its visual rules, timing, build recipe, assets, sound, pitfalls, sources and a tested demo. `scripts/art_route.py BRIEF.md` proposes one from a brief and says why.
 
@@ -31,7 +31,7 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 |---|---|---|---|
 | [Anime and cel shading](art-forms/cel-shaded.md) | Light broken into two or three flat tones with a hard edge between them, and an ink outline around every form. | steps 12 times a second | Three.js inside HyperFrames |
 | [2D flat vector explainer](art-forms/flat-explainer.md) | The plain explainer look: flat fills, a few colours, simple shapes and icons, smooth eased motion. | smooth, full frame rate | HyperFrames (DOM, SVG) |
-| [Whiteboard and doodle](art-forms/whiteboard.md) | Marker lines that draw themselves on a white board, in the order someone would draw them. | steps 10 times a second | HyperFrames (canvas or SVG) |
+| [Whiteboard and doodle](art-forms/whiteboard.md) | Marker lines that draw themselves on a white board, in the order someone would draw them: simple diagrams and a few handwritten words, one accent colour. | steps 10 times a second | HyperFrames (canvas or SVG) |
 | [Watercolour](art-forms/watercolour.md) | Transparent washes on textured paper: colour that spreads, pools darker at its edge, and lets the paper show through. | steps 12 times a second | HyperFrames (canvas or SVG) |
 | [Ink wash (sumi-e)](art-forms/ink-wash.md) | Black ink in every shade from deep black to pale grey, laid down in tapered brush strokes on rice paper, with a great deal left empty. | steps 12 times a second | HyperFrames (canvas or SVG) |
 | [Line art](art-forms/line-art.md) | One weight of line on a plain ground, no shading: the drawing draws itself, then quivers slightly as if redrawn each frame. | steps 10 times a second | HyperFrames (SVG or canvas) |
@@ -40,6 +40,15 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [UPA and mid-century modern](art-forms/upa-midcentury.md) | Flat, stylised design from 1950s cartoons: geometric characters, abstract backgrounds, colour printed slightly off its outline, and very few drawings. | steps 8 times a second | HyperFrames (canvas, SVG) |
 | [Rubber-hose cartoon](art-forms/rubber-hose.md) | The 1920s cartoon: limbs like hoses with no elbows or knees, round bodies that bounce to the music, black and white film. | steps 12 times a second | HyperFrames (canvas, SVG) |
 | [Linocut and woodcut print](art-forms/linocut.md) | A relief print: bold flat shapes in one to three inks, with white gouge marks where the block was carved. | steps 8 times a second | HyperFrames (canvas, SVG) |
+| [Pencil sketch](art-forms/pencil-sketch.md) | Graphite lines on toothed paper: thin hatching that builds tone, a doubled and searching outline, and a thumb-smudged shadow. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Charcoal](art-forms/charcoal.md) | Soft black dust smeared and rubbed on rough paper: dark masses with crumbling edges, greys made by rubbing, and highlights lifted out with an eraser. | steps 8 times a second | HyperFrames (canvas) |
+| [Oil painting and impasto](art-forms/oil-painting.md) | Thick oil paint laid in visible, directional brush strokes: colour mixed on the canvas, strokes that follow the shape of the thing, and raised light ridges where the paint is heaped up. | steps 12 times a second | HyperFrames (canvas) |
+| [Gouache storybook](art-forms/gouache.md) | Flat, matte, opaque layers of paint with hand-cut edges and faint brush streaks: the look of a printed picture book. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Crayon and oil pastel](art-forms/crayon.md) | Waxy, broken strokes of bright colour on toothed paper, scribbled in one slanted direction with fat outlines pushed past the edges. | steps 8 times a second | HyperFrames (canvas) |
+| [Chalkboard](art-forms/chalkboard.md) | White and coloured chalk on a dark green-black board: dusty, broken lines that draw themselves, ghosts of old eraser swipes, and a stub of chalk at the tip of each line. | steps 10 times a second | HyperFrames (canvas or SVG) |
+| [One continuous line](art-forms/one-line.md) | A whole subject drawn by one unbroken line on a flat colour: the pen never lifts, crosses itself where it must, and the finished drawing is a single curve. | smooth, full frame rate | HyperFrames (SVG or canvas) |
+| [Paint-on-glass](art-forms/paint-on-glass.md) | Oil paint smeared on a lit sheet of glass: translucent colour that glows against the light, deeper where it is thick, finger streaks dragged behind, and shapes that melt from one thing into the next. | steps 12 times a second | HyperFrames (canvas) |
+| [Sand animation](art-forms/sand-art.md) | Light shining through a thin layer of sand on a light table: figures are wiped out as bright lines, thin sand glows amber, and the piles at the edges stay dark. | steps 12 times a second | HyperFrames (canvas) |
 
 ## Geometry, pixels and 3D
 
@@ -109,5 +118,5 @@ Each was cloned outside this repository and its licence file was read first. No 
 
 ## The demos
 
-`art-forms/looks.js` holds one small demo per look (31 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
-These pages are generated from `references/art-forms.json` and `art-forms/looks.js` by `scripts/build_art_forms.py`.
+The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (39 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
+These pages are generated from `references/art-forms.json` and those demo files by `scripts/build_art_forms.py`.
