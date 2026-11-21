@@ -43,10 +43,30 @@ def test_clean_clip_passes(clips):
 
 
 @pytest.mark.parametrize("name,length", [("flash1", 1), ("flash3", 3)])
-def test_a_white_flash_fails(clips, name, length):
+def test_a_white_flash_warns_by_default(clips, name, length):
     proc = py_script("check_seams.py", clips[name])
+    assert proc.returncode == 0, proc.stdout
+    assert any(l.startswith("WARN  flicker at 1.50s") and f"{length} odd frame" in l for l in lines(proc)), proc.stdout
+    assert "PASS  no one-frame pop or flicker" not in proc.stdout
+
+
+@pytest.mark.parametrize("name,length", [("flash1", 1), ("flash3", 3)])
+def test_a_white_flash_fails_when_strict(clips, name, length):
+    proc = py_script("check_seams.py", clips[name], "--strict")
     assert proc.returncode == 1, proc.stdout
     assert any(l.startswith("FAIL  flicker at 1.50s") and f"{length} odd frame" in l for l in lines(proc)), proc.stdout
+
+
+def test_a_planned_flash_is_info_even_when_strict(clips):
+    proc = py_script("check_seams.py", clips["flash1"], "--strict", "--flash-ok", "1.5")
+    assert proc.returncode == 0, proc.stdout
+    assert any(l.startswith("INFO  planned flash at 1.50s") for l in lines(proc)), proc.stdout
+    assert "PASS  no one-frame pop or flicker" in proc.stdout
+
+
+def test_a_planned_flash_elsewhere_does_not_excuse_this_one(clips):
+    proc = py_script("check_seams.py", clips["flash1"], "--strict", "--flash-ok", "0.5")
+    assert proc.returncode == 1, proc.stdout
 
 
 def test_a_flash_is_not_also_counted_as_a_cut(clips):
@@ -144,8 +164,9 @@ def test_ssim_is_one_for_equal_frames_and_low_for_different_ones():
 # ---- wired into check_delivery.sh -------------------------------------------------------------------------------
 
 @needs_bash
-def test_check_delivery_reports_the_flicker_and_fails(clips):
-    proc = bash_script("check_delivery.sh", clips["flash1"], "--seconds", "3", "--size", "320x180", "--silent-ok")
+def test_check_delivery_reports_the_flicker_and_fails_when_strict(clips):
+    proc = bash_script("check_delivery.sh", clips["flash1"], "--seconds", "3", "--size", "320x180", "--silent-ok",
+                       "--strict-flicker")
     assert proc.returncode == 1
     assert "FAIL  flicker at 1.50s" in proc.stdout and "RESULT: FAIL" in proc.stdout
 

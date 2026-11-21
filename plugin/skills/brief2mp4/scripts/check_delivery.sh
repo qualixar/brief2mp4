@@ -12,10 +12,12 @@
 #   --lufs N       loudness target (default -14), checked within +/-1.5 LU
 #   --silent-ok    a silent soundtrack is what the brief asked for
 #   --joins T,T    times (s) where separately rendered acts were joined: each is checked for a pop (SSIM)
+#   --flash-ok T,T times (s) of planned one-frame flashes (reported as INFO, not flicker)
+#   --strict-flicker  any flicker not listed in --flash-ok is a FAIL (default: WARN)
 set -uo pipefail
 
 FILE="${1:-}"; shift || true
-SECONDS_="" SIZE="1920x1080" FPS=30 LUFS=-14 SILENT_OK=0 JOINS=""
+SECONDS_="" SIZE="1920x1080" FPS=30 LUFS=-14 SILENT_OK=0 JOINS="" FLASH_OK="" STRICT_FLICKER=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --seconds) SECONDS_="$2"; shift 2 ;;
@@ -24,6 +26,8 @@ while [[ $# -gt 0 ]]; do
     --lufs) LUFS="$2"; shift 2 ;;
     --silent-ok) SILENT_OK=1; shift ;;
     --joins) JOINS="$2"; shift 2 ;;
+    --flash-ok) FLASH_OK="$2"; shift 2 ;;
+    --strict-flicker) STRICT_FLICKER=1; shift ;;
     *) echo "check_delivery.sh: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -86,6 +90,8 @@ if [[ -z "$PY" ]] || ! "$PY" -c "import sys; sys.exit(sys.version_info < (3, 8))
 else
   seam_args=("$FILE")
   [[ -n "$JOINS" ]] && seam_args+=(--joins "$JOINS")
+  [[ -n "$FLASH_OK" ]] && seam_args+=(--flash-ok "$FLASH_OK")
+  [[ "$STRICT_FLICKER" == 1 ]] && seam_args+=(--strict)
   seams="$("$PY" "$HERE/check_seams.py" "${seam_args[@]}" 2>&1)" || true
   echo "$seams"
   FAILS=$((FAILS + $(echo "$seams" | grep -c '^FAIL' || true)))

@@ -7,12 +7,15 @@ Uses only the Python standard library plus ffmpeg and ffprobe. Every frame is de
   python3 check_seams.py final.mp4
   python3 check_seams.py final.mp4 --joins 12.0,24.5      # the times where separately rendered acts were joined
   python3 check_seams.py final.mp4 --freeze-seconds 2 --flicker-min 10
+  python3 check_seams.py final.mp4 --flash-ok 16,32,48 --strict   # planned flashes pass, any other flicker fails
 
 What it measures, and why each rule is built the way it is:
 
-  Flicker (FAIL). A frame, or up to 3 frames in a row, that differs sharply from the frame before
-    AND from the frame after, while the frames on either side match each other. That is a flash,
-    a missing frame or a wrong layer for a moment. It is almost never intended.
+  Flicker (WARN, or FAIL with --strict). A frame, or up to 3 frames in a row, that differs sharply
+    from the frame before AND from the frame after, while the frames on either side match each other.
+    That is a flash, a missing frame or a wrong layer for a moment. Some looks flicker on purpose
+    (a flash on the downbeat, silent-film or VHS flicker), so list planned flashes with --flash-ok
+    and they are reported as INFO; --strict makes every unlisted flicker a FAIL.
   Joins (FAIL or WARN). For each time in --joins, the SSIM between the last frame of one segment
     and the first frame of the next. Under 0.99 means the pictures do not match across the join.
     On moving pictures SSIM is low everywhere, so the jump is also compared with the frame-to-frame
@@ -201,9 +204,17 @@ def report(args, path):
 
     if len(diffs) < 4:
         out("WARN", "fewer than 4 frames, seam checks skipped")
+    planned = [float(t) * fps for t in args.flash_ok.split(",") if t.strip()] if args.flash_ok else []
+    surprise = 0
     for idx, length, size in flickers:
-        out("FAIL", f"flicker at {stamp(idx, fps)}: {length} odd frame(s), change {size:.1f}/255 each way, then the picture returns")
-    if not flickers and len(diffs) >= 4:
+        what = f"{length} odd frame(s), change {size:.1f}/255 each way, then the picture returns"
+        if any(abs(idx - p) <= 2 for p in planned):
+            out("INFO", f"planned flash at {stamp(idx, fps)}: {what}")
+            continue
+        surprise += 1
+        out("FAIL" if args.strict else "WARN", f"flicker at {stamp(idx, fps)}: {what}"
+            + ("" if args.strict else ". Intended (a flash, a flickering look)? List it with --flash-ok; if not, fix it"))
+    if not surprise and len(diffs) >= 4:
         out("PASS", "no one-frame pop or flicker")
     for idx in joins:
         ratio = diffs[idx] / max(neighbours(diffs, idx), 0.05) if idx < len(diffs) else 0
@@ -252,6 +263,8 @@ def main():
     ap.add_argument("--freeze-seconds", type=float, default=1.5, help="shortest frozen stretch to report (default 1.5)")
     ap.add_argument("--flicker-min", type=float, default=6.0,
                     help="smallest frame change (0-255 scale) that can be a flicker (default 6)")
+    ap.add_argument("--flash-ok", help="comma-separated times (s) of planned flashes; flicker within 2 frames of one is INFO")
+    ap.add_argument("--strict", action="store_true", help="an unlisted flicker is a FAIL instead of a WARN")
     args = ap.parse_args()
     return report(args, args.video)
 
