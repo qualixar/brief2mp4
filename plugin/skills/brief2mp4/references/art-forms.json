@@ -2142,28 +2142,29 @@
     "jangarh kalam"
    ],
    "family": "folk",
-   "what": "Animals and trees drawn in thin black outline and filled with bands of dots and dashes in bright colours, each band following the shape, on a light ground. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself, and a film should credit the tradition and, where it can, commission or license work from the artists.",
+   "what": "Animals and trees in thin black outline, filled with bold flat colour in bands, each band carrying fine repeated marks of one colour: dots, dashes, parallel lines or fish-scale arcs. A plain light ground, a bold crest and a decorated eye. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself, and a film should credit the tradition and, where it can, commission or license work from the artists.",
    "origin": "The Gond, or Gondi, people are an ethnolinguistic group spread across central and eastern India, including Madhya Pradesh, Maharashtra and Chhattisgarh. The artist Jangarh Singh Shyam, born into a Pardhan Gond family in Patangarh, Mandla district, Madhya Pradesh, is credited with starting the school called Jangarh Kalam; he used lines of coloured dots, inspired by Gond tattoos, with bands of dots, dense cross-hatching and comb-lines, and painted animals such as tigers and deer.",
    "rules": [
     "Thin black outlines round animals, birds and trees",
-    "Inside every shape: rows of dots, dashes, and dots and dashes, each row in its own bright colour",
-    "The rows follow the long axis of the shape",
-    "A light or bright ground, often with a dotted ground and border",
-    "Animals and trees shown as decorated cut-outs, with no shading"
+    "Saturated flat colour: deep red, saffron, cobalt, leaf green and black",
+    "Each body is filled in bands; each band is a solid base colour with marks of ONE contrasting colour, never a rainbow inside a stripe",
+    "Mark types alternate band by band: rows of dots, short dashes, fine parallel lines, fish-scale arcs",
+    "Bold, decorated details: a crest, an eye with rings and dots, branches that curl in toward the animal"
    ],
    "timing": "Parts draw on one after another over about 3 seconds, outline first, then the bands fill. The picture steps about 8 times a second.",
    "fps": 8,
    "build": [
-    "Draw each part with `folkShape()` and a pale tint fill",
-    "Bands: rows along the shape's axis with a gentle wave, alternating dots, ticks and dot-and-tick, cycling six colours (`gondBands()` in `looks-folk.js`)",
-    "Add a dot grid over the ground and a dotted border",
-    "Keep the outline thin so the dots and dashes carry the colour"
+    "Draw each part with `folkShape()` and a black fill under the bands",
+    "Bands: rotate to the shape's long axis, fill a 14 px strip with the base colour, then draw one mark type in the paired colour (`gondBands()` and the `GOND` colour pairs in `looks-folk.js`)",
+    "Trunks and branches: a tapering band along a spline (`ribbon()`), ending in a curl",
+    "Eye: a pale ring, a red ring, a dark pupil and a ring of small dots",
+    "Keep the ground plain; add only a dotted border"
    ],
    "assets": "All in code.",
    "sound": "Drums and a stringed drone, a rhythmic tapping as each band fills. Practice note.",
    "pitfalls": [
-    "Solid fills and gradients: the pattern is the colour",
-    "Dots all the same size and colour",
+    "Pastel stripes or a rainbow inside each band: the colours are saturated and each band has one mark colour",
+    "Gradients and shading",
     "Presenting a machine-made picture as authentic Gond art"
    ],
    "route": "HyperFrames (canvas or SVG)",

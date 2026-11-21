@@ -68,18 +68,26 @@ function warliTree(g, x, y, sc, k) {
 const curl = (x, y, r, turns = 2.2, dir = 1) => Array.from({ length: 30 }, (_, i) => { const a = (i / 29) * turns * TAU * dir, rr = r * (1 - i / 36); return [x + Math.cos(a) * rr, y + Math.sin(a) * rr]; });
 
 const ellipseLine = (x, y, rx, ry, a = 0) => rot(circlePts(0, 0, 1, 28), x, y, a, rx, ry);
-const PALETTE = ['#d6382c', '#f2a81d', '#2c6fbb', '#2e9b4f', '#e0559a', '#7a3fa8'];
-// Gond bands: rows of dots, dashes and dot-and-dash that follow the long axis of a shape, each row in its own bright colour
+// Gond bands: each band is a solid base colour with fine marks of one contrasting colour: dots, dashes, parallel lines or fish-scale arcs
+const GOND = [['#b3182a', '#f7c948'], ['#f2a81d', '#15100d'], ['#1f4fa8', '#f6f0dc'], ['#2d8a3e', '#f7c948'], ['#15100d', '#f2a81d'], ['#b3182a', '#f6f0dc'], ['#f2a81d', '#b3182a'], ['#1f4fa8', '#f2a81d']];
 function gondBands(g, bb, ang, seed = 0) {
-  const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, D = Math.hypot(bb[2] - bb[0], bb[3] - bb[1]) / 2 + 4, c = Math.cos(ang), s = Math.sin(ang);
-  g.lineCap = 'round';
-  for (let r = 0, y = -D; y <= D; y += 11, r++) {
-    const col = PALETTE[(r + seed) % PALETTE.length], kind = (r + seed) % 3; g.fillStyle = g.strokeStyle = col; g.lineWidth = 3.2;
-    for (let x = -D, i = 0; x <= D; x += 9, i++) {
-      const yy = y + Math.sin(x / 16 + r) * 2.5, px = cx + x * c - yy * s, py = cy + x * s + yy * c;
-      if (kind === 0 || (kind === 2 && i % 2)) { g.beginPath(); g.arc(px, py, 3, 0, TAU); g.fill(); } else { g.beginPath(); g.moveTo(px + s * 4.6, py - c * 4.6); g.lineTo(px - s * 4.6, py + c * 4.6); g.stroke(); }
-    }
+  const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, D = Math.hypot(bb[2] - bb[0], bb[3] - bb[1]) / 2 + 6;
+  g.save(); g.translate(cx, cy); g.rotate(ang); g.lineCap = 'round';
+  for (let r = 0, y = -D; y <= D; y += 14, r++) {
+    const [base, mark] = GOND[(r * 3 + seed) % GOND.length], kind = (r + seed) % 4;
+    g.fillStyle = base; g.fillRect(-D, y, 2 * D, 14.5); g.fillStyle = g.strokeStyle = mark; g.lineWidth = 1.8;
+    if (kind === 0) { g.beginPath(); for (let x = -D; x < D; x += 8) { g.moveTo(x + 2.4, y + 7); g.arc(x, y + 7, 2.4, 0, TAU); } g.fill(); }
+    else if (kind === 1) { g.lineWidth = 2.4; g.beginPath(); for (let x = -D; x < D; x += 7) { g.moveTo(x, y + 3.5); g.lineTo(x, y + 10.5); } g.stroke(); }
+    else if (kind === 2) { g.beginPath(); for (const o of [4, 7, 10]) { g.moveTo(-D, y + o); g.lineTo(D, y + o); } g.stroke(); }
+    else { g.beginPath(); for (let x = -D; x < D; x += 10) { g.moveTo(x + 5, y + 4); g.arc(x, y + 4, 5, 0, Math.PI); } g.stroke(); }
   }
+  g.restore();
+}
+// a tapering band along a curve: used for tree trunks and branches
+function ribbon(ctrl, w0, w1) {
+  const pts = spline(ctrl, 8), n = pts.length, L = [], R = [];
+  pts.forEach(([x, y], i) => { const p = pts[Math.max(0, i - 1)], q = pts[Math.min(n - 1, i + 1)], a = Math.atan2(q[1] - p[1], q[0] - p[0]), w = lerp(w0, w1, i / (n - 1)); L.push([x + Math.sin(a) * w, y - Math.cos(a) * w]); R.push([x - Math.sin(a) * w, y + Math.cos(a) * w]); });
+  return [...L, ...R.reverse(), L[0]];
 }
 function halftone(g, bb, pitch, ang, val) {
   const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, n = Math.ceil(Math.hypot(bb[2] - bb[0], bb[3] - bb[1]) / 2 / pitch), c = Math.cos(ang), s = Math.sin(ang);
@@ -184,25 +192,25 @@ export const LOOKS = {
     speckle(g, W, H, 6, 45, [110, 70, 20]);
   } },
   gond: { kind: '2d', fps: 8, draw(g, t, W, H) {
-    // a bird and a tree on a light ground, every part filled with bands of dots and dashes in bright colours, thin black outlines, a dotted border
-    const ts = held(t, 8), f = frameOf(t, 8); bg(g, W, H, '#fbf1d3'); g.lineCap = 'round'; g.lineJoin = 'round';
+    // a bold bird and a tree on a plain light ground: every part is solid colour in bands, each band carrying one colour of fine marks, the tree's branches curling in toward the bird
+    const ts = held(t, 8); bg(g, W, H, '#f6ecd0'); g.lineCap = 'round'; g.lineJoin = 'round';
     const k0 = prog(ts, 0, 0.8); g.strokeStyle = INK; g.lineWidth = 3; strokePart(g, [[16, 16], [W - 16, 16], [W - 16, H - 16], [16, H - 16], [16, 16]], k0); g.lineWidth = 1.6; strokePart(g, [[24, 24], [W - 24, 24], [W - 24, H - 24], [24, H - 24], [24, 24]], k0);
-    g.fillStyle = INK; for (let i = 0; i < 60 * k0; i++) { const x = 40 + i * ((W - 80) / 60); for (const y of [34, H - 34]) { g.beginPath(); g.arc(x, y, 2.2, 0, TAU); g.fill(); } }
-    dots(g, [34, 40, W - 34, H - 40], 24, 1.8, 'rgba(210,160,70,.55)');   // the ground is dotted too
-    const shape = (pts, st, ang, seed, lw = 3.2) => folkShape(g, pts, { start: st, dur: 0.6, fill: ['#ffe9b8', '#ffd9c9', '#e6f2cf', '#dfe6f7'][seed % 4], lw, pattern: (c, bb) => gondBands(c, bb, ang, seed) }, ts);
-    for (let i = 0; i < 3; i++) shape(leaf(470, 300, 200, 34, -0.35 + i * 0.4), 1.0 + i * 0.12, -0.35 + i * 0.4, i + 2);   // tail feathers
-    shape(ellipseLine(340, 305, 168, 96, -0.1), 0.2, -0.1, 0);   // body
-    shape(leaf(250, 290, 130, 36, -2.45), 0.7, -2.45, 1);   // neck
-    shape(ellipseLine(205, 205, 40, 36), 0.9, 0.4, 4);
-    for (const [dx, st] of [[0, 1.5], [-18, 1.6], [18, 1.7]]) shape(leaf(205 + dx * 0.3, 172, 44, 10, -1.57 + dx * 0.025), st, -1.57, 3, 2.6);   // crest
-    shape(closed([[0, 0], [1, 0.25], [0, 0.5]], 4).map(([x, y]) => [172 - x * 62, 202 + y * 22]), 1.4, 0, 1, 2.8);   // beak
-    if (prog(ts, 1.6, 0.2) > 0.5) { disc(g, 208, 198, 8, '#fff', 2.6); disc(g, 206, 198, 3.6, INK); }
-    for (const [x, st] of [[300, 1.8], [372, 1.9]]) { g.strokeStyle = INK; g.lineWidth = 4; strokePart(g, [[x, 395], [x - 8, 440], [x - 24, 478]], prog(ts, st, 0.4)); g.fillStyle = INK; for (let i = 0; i < 8 * prog(ts, st + 0.2, 0.4); i++) { g.beginPath(); g.arc(x + 9 - i * 4.2 + (i % 2) * 4, 410 + i * 9, 2.2, 0, TAU); g.fill(); } }   // legs, with a row of dots beside each
-    shape(leaf(790, 480, 270, 20, -1.6), 1.9, -1.6, 5);   // the tree
-    for (const [by, d, st] of [[400, -1, 2.3], [400, 1, 2.35], [340, -1, 2.45], [340, 1, 2.5], [285, -1, 2.6], [285, 1, 2.65]]) { const a = d < 0 ? -2.5 : -0.64; shape(leaf(790, by, 120, 22, a), st, a, 3 + (by % 4), 3); }
-    for (let i = 0; i < 5; i++) { const a = -1.57 + (i - 2) * 0.42; shape(leaf(790, 230, 90, 18, a), 2.7 + i * 0.05, a, i + 1, 3); }
-    const sun = prog(ts, 0.1, 0.8); shape(ellipseLine(112, 100, 38, 38), 0.1, 0.3, 1);
-    g.fillStyle = INK; for (let r of [52, 62]) for (let i = 0; i < 16 * sun; i++) { const a = (i / 16) * TAU + (r > 55 ? 0.2 : 0); g.beginPath(); g.arc(112 + Math.cos(a) * r, 100 + Math.sin(a) * r, 2.6, 0, TAU); g.fill(); }
+    g.fillStyle = INK; for (let i = 0; i < 60 * k0; i++) { const x = 40 + i * ((W - 80) / 60); for (const y of [34, H - 34]) { g.beginPath(); g.arc(x, y, 2.4, 0, TAU); g.fill(); } }
+    const shape = (pts, st, ang, seed, lw = 3.4) => folkShape(g, pts, { start: st, dur: 0.6, fill: INK, lw, pattern: (c, bb) => gondBands(c, bb, ang, seed) }, ts);
+    for (let i = 0; i < 3; i++) shape(leaf(470, 305, 200, 36, -0.4 + i * 0.4), 1.0 + i * 0.12, -0.4 + i * 0.4, i + 1);   // tail
+    shape(ellipseLine(340, 308, 170, 98, -0.1), 0.2, -0.1, 0);   // body
+    shape(leaf(250, 292, 130, 38, -2.45), 0.7, -2.45, 2);   // neck
+    shape(ellipseLine(205, 205, 42, 38), 0.9, 0.4, 5);   // head
+    for (let i = 0; i < 5; i++) { const a = -1.57 + (i - 2) * 0.34; shape(leaf(205 + (i - 2) * 6, 172, 58 - Math.abs(i - 2) * 6, 11, a), 1.4 + i * 0.05, a, i + 1, 3); }   // a bold crest
+    shape(closed([[0, 0], [1, 0.25], [0, 0.5]], 4).map(([x, y]) => [172 - x * 64, 200 + y * 24]), 1.4, 0, 3, 3);   // beak
+    if (prog(ts, 1.6, 0.2) > 0.5) { disc(g, 208, 198, 13, '#f6f0dc', 2.6); disc(g, 208, 198, 9, '#b3182a', 1.6); disc(g, 208, 198, 4.4, INK); g.fillStyle = INK; for (let i = 0; i < 10; i++) { const a = (i / 10) * TAU; g.beginPath(); g.arc(208 + Math.cos(a) * 18, 198 + Math.sin(a) * 18, 1.8, 0, TAU); g.fill(); } }   // a decorated eye
+    for (const [x, st] of [[300, 1.8], [372, 1.9]]) { g.strokeStyle = INK; g.lineWidth = 5; strokePart(g, [[x, 395], [x - 8, 440], [x - 24, 478]], prog(ts, st, 0.4)); g.fillStyle = '#b3182a'; for (let i = 0; i < 6 * prog(ts, st + 0.2, 0.4); i++) { g.beginPath(); g.arc(x + 10 - i * 4.4, 414 + i * 11, 2.6, 0, TAU); g.fill(); } }
+    shape(ribbon([[822, 492], [812, 410], [826, 310], [812, 215]], 24, 9), 1.9, -1.57, 6);   // the trunk
+    shape(ribbon([[816, 340], [750, 318], [690, 282], [640, 262], [600, 268], [588, 292], [608, 306], [626, 292]], 13, 4), 2.3, -0.5, 1);   // a branch that curls in over the tail
+    shape(ribbon([[820, 425], [750, 424], [680, 408], [630, 392], [596, 404], [596, 428], [618, 430]], 12, 4), 2.5, -0.2, 4);   // and one that curls in under it
+    for (const [x, y, a, st] of [[820, 250, -2.3, 2.7], [820, 250, -0.8, 2.75], [815, 330, -2.2, 2.8], [822, 380, -0.9, 2.85], [800, 215, -1.57, 2.9]]) shape(leaf(x, y, 80, 16, a), st, a, (x + y) % 5, 3);
+    const sun = prog(ts, 0.1, 0.8); shape(ellipseLine(112, 100, 40, 40), 0.1, 0.3, 3);
+    g.fillStyle = INK; for (const r of [54, 64]) for (let i = 0; i < 16 * sun; i++) { const a = (i / 16) * TAU + (r > 58 ? 0.2 : 0); g.beginPath(); g.arc(112 + Math.cos(a) * r, 100 + Math.sin(a) * r, 2.8, 0, TAU); g.fill(); }
     speckle(g, W, H, 8, 40, [140, 100, 60]);
   } },
   'indian-miniature': { kind: '2d', fps: 8, draw(g, t, W, H) {
