@@ -2971,6 +2971,272 @@
    ],
    "thin": "Wikipedia describes the Kathputli as worked by a single string over the puppeteer; the demo uses a Western-style control bar, with strings to the head, hands and feet, so that the strings are easy to read. Check a real rig before a film shows one.",
    "checked": "2026-11-21"
+  },
+  {
+   "id": "stylised-3d",
+   "name": "Stylised 3D cartoon",
+   "aliases": [
+    "soft 3d cartoon",
+    "3d cartoon character",
+    "rounded 3d character"
+   ],
+   "family": "geometry",
+   "what": "A soft, rounded 3D cartoon character or prop with a big readable face: smooth forms, a soft key light, a cool rim light and warm light that seems to pass through the skin. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Three-point lighting is a standard method in film, photography and 3D graphics: the key light is the principal illuminator, usually 30 to 45 degrees to one side of the camera and elevated about as much. Subsurface scattering is light travelling into a translucent surface and out again at another point; without it a material can look like plastic or metal.",
+   "rules": [
+    "Smooth, rounded forms with no hard edges: spheres, capsules and soft boxes",
+    "A big, readable face: large eyes with a gradient and two highlights, clear brows, a wide mouth",
+    "A soft key light from the upper left, a cool rim light on the far edge, and a soft specular highlight",
+    "A warm glow at the shadow edge, as light bleeds through the skin",
+    "A shallow-depth background of blurred lights and a soft contact shadow"
+   ],
+   "timing": "Smooth, full frame rate: a slow breath, a bounce, a blink every three seconds and a wave. The squash and stretch are small and soft.",
+   "fps": null,
+   "build": [
+    "Three.js: `MeshPhysicalMaterial` with `sheen`, a low `clearcoat`, and `transmission` or a warm emissive rim for the subsurface look",
+    "Lights: a `DirectionalLight` key at about 40 degrees, a cool back `DirectionalLight` for the rim, a `HemisphereLight` fill, and `ACESFilmicToneMapping`",
+    "Add `OutputPass` and a gentle `UnrealBloomPass`; soft `PCFSoftShadowMap` shadows",
+    "Add a shallow depth of field with `BokehPass`",
+    "In the 2D demo: `ball()` builds each form from an offset radial gradient, a warm inner gradient, a rim arc and a soft highlight"
+   ],
+   "assets": "All in code here. For a real character, model it in Blender and export a glTF.",
+   "sound": "Soft foley, a light orchestral bed and a spring on each bounce. Practice note.",
+   "pitfalls": [
+    "Hard black outlines: they turn it into toon 3D",
+    "Plastic highlights and no warm bleed at the shadow edge",
+    "A small face: the face must be readable at a glance",
+    "Copying a recognisable studio character"
+   ],
+   "route": "Three.js inside HyperFrames, or Blender",
+   "blender": "",
+   "keywords": [
+    "pixar",
+    "stylised 3d",
+    "3d cartoon",
+    "soft 3d",
+    "3d character"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Subsurface_scattering",
+    "https://en.wikipedia.org/wiki/Three-point_lighting"
+   ],
+   "looks": [
+    "stylised-3d"
+   ],
+   "thin": "The two sources cover the lighting and shading ideas; the face and softness rules are a practice summary.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "toon-3d",
+   "name": "Toon 3D (cel-shaded, comic-book)",
+   "aliases": [
+    "cel shaded 3d",
+    "comic book 3d",
+    "toon shaded 3d",
+    "painterly 3d"
+   ],
+   "family": "geometry",
+   "what": "3D forms cut into two or three flat shading bands, with a thick ink outline on every silhouette and a printed, painterly comic-book feel. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Cel shading, or toon shading, is a type of non-photorealistic rendering that makes 3D graphics look flat and hand-drawn: conventional smooth lighting values are quantised to a few discrete shades, so that shadows and highlights appear as blocks of colour. Black ink outlines can be made by first rendering a slightly larger black copy of the object with its back faces drawn.",
+   "rules": [
+    "Two or three flat bands of colour: a light, a base and a shadow, with hard edges",
+    "A thick ink outline round the silhouette",
+    "The shadow band tinted toward purple or blue, not just darker",
+    "Print texture: halftone dots, hatching lines and paper grain",
+    "A hard highlight spot and a hard-edged ground shadow"
+   ],
+   "timing": "Smooth rotation and bounce at the full frame rate; or stepped on twos for a hand-drawn feel.",
+   "fps": null,
+   "build": [
+    "Three.js: `MeshToonMaterial` with a `gradientMap` of 3 texels (`DataTexture` with `NearestFilter`), so that lighting steps in three bands",
+    "Outlines: `OutlineEffect` from the examples, or draw a back-face copy scaled by 1.03 in black",
+    "Add a `HalftonePass`, or a halftone texture multiplied into the shadow band",
+    "Tint the shadow band in the gradient map toward purple",
+    "In the 2D demo: `turn()` rotates vertices, face normals pick one of three bands (`band3()`), and a thick ink stroke outlines each face"
+   ],
+   "assets": "All in code here.",
+   "sound": "Brush-stroke whooshes and a drum loop. Practice note.",
+   "pitfalls": [
+    "Smooth gradients inside the bands",
+    "Thin or uneven outlines",
+    "More than three bands: it starts to look like normal shading"
+   ],
+   "route": "Three.js inside HyperFrames, or Blender (Freestyle)",
+   "blender": "",
+   "keywords": [
+    "toon 3d",
+    "cel shaded 3d",
+    "cel shaded",
+    "3d like a comic",
+    "comic book 3d",
+    "painterly 3d"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Cel_shading"
+   ],
+   "looks": [
+    "toon-3d"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "point-cloud",
+   "name": "Point cloud and lidar scan",
+   "aliases": [
+    "lidar scan",
+    "point cloud scan",
+    "3d scan"
+   ],
+   "family": "geometry",
+   "what": "An object or scene made of thousands of glowing points on black, in blue and gold, turning slowly, with points that fade and shrink as they recede. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "A point cloud is a discrete set of data points in space; each has X, Y and Z coordinates and may carry colour and other data. Point clouds are produced by 3D scanners or photogrammetry software. Lidar measures distance by timing the return of laser light, and is used to make high-resolution maps.",
+   "rules": [
+    "Only points, no surfaces or lines",
+    "Glowing points on black, in two hues: blue for the ground, gold for the object",
+    "Depth: far points are smaller and dimmer",
+    "Scan structure: rings or lines of points, and a pulse of brighter points sweeping over them",
+    "A slow turn, a high camera, and a faint vignette"
+   ],
+   "timing": "A slow turn at the full frame rate; the cloud builds up over about 1.6 seconds and the scan pulse crosses the ground every 3 to 4 seconds.",
+   "fps": null,
+   "build": [
+    "Three.js: `Points` with a `BufferGeometry`, `PointsMaterial` (`sizeAttenuation: true`, `vertexColors`, `AdditiveBlending`, `depthWrite: false`)",
+    "Size by depth in a custom shader: `gl_PointSize = base / -mvPosition.z`",
+    "Real data: load a PLY or PCD scan with the examples loaders",
+    "Scan pulse: a uniform radius that brightens the points near it",
+    "In the 2D demo: project each point with a turn, a tilt and a perspective factor, and draw it as a tiny square with `lighter` compositing (`plot()`)"
+   ],
+   "assets": "All in code here. Real scans come from a lidar device or a photogrammetry run.",
+   "sound": "A low synth pulse and a soft ping as the scan passes. Practice note.",
+   "pitfalls": [
+    "Joining the points with lines or surfaces",
+    "Opaque, same-sized points: no depth",
+    "Too few points: it reads as sparkle, not as an object"
+   ],
+   "route": "Three.js inside HyperFrames",
+   "blender": "",
+   "keywords": [
+    "point cloud",
+    "lidar",
+    "scan",
+    "photogrammetry",
+    "glowing points"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Point_cloud",
+    "https://en.wikipedia.org/wiki/Lidar"
+   ],
+   "looks": [
+    "point-cloud"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "diorama",
+   "name": "Tilt-shift miniature diorama",
+   "aliases": [
+    "tilt-shift",
+    "miniature town",
+    "miniature diorama",
+    "toy town"
+   ],
+   "family": "geometry",
+   "what": "A tiny town seen from a high camera: saturated toy colours, little cars looping round the roads, and a blur that grows toward the top and bottom of the frame, so that it looks like a model. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Tilt-shift photography uses camera movements that change the orientation or position of the lens relative to the sensor; the term is also used when a shallow depth of field is simulated in post-processing. A diorama is a replica of a scene, typically a three-dimensional model, miniature or full-size.",
+   "rules": [
+    "A high camera looking down at an angle",
+    "A sharp band across the middle, with blur growing toward the top and bottom edges",
+    "Saturated, toy-like colours and simple blocky buildings",
+    "Tiny moving things: cars, boats or people",
+    "Soft, slightly raised contrast and a light vignette"
+   ],
+   "timing": "Smooth: cars loop round the roads at different speeds, and the camera is still.",
+   "fps": null,
+   "build": [
+    "Three.js: an `OrthographicCamera` or a narrow-FOV `PerspectiveCamera` placed high, and `InstancedMesh` buildings",
+    "Tilt-shift: render to a target and blur it with a vertical mask, as in the `HorizontalTiltShiftShader` and `VerticalTiltShiftShader` examples, or use `BokehPass` with a focal band",
+    "Raise saturation and add a soft vignette with an `OutputPass` and a colour-grade pass",
+    "In the 2D demo: draw the town to an off-screen canvas, then draw it again through several clipped bands with increasing `blur()` (`diorama`)"
+   ],
+   "assets": "All in code here.",
+   "sound": "A light ukulele bed and distant traffic noise. Practice note.",
+   "pitfalls": [
+    "Blur across the whole frame, which reads as out of focus",
+    "Muted, realistic colours",
+    "A low camera: the miniature look needs a high angle"
+   ],
+   "route": "Three.js inside HyperFrames, or Blender",
+   "blender": "",
+   "keywords": [
+    "tilt shift",
+    "miniature",
+    "toy town",
+    "diorama",
+    "model city"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tilt%E2%80%93shift_photography",
+    "https://en.wikipedia.org/wiki/Diorama"
+   ],
+   "looks": [
+    "diorama"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "parallax-2-5d",
+   "name": "Parallax 2.5D",
+   "aliases": [
+    "2.5d parallax",
+    "parallax scrolling",
+    "multiplane"
+   ],
+   "family": "geometry",
+   "what": "Four to six flat painted layers moving at different speeds as the camera pans: a sky, far mountains, hills, a row of trees, a field and grass in front, so that a flat scene feels deep. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Parallax scrolling is a technique where background images move past the camera more slowly than foreground images, creating an illusion of depth in a 2D scene. It grew out of the multiplane camera used in traditional animation since the 1930s, which moved layers of artwork at different speeds and distances.",
+   "rules": [
+    "Layers, each one flat: sky, far mountains, hills, trees, field, foreground",
+    "Each layer moves at its own speed: the nearer, the faster",
+    "Distant layers are hazier and lighter; near layers darker and more saturated",
+    "Layers repeat seamlessly as the camera pans",
+    "A fixed or very slow sky and sun"
+   ],
+   "timing": "A steady pan to the right at about 90 px a second; speeds from 0.02 for the sun to 1.8 for the grass blades. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Three.js: flat `PlaneGeometry` layers with textured `MeshBasicMaterial` at different `z` depths and a `PerspectiveCamera` moving along x, or the same layers with an orthographic camera scaling each layer's x motion",
+    "In the 2D demo: each layer is drawn in screen columns offset by `camera * speed`, wrapping with `Math.floor(offset / width)`, and ridges come from value noise of world x (`ridge()`)",
+    "Add atmospheric haze by mixing far layers toward the sky colour",
+    "Add a slight vertical bob to the camera"
+   ],
+   "assets": "All in code here. For real layers, paint each on a transparent PNG.",
+   "sound": "Wind, birdsong, a gentle acoustic bed. Practice note.",
+   "pitfalls": [
+    "All layers moving at the same speed",
+    "Visible seams where a layer repeats",
+    "Detail in the far layers that competes with the foreground"
+   ],
+   "route": "HyperFrames (canvas or Three.js)",
+   "blender": "",
+   "keywords": [
+    "parallax",
+    "parallax scrolling",
+    "multiplane",
+    "2.5d",
+    "layered pan"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Parallax_scrolling",
+    "https://en.wikipedia.org/wiki/Multiplane_camera"
+   ],
+   "looks": [
+    "parallax-2-5d"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
   }
  ]
 }

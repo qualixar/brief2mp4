@@ -6,10 +6,10 @@ import { closed, rot, leaf, lines, dots, scales, disc, ribbon, ellipseLine, half
 
 const overshootK = (k) => 1 + 2.70158 * (k - 1) ** 3 + 1.70158 * (k - 1) ** 2;
 const BLACK = '#000', WHITE = '#fff', OUT = '#16121c';
-const path = (g, pts, close = true) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); if (close) g.closePath(); };
-const polyFill = (g, pts, col, line = 0, lw = 4) => { path(g, pts); g.fillStyle = col; g.fill(); if (line) { g.strokeStyle = line; g.lineWidth = lw; g.lineJoin = 'round'; g.stroke(); } };
-const ell = (g, x, y, rx, ry, col, line = 0, lw = 4, a = 0) => { g.beginPath(); g.ellipse(x, y, Math.max(0.01, rx), Math.max(0.01, ry), a, 0, TAU); g.fillStyle = col; g.fill(); if (line) { g.strokeStyle = line; g.lineWidth = lw; g.stroke(); } };
-const star = (x, y, ro, ri, n, a0 = 0, wob = 0, seed = 0) => Array.from({ length: n * 2 }, (_, i) => { const a = a0 + (i / (n * 2)) * TAU, r = (i % 2 ? ri : ro) * (1 + (wob ? (hash(i, seed) - 0.5) * wob : 0)); return [x + Math.cos(a) * r, y + Math.sin(a) * r]; });
+export const path = (g, pts, close = true) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); if (close) g.closePath(); };
+export const polyFill = (g, pts, col, line = 0, lw = 4) => { path(g, pts); g.fillStyle = col; g.fill(); if (line) { g.strokeStyle = line; g.lineWidth = lw; g.lineJoin = 'round'; g.stroke(); } };
+export const ell = (g, x, y, rx, ry, col, line = 0, lw = 4, a = 0) => { g.beginPath(); g.ellipse(x, y, Math.max(0.01, rx), Math.max(0.01, ry), a, 0, TAU); g.fillStyle = col; g.fill(); if (line) { g.strokeStyle = line; g.lineWidth = lw; g.stroke(); } };
+export const star = (x, y, ro, ri, n, a0 = 0, wob = 0, seed = 0) => Array.from({ length: n * 2 }, (_, i) => { const a = a0 + (i / (n * 2)) * TAU, r = (i % 2 ? ri : ro) * (1 + (wob ? (hash(i, seed) - 0.5) * wob : 0)); return [x + Math.cos(a) * r, y + Math.sin(a) * r]; });
 
 // manga helpers: only black and white. A speed-line burst, a screentone, and a fighter drawn from local coordinates
 const speedLines = (g, cx, cy, r0, r1, n, f, w = 2) => { g.fillStyle = BLACK; for (let i = 0; i < n; i++) { const a = (i / n) * TAU + jit(f, i, 0.02), a2 = a + 0.012 + hash(i, 2) * 0.012, r = r1 * (0.8 + hash(i, f % 4, 3) * 0.4), q = r0 * (0.8 + hash(i, 4) * 0.5); path(g, [[cx + Math.cos(a) * q, cy + Math.sin(a) * q], [cx + Math.cos(a) * r, cy + Math.sin(a) * r], [cx + Math.cos(a2) * r, cy + Math.sin(a2) * r]]); g.fill(); } };
@@ -28,7 +28,7 @@ function fighter(g, x, y, s, dir, clothes, f) {
   g.restore();
 }
 
-const shadeHex = (hex, k) => { const n = parseInt(hex.slice(1), 16); return `rgb(${Math.round(((n >> 16) & 255) * k)},${Math.round(((n >> 8) & 255) * k)},${Math.round((n & 255) * k)})`; };
+export const shadeHex = (hex, k) => { const n = parseInt(hex.slice(1), 16); return `rgb(${Math.round(((n >> 16) & 255) * k)},${Math.round(((n >> 8) & 255) * k)},${Math.round((n & 255) * k)})`; };
 const curlPts = (x, y, r, turns = 2, dir = 1) => Array.from({ length: 28 }, (_, i) => { const a = (i / 27) * turns * TAU * dir, rr = r * (1 - i / 34); return [x + Math.cos(a) * rr, y + Math.sin(a) * rr]; });
 // an isometric brick world: x runs down to the right, y down to the left, z up
 const ISO = { cx: 480, cy: 136, cw: 33, ch: 16.5, bh: 24 };

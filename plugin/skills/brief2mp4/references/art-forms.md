@@ -1,4 +1,4 @@
-# Art forms: 58 looks for animated video, and how to build each
+# Art forms: 63 looks for animated video, and how to build each
 
 Read this when a brief names a look ("claymation", "paper cut-out", "anime", "like a blueprint") or describes a feeling that a look would carry. It is the index. Each art form has its own page in `references/art-forms/` with its visual rules, timing, build recipe, assets, sound, pitfalls, sources and a tested demo. `scripts/art_route.py BRIEF.md` proposes one from a brief and says why.
 
@@ -68,6 +68,11 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [Voxel](art-forms/voxel.md) | Everything built from cubes of one size on a grid, like a three-dimensional pixel picture. | steps 12 times a second | Three.js inside HyperFrames |
 | [Pixel art](art-forms/pixel-art.md) | A tiny picture placed pixel by pixel and scaled up with hard edges: a few colours, no blur, sprites that step. | steps 8 times a second | HyperFrames (canvas) |
 | [3D product render](art-forms/product-render.md) | A studio shot of an object: a seamless backdrop, soft key, fill and rim lights, controlled reflections, a slow turn. | smooth, full frame rate | Three.js, the 3D pack, or Blender |
+| [Stylised 3D cartoon](art-forms/stylised-3d.md) | A soft, rounded 3D cartoon character or prop with a big readable face: smooth forms, a soft key light, a cool rim light and warm light that seems to pass through the skin. | smooth, full frame rate | Three.js inside HyperFrames, or Blender |
+| [Toon 3D (cel-shaded, comic-book)](art-forms/toon-3d.md) | 3D forms cut into two or three flat shading bands, with a thick ink outline on every silhouette and a printed, painterly comic-book feel. | smooth, full frame rate | Three.js inside HyperFrames, or Blender (Freestyle) |
+| [Point cloud and lidar scan](art-forms/point-cloud.md) | An object or scene made of thousands of glowing points on black, in blue and gold, turning slowly, with points that fade and shrink as they recede. | smooth, full frame rate | Three.js inside HyperFrames |
+| [Tilt-shift miniature diorama](art-forms/diorama.md) | A tiny town seen from a high camera: saturated toy colours, little cars looping round the roads, and a blur that grows toward the top and bottom of the frame, so that it looks like a model. | smooth, full frame rate | Three.js inside HyperFrames, or Blender |
+| [Parallax 2.5D](art-forms/parallax-2-5d.md) | Four to six flat painted layers moving at different speeds as the camera pans: a sky, far mountains, hills, a row of trees, a field and grass in front, so that a flat scene feels deep. | smooth, full frame rate | HyperFrames (canvas or Three.js) |
 
 ## Type, data and retro
 
@@ -142,5 +147,5 @@ Each was cloned outside this repository and its licence file was read first. No 
 
 ## The demos
 
-The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (58 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
+The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (63 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
 These pages are generated from `references/art-forms.json` and those demo files by `scripts/build_art_forms.py`.
