@@ -9,11 +9,13 @@
  *
  * A track is a list of keys { t, pose, ease } or an object:
  *   { keys: [{ t, pose, ease }],            the ease shapes the move INTO that key (linear, in, out, inOut, sine, backOut, hold)
- *     move: [{ t, x, y, flip, ease }],       where the character stands, in scene units; flip -1 faces left
+ *     move: [{ t, x, y, facing, ease }],     where it stands: absolute scene positions (x across, y of the feet); facing "left" or "right"
+ *                                             (flip -1 or 1 is the older spelling); a key without x or y keeps opts.home
  *     layers: [{ cycle, from, to, steps }],  walk, run, wave, laugh, breath, talk; steps = new drawings per second
  *     visemes: [{ t, v }],                   the lip-sync track from scripts/lipsync.py
  *     blink: true, props: ["prop_kite"], fx: { speedLines: [[t0, t1]] },
  *     view: 'front' }                         a close-up head drawing that faces the camera (parts with a 'front' variant)
+ * opts.home = { x, y, flip } is where the character stands when a move key does not say (the scene's cast x and y).
  * opts.steps quantises time (a handmade skin holds each drawing for 1/steps of a second); leave it out for smooth motion.
  * Cycles hold their drawings at the layer's steps per second; opts.smooth: true (for a smooth skin) blends between them instead.
  */
@@ -186,17 +188,24 @@
     return track.poseMouths ? base.mouth || 'rest' : 'rest';
   }
 
-  function sampleMove(moves, ts) {
-    if (!moves || !moves.length) return { x: 0, y: 0, flip: 1 };
+  // Where the character stands. Move keys hold absolute positions in scene units (the y of the feet on screen);
+  // a key that leaves x or y out keeps the character's home position, and with no move keys it stays at home.
+  // facing "left" or "right" (flip -1 or 1 is the older spelling) turns it; the facing of the latest key holds.
+  const facingOf = (m, fallback) => (m.facing === 'left' ? -1 : m.facing === 'right' ? 1 : m.flip === undefined ? fallback : m.flip);
+
+  function sampleMove(moves, ts, home) {
+    const h = Object.assign({ x: null, y: null, flip: 1 }, home);
+    if (!moves || !moves.length) return { x: h.x, y: h.y, flip: h.flip };
     const keys = moves.slice().sort((p, q) => p.t - q.t);
     let i = -1;
     for (let n = 0; n < keys.length; n++) if (keys[n].t <= ts + EPS) i = n;
-    const val = (m) => ({ x: m.x || 0, y: m.y || 0, flip: m.flip === undefined ? 1 : m.flip });
+    const val = (m) => ({ x: m.x === undefined ? h.x : m.x, y: m.y === undefined ? h.y : m.y, flip: facingOf(m, h.flip) });
+    const mix = (u, v, k) => (u === null ? v : v === null ? u : lerp(u, v, k));
     if (i < 0) return val(keys[0]);
     const a = val(keys[i]);
     if (i === keys.length - 1) return a;
     const k = ease(keys[i + 1].ease, (ts - keys[i].t) / (keys[i + 1].t - keys[i].t)), b = val(keys[i + 1]);
-    return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), flip: a.flip };
+    return { x: mix(a.x, b.x, k), y: mix(a.y, b.y, k), flip: a.flip };
   }
 
   function visibleProps(list, ts) {
@@ -236,7 +245,7 @@
     return {
       t, ts, frame: steps ? Math.round(ts * steps) : Math.round(t * 60), parts, viseme, blink, smile: base.smile, lift: base.lift, cycles,
       variants: base.variants, view: track.view || 'side',
-      move: sampleMove(track.move, ts), props: visibleProps(track.props, ts), speedLines: inRanges(track.fx && track.fx.speedLines, ts),
+      move: sampleMove(track.move, ts, o.home), props: visibleProps(track.props, ts), speedLines: inRanges(track.fx && track.fx.speedLines, ts),
     };
   }
 

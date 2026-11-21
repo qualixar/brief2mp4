@@ -78,7 +78,9 @@
     return Object.assign({}, shape, { calm: undefined, pts: shape.pts.map((p, i) => [shape.calm[i][0] + (p[0] - shape.calm[i][0]) * k, shape.calm[i][1] + (p[1] - shape.calm[i][1]) * k]) });
   }
 
-  const placement = (o, posed) => mul(translate((o.x || 0) + posed.move.x, (o.y || 0) + posed.move.y), scaleM((o.scale || 1) * posed.move.flip, o.scale || 1));
+  // The move track's x and y are absolute; where it gives none, the caller's x and y are where the character stands.
+  const at = (v, home) => (v === null || v === undefined ? home || 0 : v);
+  const placement = (o, posed) => mul(translate(at(posed.move.x, o.x), at(posed.move.y, o.y)), scaleM((o.scale || 1) * posed.move.flip, o.scale || 1));
 
   function posedWithJaw(eff, posed) {
     const work = { parts: {} };
@@ -90,7 +92,7 @@
   }
 
   /**
-   * @param opts { x, y, scale } where the character stands (feet on the ground at x, y); the pose's own move track is added.
+   * @param opts { x, y, scale } where the character stands (feet at x, y). A move track in the pose overrides it with absolute positions.
    */
   function layout(character, skin, posed, opts) {
     const o = opts || {}, eff = effectiveParts(character, posed, skin);

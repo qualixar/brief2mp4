@@ -11,7 +11,8 @@
  *   hills: [{ pts: [[x, y], ...], fill: "hill1" }],   // optional silhouettes behind the cast
  *   set:   [{ type: "circle", c: [x, y], r: 90, fill: "sun", layer: "back" }],   // optional shapes (same records as a character part);
  *                                                     // layer "back" draws behind the hills, the default "front" on the ground
- *   cast:  [{ id, character, x, y, scale, track }],   // track as in rig.js, visemes included
+ *   cast:  [{ id, character, x, y, scale, facing, track }],   // x, y: where it stands (y defaults to the ground); track as in rig.js, visemes included;
+ *                                                       // a move key's x and y are absolute and replace x and y while it plays
  *   captions: [{ from, to, text }] }
  */
 (function (g) {
@@ -41,6 +42,11 @@
     return items;
   }
 
+  // Where a cast member stands when its track's move keys say nothing, and which way it faces to begin with.
+  function homeOf(c, scene) {
+    return { x: c.x, y: c.y === undefined ? scene.ground : c.y, flip: c.facing === 'left' ? -1 : c.facing === 'right' ? 1 : c.flip === undefined ? 1 : c.flip };
+  }
+
   function captionAt(scene, t) {
     const c = (scene.captions || []).find((k) => t >= k.from && t < k.to);
     return c ? c.text : '';
@@ -60,10 +66,10 @@
     function items(t) {
       const ts = B.quantise(t, skin.steps), frame = skin.steps ? Math.round(ts * skin.steps) : 0;
       const out = backdrop(scene, skin, frame);
-      const order = scene.cast.slice().sort((a, b) => (a.y || scene.ground) - (b.y || scene.ground));
+      const order = scene.cast.slice().sort((a, b) => (a.y === undefined ? scene.ground : a.y) - (b.y === undefined ? scene.ground : b.y));
       order.forEach((c) => {
-        const ch = cast[c.character], posed = B.pose(ch, c.track, t, opts);
-        out.push(...B.layout(ch, skin, posed, { x: c.x, y: c.y || scene.ground, scale: c.scale || 1 }));
+        const ch = cast[c.character], home = homeOf(c, scene), posed = B.pose(ch, c.track, t, Object.assign({ home }, opts));
+        out.push(...B.layout(ch, skin, posed, { x: home.x, y: home.y, scale: c.scale || 1 }));
       });
       const text = captionAt(scene, t);
       const over = skin.foreground ? skin.foreground({ W: scene.width, H: scene.height, caption: text, t, scene }) : [];
@@ -77,6 +83,6 @@
     return { items, draw, skin };
   }
 
-  Object.assign(B, { createStage });
+  Object.assign(B, { createStage, homeOf });
   if (typeof module !== 'undefined' && module.exports) module.exports = B;
 })(globalThis);

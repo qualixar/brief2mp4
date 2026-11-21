@@ -37,29 +37,34 @@ def _resolve(ref: str, root: dict) -> dict:
     return node
 
 
+def _name(value) -> str:
+    return "null" if value is None else "boolean" if isinstance(value, bool) else "number" if _is(value, "number") else "string" if isinstance(value, str) else "list" if isinstance(value, list) else "object"
+
+
 def _check(value, schema: dict, root: dict, where: str, errors: list[str]) -> None:
     if "$ref" in schema:
         schema = _resolve(schema["$ref"], root)
+    hint = f" ({schema['x-hint']})" if "x-hint" in schema else ""
     kinds = schema.get("type")
     if kinds is not None:
         kinds = [kinds] if isinstance(kinds, str) else kinds
         if not any(_is(value, k) for k in kinds):
-            errors.append(f"{where}: expected {' or '.join(kinds)}")
+            errors.append(f"{where}: expected {' or '.join(kinds)}, got {_name(value)}{hint}")
             return
     if "enum" in schema and value not in schema["enum"]:
-        errors.append(f"{where}: {value!r} is not one of {schema['enum']}")
+        errors.append(f"{where}: {value!r} is not allowed. Allowed: {', '.join(str(v) for v in schema['enum'])}")
     if isinstance(value, str):
         if "pattern" in schema and not re.search(schema["pattern"], value):
-            errors.append(f"{where}: {value!r} does not match {schema['pattern']}")
+            errors.append(f"{where}: {value!r} is not valid{hint or ' (must match ' + schema['pattern'] + ')'}")
         if len(value) < schema.get("minLength", 0):
             errors.append(f"{where}: too short")
     if _is(value, "number"):
         if "minimum" in schema and value < schema["minimum"]:
-            errors.append(f"{where}: below {schema['minimum']}")
+            errors.append(f"{where}: {value} is below the minimum of {schema['minimum']}{hint}")
         if "maximum" in schema and value > schema["maximum"]:
-            errors.append(f"{where}: above {schema['maximum']}")
+            errors.append(f"{where}: {value} is above the maximum of {schema['maximum']}{hint}")
         if "exclusiveMinimum" in schema and value <= schema["exclusiveMinimum"]:
-            errors.append(f"{where}: must be above {schema['exclusiveMinimum']}")
+            errors.append(f"{where}: {value} must be above {schema['exclusiveMinimum']}{hint}")
     if isinstance(value, list):
         _check_array(value, schema, root, where, errors)
     if isinstance(value, dict):
@@ -79,7 +84,7 @@ def _check_array(value: list, schema: dict, root: dict, where: str, errors: list
 def _check_object(value: dict, schema: dict, root: dict, where: str, errors: list[str]) -> None:
     for key in schema.get("required", []):
         if key not in value:
-            errors.append(f"{where}: missing '{key}'")
+            errors.append(f"{where}: missing required field '{key}'")
     if len(value) < schema.get("minProperties", 0):
         errors.append(f"{where}: needs at least {schema['minProperties']} entries")
     props = schema.get("properties", {})
@@ -88,9 +93,16 @@ def _check_object(value: dict, schema: dict, root: dict, where: str, errors: lis
         if key in props:
             _check(item, props[key], root, f"{where}.{key}", errors)
         elif extra is False:
-            errors.append(f"{where}: unknown field '{key}'")
+            errors.append(f"{where}: unknown field '{key}'. Allowed: {', '.join(props) or 'none'}")
         elif isinstance(extra, dict):
             _check(item, extra, root, f"{where}.{key}", errors)
+
+
+def check(value, schema: dict, where: str) -> list[str]:
+    """Check a value against any schema this kit ships (character or scene); the problems name the field and say what is allowed."""
+    errors: list[str] = []
+    _check(value, schema, schema, where, errors)
+    return errors
 
 
 def schema_errors(character: dict) -> list[str]:

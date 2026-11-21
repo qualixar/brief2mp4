@@ -102,6 +102,14 @@ def write_hf_files(project: Path, name: str) -> None:
     (project / "meta.json").write_text(json.dumps({"id": name, "name": name}) + "\n", encoding="utf-8", newline="\n")
 
 
+class SceneError(ValueError):
+    """A scene file with problems. `problems` lists each one, naming the field and what is allowed."""
+
+    def __init__(self, problems: list[str]):
+        super().__init__("the scene has %d problem(s):\n  %s" % (len(problems), "\n  ".join(problems)))
+        self.problems = problems
+
+
 def resolve_scene(scene: dict, base: Path) -> dict:
     """Expand each track's visemesFrom into a lip-sync track, and check the cast and skin names."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -115,12 +123,85 @@ def resolve_scene(scene: dict, base: Path) -> dict:
     return scene
 
 
+_PATHS_JS = """
+const fs = require('fs'); const B2M = require(process.argv[1]);
+const scene = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const out = {};
+scene.cast.forEach((m) => {
+  const ch = require(process.argv[1] + '/../cast/' + m.character + '.json'), home = B2M.homeOf(m, scene), x = [], flip = [];
+  for (let t = 0; t <= scene.duration + 1e-9; t += 0.1) {
+    const p = B2M.pose(ch, m.track || {}, t, { home }).move;
+    x.push(p.x === null ? home.x : p.x); flip.push(p.flip);
+  }
+  out[m.id] = { x, flip, half: ((ch.proportions.width || ch.proportions.height * 0.6) * (m.scale || 1)) / 2 };
+});
+console.log(JSON.stringify(out));
+"""
+
+
+def _walk_scene(scene: dict) -> dict:
+    """Where each cast member stands every 0.1 s and which way it faces, worked out by the same rig that renders it."""
+    import tempfile
+    node = shutil.which("node")
+    if not node:
+        raise SystemExit("character_project: node not found; install Node.js 22 or newer")
+    with tempfile.TemporaryDirectory() as tmp:
+        f = Path(tmp) / "scene.json"
+        f.write_text(json.dumps(scene), encoding="utf-8")
+        done = subprocess.run([node, "-e", _PATHS_JS, str(KIT / "index.js"), str(f)], capture_output=True, text=True, encoding="utf-8")
+    if done.returncode != 0:
+        raise SystemExit("character_project: could not trace the cast through the scene:\n" + done.stderr[-600:])
+    return json.loads(done.stdout)
+
+
+def screen_problems(scene: dict) -> tuple[list[str], list[str]]:
+    """Errors and warnings about where the cast stands: fully out of the frame for over half a second (error), speakers
+    facing away from each other (warning). Positions in a move track are absolute screen pixels."""
+    paths, errors, warnings = _walk_scene(scene), [], []
+    width, step = scene["width"], 0.1
+    for m in scene["cast"]:
+        if m.get("allowOffscreen"):
+            continue
+        p, run = paths[m["id"]], None
+        for i, x in enumerate(p["x"] + [None]):
+            out = x is not None and (x + p["half"] < 0 or x - p["half"] > width)
+            if out and run is None:
+                run = i
+            elif not out and run is not None:
+                if (i - run) * step > 0.5 + 1e-9:
+                    side = "left" if p["x"][run] < 0 else "right"
+                    errors.append(f"scene.cast[{scene['cast'].index(m)}] ({m['id']}, {m['character']}) is fully outside the frame to the {side} from {run * step:.1f} s to {(i - 1) * step:.1f} s "
+                                  f"(x = {p['x'][run]:.0f}, the frame is 0 to {width}). Positions in a move track are absolute screen pixels; fix x or the move keys, or set allowOffscreen: true if this is meant")
+                run = None
+    speakers = [m for m in scene["cast"] if isinstance(m.get("track"), dict) and m["track"].get("visemes")]
+    for a in speakers:
+        i = min(len(paths[a["id"]]["x"]) - 1, int(a["track"]["visemes"][0]["t"] / step) + 3)
+        for b in speakers:
+            if a is b:
+                continue
+            toward = 1 if paths[b["id"]]["x"][i] > paths[a["id"]]["x"][i] else -1
+            if paths[a["id"]]["flip"][i] != toward:
+                warnings.append(f"{a['id']} faces {'right' if toward < 0 else 'left'} while speaking to {b['id']}, who stands to its {'right' if toward > 0 else 'left'}: speakers usually face each other (set facing: \"{'right' if toward > 0 else 'left'}\")")
+    return errors, warnings
+
+
 def build_scene_project(scene_path: Path, out: Path, skin: str | None = None) -> dict:
-    """Write a complete HyperFrames project for the scene; return the scene as written."""
+    """Write a complete HyperFrames project for the scene; return the scene as written. Raises SceneError for a bad scene."""
     scene_path = Path(scene_path)
-    scene = resolve_scene(json.loads(scene_path.read_text(encoding="utf-8")), scene_path.resolve().parent)
+    sys.path.insert(0, str(KIT))
+    import validate_scene
+    raw = json.loads(scene_path.read_text(encoding="utf-8"))
     if skin:
-        scene["skin"] = skin
+        raw["skin"] = skin
+    problems = validate_scene.validate_scene(raw, scene_path.resolve().parent)
+    if problems:
+        raise SceneError(problems)
+    scene = resolve_scene(raw, scene_path.resolve().parent)
+    errors, warnings = screen_problems(scene)
+    if errors:
+        raise SceneError(errors)
+    for w in warnings:
+        print(f"warning: {w}", file=sys.stderr)
     ids = sorted({m["character"] for m in scene["cast"]})
     out.mkdir(parents=True, exist_ok=True)
     prepare_project(out, ids)
@@ -157,7 +238,11 @@ def main(argv: list[str]) -> int:
         return 0
     if not args.scene:
         ap.error("give --scene FILE, or --stage3d")
-    scene = build_scene_project(Path(args.scene), Path(args.out), args.skin)
+    try:
+        scene = build_scene_project(Path(args.scene), Path(args.out), args.skin)
+    except SceneError as exc:
+        print(f"character_project: {exc}", file=sys.stderr)
+        return 2
     print(f"project written to {args.out}: {scene['width']}x{scene['height']}, {scene['duration']} s, skin {scene['skin']}")
     return 0
 

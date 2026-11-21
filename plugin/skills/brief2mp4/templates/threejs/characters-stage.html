@@ -48,7 +48,7 @@
         { character: Object.keys(B2M_CAST)[0], x: -1.6, z: 0, height: 2.0,
           track: { keys: [{ t: 0, pose: "idle" }, { t: 1, pose: "wave", ease: "out" }, { t: 4, pose: "idle", ease: "inOut" }], layers: [{ cycle: "wave", from: 1, to: 4, steps: 5 }] } },
         { character: Object.keys(B2M_CAST)[1] || Object.keys(B2M_CAST)[0], x: 1.5, z: -0.8, height: 1.6,
-          track: { keys: [{ t: 0, pose: "idle" }, { t: 2, pose: "think", ease: "inOut" }], move: [{ t: 0, x: 0, flip: -1 }] } },       // flip -1 faces left
+          track: { keys: [{ t: 0, pose: "idle" }, { t: 2, pose: "think", ease: "inOut" }], move: [{ t: 0, facing: "left" }] } },       // facing "left" turns it; with no x the actor stays where it stands
       ];
 
       const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gl"), antialias: true, preserveDrawingBuffer: true });
