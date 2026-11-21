@@ -4,6 +4,7 @@
     python3 character_sheet.py --character child --skin paper-cutout --out sheets/
     python3 character_sheet.py --all --out sheets/            # every character in every skin
     python3 character_sheet.py --character crow --skin all    # one character, every skin
+    python3 character_sheet.py --file my-art/hero.json --skin cel-shaded    # a character file of your own
 
 Writes <out>/<character>-<skin>.png at 1920x1080. All sheets of one call come from a single HyperFrames
 snapshot run (second i of one composition shows sheet i). Use them to check that a character stays recognisable
@@ -58,12 +59,17 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--character", help="a character id from characters/cast/")
     ap.add_argument("--skin", default="all", help="a skin id, or 'all' (default)")
+    ap.add_argument("--file", help="a character JSON file of your own (its pictures, if any, are read from beside it)")
     ap.add_argument("--all", action="store_true", help="every character in every skin")
     ap.add_argument("--out", default="character-sheets", help="folder for the PNG files")
     args = ap.parse_args(argv)
-    chars = cp.cast_ids() if args.all else [args.character] if args.character else []
+    extra = {}
+    if args.file:
+        extra_char = cp.load_file(Path(args.file))
+        extra[extra_char["id"]] = extra_char
+    chars = cp.cast_ids() if args.all else [args.character] if args.character else list(extra)
     if not chars:
-        ap.error("give --character ID or --all")
+        ap.error("give --character ID, --file FILE or --all")
     skins = skin_ids() if args.all or args.skin == "all" else [args.skin]
     for s in skins:
         if s not in skin_ids():
@@ -73,7 +79,7 @@ def main(argv: list[str]) -> int:
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="b2m-sheet-") as tmp:
         project = Path(tmp)
-        cp.prepare_project(project, chars)
+        cp.prepare_project(project, [c for c in chars if c not in extra], extra_cast=extra)
         build_page(project, sheets)
         for (c, s), shot in zip(sheets, snapshot(project, len(sheets))):
             dest = out / f"{c}-{s}.png"

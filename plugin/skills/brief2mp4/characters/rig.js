@@ -12,7 +12,8 @@
  *     move: [{ t, x, y, flip, ease }],       where the character stands, in scene units; flip -1 faces left
  *     layers: [{ cycle, from, to, steps }],  walk, run, wave, laugh, breath, talk; steps = new drawings per second
  *     visemes: [{ t, v }],                   the lip-sync track from scripts/lipsync.py
- *     blink: true, props: ["prop_kite"], fx: { speedLines: [[t0, t1]] } }
+ *     blink: true, props: ["prop_kite"], fx: { speedLines: [[t0, t1]] },
+ *     view: 'front' }                         a close-up head drawing that faces the camera (parts with a 'front' variant)
  * opts.steps quantises time (a handmade skin holds each drawing for 1/steps of a second); leave it out for smooth motion.
  * Cycles hold their drawings at the layer's steps per second; opts.smooth: true (for a smooth skin) blends between them instead.
  */
@@ -22,7 +23,7 @@
   const B = (g.B2M = g.B2M || {});
   const EPS = 1e-6;
   const CHANNELS = ['r', 'x', 'y', 'sx', 'sy'];
-  const SPECIAL = new Set(['lift', 'smile', 'gaze', 'mouth']);
+  const SPECIAL = new Set(['lift', 'smile', 'gaze', 'mouth', 'variants']);
   const clamp01 = (x) => Math.min(1, Math.max(0, x));
   const lerp = (a, b, k) => a + (b - a) * k;
 
@@ -81,6 +82,7 @@
     const ga = a.gaze || [0, 0], gb = b.gaze || [0, 0];
     out.gaze = [lerp(ga[0], gb[0], k), lerp(ga[1], gb[1], k)];
     out.mouth = nearest.mouth;
+    out.variants = nearest.variants || {};
     return out;
   }
 
@@ -127,7 +129,7 @@
     const c = (ts - (layer.from || 0)) * steps + EPS;
     const useSmooth = layer.smooth !== undefined ? layer.smooth : def.smooth || smooth;
     const idx = useSmooth ? c : Math.floor(c);
-    return def.fn((((idx % n) + n) % n) / n);
+    return def.fn((((idx % n) + n) % n) / n, useSmooth);
   }
 
   function talkDeltas(character, layer, ts, smooth) {
@@ -141,10 +143,11 @@
   }
 
   function applyLayers(character, track, ts, opts, acc, speaking) {
-    const smooth = !!opts.smooth;
+    const smooth = !!opts.smooth, active = [];
     (track.layers || []).forEach((layer) => {
       const w = layerWeight(ts, layer);
       if (w <= 0) return;
+      active.push(layer.cycle);
       let deltas;
       if (layer.cycle === 'talk') {
         deltas = talkDeltas(character, layer, ts, smooth);
@@ -158,6 +161,7 @@
       deltas = cycleDeltas(layer, ts, smooth);
       Object.keys(deltas).forEach((j) => addDelta(acc, j, deltas[j], w));
     });
+    return active;
   }
 
   function blinkAmount(character, track, ts) {
@@ -203,7 +207,7 @@
     const acc = {};
     Object.keys(base).forEach((j) => { if (!SPECIAL.has(j)) addDelta(acc, j, base[j], 1); });
     const layers = track.breath === false ? track.layers || [] : [{ cycle: 'breath' }].concat(track.layers || []);
-    applyLayers(character, Object.assign({}, track, { layers }), ts, o, acc, viseme !== 'rest');
+    const cycles = applyLayers(character, Object.assign({}, track, { layers }), ts, o, acc, viseme !== 'rest');
     const blink = blinkAmount(character, track, ts);
     const legLength = (character.proportions && character.proportions.legLength) || 0;
     addDelta(acc, 'hip', { y: base.lift * legLength }, 1);
@@ -215,7 +219,8 @@
       parts[p.id] = { r: a.r * signOf(p), x: a.x, y: a.y, sx: a.sx, sy: a.sy };
     });
     return {
-      t, ts, frame: steps ? Math.round(ts * steps) : Math.round(t * 60), parts, viseme, blink, smile: base.smile,
+      t, ts, frame: steps ? Math.round(ts * steps) : Math.round(t * 60), parts, viseme, blink, smile: base.smile, lift: base.lift, cycles,
+      variants: base.variants, view: track.view || 'side',
       move: sampleMove(track.move, ts), props: visibleProps(track.props, ts), speedLines: inRanges(track.fx && track.fx.speedLines, ts),
     };
   }

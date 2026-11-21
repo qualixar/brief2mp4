@@ -126,30 +126,55 @@ def _structure_errors(parts: list[dict]) -> list[str]:
     return errors
 
 
-def _shape_errors(character: dict) -> list[str]:
+def _shapes_in(where: str, shapes: list, palette: set) -> list[str]:
     errors: list[str] = []
-    palette = set(character.get("palette", {})) | BUILTIN_COLOURS
-    for part in character.get("parts", []):
-        if part.get("id") == "mouth" and "mouth" not in part:
-            errors.append("part 'mouth' needs a 'mouth' block (kind lips or jaw)")
-        for i, shape in enumerate(part.get("shapes", [])):
-            where = f"part '{part.get('id')}' shape {i}"
-            for key in NEEDS.get(shape.get("type"), []):
-                if key not in shape:
-                    errors.append(f"{where}: a {shape['type']} needs '{key}'")
-            for key in ("fill", "stroke"):
-                if shape.get(key) and shape[key] not in palette:
-                    errors.append(f"{where}: {key} colour '{shape[key]}' is not in the palette")
+    for i, shape in enumerate(shapes):
+        for key in NEEDS.get(shape.get("type"), []):
+            if key not in shape:
+                errors.append(f"{where} shape {i}: a {shape['type']} needs '{key}'")
+        for key in ("fill", "stroke"):
+            if shape.get(key) and shape[key] not in palette:
+                errors.append(f"{where} shape {i}: {key} colour '{shape[key]}' is not in the palette")
     return errors
 
 
-def validate_character(character: dict) -> list[str]:
-    """Return a list of problems; an empty list means the character is valid."""
+def _images_in(where: str, holder: dict, base_dir: Path | None) -> list[str]:
+    """Check the picture files a part, variant or mouth block points at (when the file's folder is known)."""
+    errors: list[str] = []
+    mouth = holder.get("mouth") or {}
+    if mouth.get("kind") == "images" and "rest" not in mouth.get("images", {}):
+        errors.append(f"{where}: an image mouth needs a 'rest' picture")
+    pictures = [holder["image"]] if "image" in holder else []
+    pictures += list((mouth.get("images") or {}).values())
+    for pic in pictures:
+        src = pic.get("src", "")
+        if base_dir is not None and not src.startswith("data:") and not (base_dir / src).is_file():
+            errors.append(f"{where}: picture '{src}' not found next to the character file")
+    return errors
+
+
+def _shape_errors(character: dict, base_dir: Path | None = None) -> list[str]:
+    errors: list[str] = []
+    palette = set(character.get("palette", {})) | BUILTIN_COLOURS
+    for part in character.get("parts", []):
+        pid = part.get("id")
+        if pid == "mouth" and "mouth" not in part:
+            errors.append("part 'mouth' needs a 'mouth' block (kind lips, jaw or images)")
+        errors += _shapes_in(f"part '{pid}'", part.get("shapes", []), palette) + _images_in(f"part '{pid}'", part, base_dir)
+        for name, variant in part.get("variants", {}).items():
+            where = f"part '{pid}' variant '{name}'"
+            errors += _shapes_in(where, variant.get("shapes", []), palette) + _images_in(where, variant, base_dir)
+    return errors
+
+
+def validate_character(character: dict, base_dir: Path | None = None) -> list[str]:
+    """Return a list of problems; an empty list means the character is valid. Give base_dir (the folder of the
+    character file) to also check that every picture file it names exists."""
     errors = schema_errors(character)
     if errors and not isinstance(character.get("parts"), list):
         return errors
     parts = [p for p in character.get("parts", []) if isinstance(p, dict)]
-    return errors + _structure_errors(parts) + _shape_errors(character)
+    return errors + _structure_errors(parts) + _shape_errors(character, base_dir)
 
 
 def main(argv: list[str]) -> int:
@@ -164,7 +189,7 @@ def main(argv: list[str]) -> int:
             print(f"{name}: cannot read: {exc}")
             failed += 1
             continue
-        problems = validate_character(data)
+        problems = validate_character(data, Path(name).resolve().parent)
         for line in problems:
             print(f"{name}: {line}")
         print(f"{name}: {'OK' if not problems else str(len(problems)) + ' problem(s)'}")

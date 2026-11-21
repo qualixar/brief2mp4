@@ -36,6 +36,10 @@
       tl.to(clock, { t: __DURATION__, duration: __DURATION__, ease: "none", onUpdate: () => draw(clock.t) }, 0);
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;
+      // Hold the first frame until every picture a character uses is decoded, then draw it.
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["b2m-characters"] = B2M.preloadImages(B2M_CAST).then(() => { draw(0); tl.seek(0); });
       draw(0);
       tl.seek(0);
     </script>

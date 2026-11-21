@@ -103,7 +103,7 @@
   const toHex = (rgb) => '#' + rgb.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
   const mix = (a, b, k) => { const p = toRgb(a), q = toRgb(b); return toHex(p.map((v, i) => v + (q[i] - v) * k)); };
 
-  const DEFAULT_PALETTE = { ink: '#1d1a22', mouth: '#5b1f26', teeth: '#fff8ee', tongue: '#d8606a', white: '#fffaf0' };
+  const DEFAULT_PALETTE = { ink: '#1d1a22', mouth: '#5b1f26', teeth: '#fff8ee', tongue: '#d8606a', lip: '#d9605b', white: '#fffaf0' };
   const colorOf = (character, key) => (key ? character.palette[key] || DEFAULT_PALETTE[key] || '#ff00ff' : null);
 
   // ---- the mouth: nine drawings from one table ----
@@ -112,19 +112,27 @@
     const cx = pivot[0], cy = pivot[1], w = 10 * size * P.w, h = 9 * size * P.open, s = smile || 0;
     const cornerY = cy - s * 3 * size * (1 - P.round * 0.6), ctrl = cy + s * 4 * size;
     if (h < 0.5) {
+      if (P.press) {   // lips pressed together: a flat pink pad with a seam
+        return [{ type: 'ellipse', c: [cx, cy], r: [w * 0.92, 2.6 * size], fill: 'lip', stroke: 'ink', sw: 1.1 * size, role: 'mouth' },
+          { type: 'path', d: 'M' + pt(cx - w * 0.8, cy) + 'L' + pt(cx + w * 0.8, cy), fill: null, stroke: 'ink', sw: 1.2 * size, role: 'line' }];
+      }
       const d = 'M' + pt(cx - w, cornerY) + 'Q' + pt(cx, ctrl) + ' ' + pt(cx + w, cornerY);
-      return [{ type: 'path', d, fill: null, stroke: 'ink', sw: 2.4 * size * (P.press ? 1.6 : 1), role: 'line' }];
+      return [{ type: 'path', d, fill: null, stroke: 'ink', sw: 1.5 * size, role: 'line' }];
     }
     const top = cy - h * 0.35, bot = cy + h * 0.65;
     const open = P.round > 0.5 ? { type: 'ellipse', c: [cx, cy + h * 0.1], r: [w * 0.85, h * 0.55] }
       : { type: 'path', d: 'M' + pt(cx - w, cornerY) + 'Q' + pt(cx, top - h * 0.25) + ' ' + pt(cx + w, cornerY) + 'C' + pt(cx + w * 0.8, bot + h * 0.3) + ' ' + pt(cx - w * 0.8, bot + h * 0.3) + ' ' + pt(cx - w, cornerY) + 'Z' };
-    const out = [Object.assign(open, { fill: 'mouth', stroke: 'ink', sw: 2 * size, role: 'mouth' })];
-    if (P.tongue && h > 4) out.push({ type: 'ellipse', c: [cx, bot - h * 0.12], r: [w * 0.45, h * 0.2], fill: 'tongue', stroke: null, role: 'mouth' });
+    const out = [Object.assign(open, { fill: 'mouth', stroke: 'ink', sw: 1.2 * size, role: 'mouth' })];
+    const th = h * 0.42 * P.teeth;
     if (P.teeth && P.round < 0.5) {
-      const th = Math.max(1.6, h * 0.32 * P.teeth), y = P.lip ? bot - h * 0.45 : top + h * 0.12;
-      out.push({ type: 'rect', x: cx - w * 0.62, y, w: w * 1.24, h: th, r: 1, fill: 'teeth', stroke: null, role: 'mouth' });
+      const y = P.lip ? bot - h * 0.55 : top + h * 0.1;
+      out.push({ type: 'rect', x: cx - w * 0.62, y, w: w * 1.24, h: Math.max(1.6, th), r: 1, fill: 'teeth', stroke: null, role: 'mouth' });
     }
-    if (P.lip) out.push({ type: 'path', d: 'M' + pt(cx - w * 0.7, bot - h * 0.12) + 'Q' + pt(cx, bot + h * 0.2) + ' ' + pt(cx + w * 0.7, bot - h * 0.12), fill: null, stroke: 'ink', sw: 1.8 * size, role: 'line' });
+    if (P.tongue && h > 4) {
+      const ty = P.tongueUp ? top + h * 0.1 + th + h * 0.16 : bot - h * 0.2;
+      out.push({ type: 'ellipse', c: [cx, ty], r: [w * 0.46, h * 0.2], fill: 'tongue', stroke: null, role: 'mouth' });
+    }
+    if (P.lip) out.push({ type: 'ellipse', c: [cx, bot - h * 0.04], r: [w * 0.8, h * 0.22], fill: 'lip', stroke: 'ink', sw: 0.9 * size, role: 'mouth' });
     return out;
   }
 

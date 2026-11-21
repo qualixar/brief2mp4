@@ -30,69 +30,127 @@
     const seen = new Set();
     const visit = (p) => { if (seen.has(p.id)) return; seen.add(p.id); if (p.parent) visit(byId[p.parent]); topo.push(p); };
     Object.values(byId).forEach(visit);
-    const draw = Object.values(byId).sort((a, b) => a.z - b.z || a.order - b.order);
-    ix = { byId, topo, draw };
+    ix = { byId, topo };
     INDEX.set(character, ix);
     return ix;
   }
 
-  function partMatrices(character, posed, base) {
-    const ix = indexOf(character), W = {};
-    ix.topo.forEach((p) => {
-      const ch = posed.parts[p.id], parent = p.parent ? W[p.parent] : base;
+  // The drawing a part uses right now: its own, or a variant chosen by the pose (an open hand), the view
+  // ('front' for a close-up facing the camera) or the skin (the anime skin redraws eyes and hair).
+  function effectiveParts(character, posed, skin) {
+    const out = {}, view = posed.view || 'side', sv = skin && skin.variant;
+    indexOf(character).topo.forEach((p) => {
+      const names = [posed.variants && posed.variants[p.id], view !== 'side' && sv && view + '+' + sv, view !== 'side' && view, sv];
+      const hit = p.variants && names.find((n) => n && p.variants[n]);
+      out[p.id] = hit ? Object.assign({}, p, p.variants[hit]) : p;
+    });
+    return out;
+  }
+
+  function partMatrices(eff, character, posed, base) {
+    const W = {};
+    indexOf(character).topo.forEach((q) => {
+      const p = eff[q.id], ch = posed.parts[p.id], parent = p.parent ? W[p.parent] : base;
       const local = mul(translate(ch.x, ch.y), mul(translate(p.pivot[0], p.pivot[1]), mul(rotate(ch.r + (ch.jaw || 0)), mul(scaleM(ch.sx, ch.sy), translate(-p.pivot[0], -p.pivot[1])))));
       W[p.id] = mul(parent, local);
     });
     return W;
   }
 
-  function mouthOpen(posed) { return (B.VISEME_SHAPE[posed.viseme] || B.VISEME_SHAPE.rest).open; }
+  const mouthOpen = (posed) => (B.VISEME_SHAPE[posed.viseme] || B.VISEME_SHAPE.rest).open;
 
-  function shapesOf(character, part, posed) {
+  function shapesOf(part, posed) {
     const cfg = part.mouth;
-    if (!cfg) return part.shapes;
-    if (cfg.kind === 'jaw') return part.shapes;
-    return B.lipShapes(cfg, part.pivot, posed.viseme, posed.smile);
+    return cfg && cfg.kind === 'lips' ? B.lipShapes(cfg, part.pivot, posed.viseme, posed.smile) : part.shapes;
+  }
+
+  function imageOf(part, posed) {
+    const cfg = part.mouth;
+    if (cfg && cfg.kind === 'images') return cfg.images[posed.viseme] || cfg.images.rest;
+    return part.image || null;
+  }
+
+  const placement = (o, posed) => mul(translate((o.x || 0) + posed.move.x, (o.y || 0) + posed.move.y), scaleM((o.scale || 1) * posed.move.flip, o.scale || 1));
+
+  function posedWithJaw(eff, posed) {
+    const work = { parts: {} };
+    Object.keys(posed.parts).forEach((id) => {
+      const part = eff[id], jaw = part.mouth && part.mouth.kind === 'jaw' ? mouthOpen(posed) * (part.mouth.maxOpen || 28) * (part.sign || 1) : 0;
+      work.parts[id] = Object.assign({}, posed.parts[id], { jaw });
+    });
+    return work;
   }
 
   /**
    * @param opts { x, y, scale } where the character stands (feet on the ground at x, y); the pose's own move track is added.
    */
   function layout(character, skin, posed, opts) {
-    const o = opts || {}, ix = indexOf(character);
-    const flip = posed.move.flip, sc = o.scale || 1;
-    const base = mul(translate((o.x || 0) + posed.move.x, (o.y || 0) + posed.move.y), scaleM(sc * flip, sc));
-    const work = { parts: {} };
-    Object.keys(posed.parts).forEach((id) => {
-      const part = ix.byId[id], jaw = part && part.mouth && part.mouth.kind === 'jaw' ? mouthOpen(posed) * (part.mouth.maxOpen || 28) * (part.sign || 1) : 0;
-      work.parts[id] = Object.assign({}, posed.parts[id], { jaw });
-    });
-    const W = partMatrices(character, work, base);
-    const items = [];
-    const shown = new Set(posed.props);
-    ix.draw.forEach((part) => {
+    const o = opts || {}, eff = effectiveParts(character, posed, skin);
+    const base = placement(o, posed), W = partMatrices(eff, character, posedWithJaw(eff, posed), base);
+    const items = [], shown = new Set(posed.props);
+    const under = (it) => items.unshift(it);
+    Object.values(eff).sort((a, b) => a.z - b.z || a.order - b.order).forEach((part) => {
       if (part.prop && !shown.has(part.id)) return;
-      shapesOf(character, part, posed).forEach((shape, si) => {
+      shapesOf(part, posed).forEach((shape, si) => {
         const d = B.shapePath(shape);
         const ctx = { character, part, shape, d, posed, skin, frame: posed.frame, seed: character.id + ':' + part.id + ':' + si, color: (k) => B.colorOf(character, k), bounds: () => B.pathBounds(d) };
         skin.shape(ctx).forEach((prim) => items.push(Object.assign({ kind: 'path', part: part.id, m: round(W[part.id]) }, prim)));
       });
+      const img = imageOf(part, posed);
+      if (img) items.push(Object.assign({ kind: 'image', part: part.id, m: round(W[part.id]), src: img.src, x: img.x, y: img.y, w: img.w, h: img.h }, skin.image ? skin.image({ part, posed, skin }) : {}));
     });
-    if (skin.character) skin.character({ character, posed, items, matrices: W, base, push: (it) => items.push(it) });
+    if (skin.character) skin.character({ character, posed, items, matrices: W, base, push: (it) => items.push(it), under });
     return items;
   }
 
   // Where a part sits on screen at this pose: used for captions, speech bubbles and tests.
-  function partPoint(character, posed, opts, partId) {
-    const o = opts || {}, flip = posed.move.flip, sc = o.scale || 1;
-    const base = mul(translate((o.x || 0) + posed.move.x, (o.y || 0) + posed.move.y), scaleM(sc * flip, sc));
-    const W = partMatrices(character, { parts: Object.fromEntries(Object.entries(posed.parts).map(([k, v]) => [k, Object.assign({ jaw: 0 }, v)])) }, base);
-    const p = indexOf(character).byId[partId].pivot, m = W[partId];
+  function partPoint(character, posed, opts, partId, skin) {
+    const eff = effectiveParts(character, posed, skin), W = partMatrices(eff, character, posedWithJaw(eff, posed), placement(opts || {}, posed));
+    const p = eff[partId].pivot, m = W[partId];
     return [m[0] * p[0] + m[2] * p[1] + m[4], m[1] * p[0] + m[3] * p[1] + m[5]];
   }
 
+  // Every image a character uses, loaded and decoded, so that a frame never draws a half-loaded picture.
+  const IMAGES = {};
+  function imageSources(character) {
+    const found = new Set();
+    const take = (img) => img && img.src && found.add(img.src);
+    character.parts.forEach((p) => {
+      [p].concat(Object.values(p.variants || {})).forEach((v) => {
+        take(v.image);
+        if (v.mouth && v.mouth.images) Object.values(v.mouth.images).forEach(take);
+      });
+    });
+    return Array.from(found);
+  }
+
+  function preloadImages(characters) {
+    const jobs = [];
+    Object.values(characters).forEach((c) => imageSources(c).forEach((src) => {
+      if (IMAGES[src] || typeof Image === 'undefined') return;
+      const img = new Image();
+      img.src = src;
+      IMAGES[src] = img;
+      jobs.push(img.decode());
+    }));
+    return Promise.all(jobs);
+  }
+
   // ---- canvas backend ----
+  const PATTERNS = {};
+  function pattern(g2, v) {
+    if (!PATTERNS[v.id]) {
+      const c = document.createElement('canvas');
+      c.width = c.height = v.size;
+      const k = c.getContext('2d');
+      v.dots.forEach((d) => { k.fillStyle = d[4]; k.beginPath(); k.arc(d[0], d[1], d[2], 0, 6.2832); k.fill(); });
+      PATTERNS[v.id] = g2.createPattern(c, 'repeat');
+    }
+    return PATTERNS[v.id];
+  }
+
   function paint(g2, v, item) {
+    if (v && v.pattern) return pattern(g2, v);
     if (v && typeof v === 'object') {
       const gr = v.grad === 'radial' ? g2.createRadialGradient(v.cx, v.cy, v.r0 || 0, v.cx, v.cy, v.r) : g2.createLinearGradient(v.x1, v.y1, v.x2, v.y2);
       v.stops.forEach((s) => gr.addColorStop(s[0], s[1]));
@@ -107,7 +165,10 @@
       g2.setTransform(it.m[0], it.m[1], it.m[2], it.m[3], it.m[4], it.m[5]);
       g2.globalAlpha = it.alpha === undefined ? 1 : it.alpha;
       if (it.shadow) { g2.shadowColor = it.shadow.color; g2.shadowBlur = it.shadow.blur; g2.shadowOffsetX = it.shadow.dx; g2.shadowOffsetY = it.shadow.dy; }
-      if (it.kind === 'text') {
+      if (it.kind === 'image') {
+        const img = IMAGES[it.src];
+        if (img && img.complete) g2.drawImage(img, it.x, it.y, it.w, it.h);
+      } else if (it.kind === 'text') {
         g2.font = it.font; g2.textAlign = it.align || 'left'; g2.textBaseline = it.baseline || 'alphabetic';
         if (it.stroke) { g2.strokeStyle = it.stroke; g2.lineWidth = it.sw || 1; g2.lineJoin = 'round'; g2.strokeText(it.text, it.x, it.y); }
         g2.fillStyle = paint(g2, it.fill, it); g2.fillText(it.text, it.x, it.y);
@@ -128,7 +189,17 @@
     svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height); svg.setAttribute('width', width); svg.setAttribute('height', height);
     const defs = doc.createElementNS(NS, 'defs'); svg.appendChild(defs); parent.appendChild(svg);
     const pool = [], gradients = new Map();
+    const patternDef = (v) => {
+      if (!gradients.has(v.id)) {
+        const el = doc.createElementNS(NS, 'pattern');
+        el.setAttribute('id', v.id); el.setAttribute('patternUnits', 'userSpaceOnUse'); el.setAttribute('width', v.size); el.setAttribute('height', v.size);
+        v.dots.forEach((d) => { const c = doc.createElementNS(NS, 'circle'); c.setAttribute('cx', d[0]); c.setAttribute('cy', d[1]); c.setAttribute('r', d[2]); c.setAttribute('fill', d[4]); el.appendChild(c); });
+        defs.appendChild(el); gradients.set(v.id, v.id);
+      }
+      return 'url(#' + v.id + ')';
+    };
     const gradient = (v) => {
+      if (v.pattern) return patternDef(v);
       const key = JSON.stringify(v);
       if (!gradients.has(key)) {
         const el = doc.createElementNS(NS, v.grad === 'radial' ? 'radialGradient' : 'linearGradient'), id = 'g' + gradients.size;
@@ -141,9 +212,10 @@
       return 'url(#' + gradients.get(key) + ')';
     };
     const paintAttr = (v) => (v && typeof v === 'object' ? gradient(v) : v || 'none');
+    const TAGS = { text: 'text', image: 'image', path: 'path' };
     function update(items) {
       items.forEach((it, i) => {
-        const tag = it.kind === 'text' ? 'text' : 'path';
+        const tag = TAGS[it.kind];
         let el = pool[i];
         if (!el || el.tagName !== tag) { const n = doc.createElementNS(NS, tag); if (el) svg.replaceChild(n, el); else svg.appendChild(n); pool[i] = el = n; }
         el.style.display = '';
@@ -153,6 +225,7 @@
         el.setAttribute('opacity', it.alpha === undefined ? 1 : it.alpha); el.setAttribute('fill-rule', it.rule || 'nonzero');
         el.style.filter = it.shadow ? 'drop-shadow(' + it.shadow.dx + 'px ' + it.shadow.dy + 'px ' + it.shadow.blur / 2 + 'px ' + it.shadow.color + ')' : '';
         if (tag === 'path') el.setAttribute('d', it.d);
+        else if (tag === 'image') { el.setAttribute('href', it.src); el.setAttribute('x', it.x); el.setAttribute('y', it.y); el.setAttribute('width', it.w); el.setAttribute('height', it.h); }
         else { el.setAttribute('x', it.x); el.setAttribute('y', it.y); el.setAttribute('style', 'font:' + it.font + ';text-anchor:' + ({ center: 'middle', right: 'end' }[it.align] || 'start')); el.textContent = it.text; }
       });
       for (let i = items.length; i < pool.length; i++) pool[i].style.display = 'none';
@@ -160,6 +233,6 @@
     return { svg, update };
   }
 
-  Object.assign(B, { layout, partPoint, drawCanvas, createSVG, matrix: { mul, translate, rotate, scale: scaleM, IDENT } });
+  Object.assign(B, { layout, partPoint, drawCanvas, createSVG, preloadImages, imageSources, effectiveParts, matrix: { mul, translate, rotate, scale: scaleM, IDENT } });
   if (typeof module !== 'undefined' && module.exports) module.exports = B;
 })(globalThis);
