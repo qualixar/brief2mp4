@@ -68,7 +68,7 @@ Mixing is normal: render a Blender shot to frames, then use it as a video layer 
 
 ### Art forms: when the brief asks for a look
 
-Thirty art forms have a recipe each: claymation, stop-motion, paper cut-out, felt, origami, shadow puppetry, collage, risograph, anime and cel shading, flat vector explainer, whiteboard and chalkboard, watercolour, ink wash, line art, rotoscope, motion comic, UPA mid-century, rubber-hose, linocut, isometric, low-poly, voxel, pixel art, 3D product render, kinetic typography, infographic, lyric video, VHS and glitch, blueprint, neon sign.
+58 art forms have a recipe each, in 5 families: craft and handmade: claymation, stop-motion look, paper cut-out, felt and fabric craft, origami, shadow puppetry, collage and mixed media, risograph and halftone print, pop-up book, papercut and sanjhi, brick toy, string puppet and kathputli; drawn and painted: anime and cel shading, 2D flat vector explainer, whiteboard and doodle, watercolour, ink wash, line art, rotoscope look, motion comic, UPA and mid-century modern, rubber-hose cartoon, linocut and woodcut print, pencil sketch, charcoal, oil painting and impasto, gouache storybook, crayon and oil pastel, chalkboard, one continuous line, paint-on-glass, sand animation, retro anime, manga, chibi, modern TV cartoon, gothic cartoon; geometry, pixels and 3d: isometric, low-poly 3D, voxel, pixel art, 3D product render; type, data and retro: kinetic typography, infographic and data animation, lyric video, VHS and glitch, blueprint and technical drawing, neon sign; folk and print traditions: Madhubani, Warli, Pattachitra, Gond, Indian miniature, engraving and banknote hatching, silkscreen poster, art deco, stained glass, ukiyo-e woodblock.
 
 ```bash
 python3 <this skill's folder>/scripts/art_route.py BRIEF.md     # proposes one, with the reason, or says none fits
@@ -164,7 +164,7 @@ That message means: re-read the **original brief** (not your spec), go through i
 - `references/blender.md`: headless Blender, engines, light, camera, text, frames
 - `references/ffmpeg.md`: finishing, joining, overlays, sound, loudness, inspection
 - `references/formats.md`: beat sheets, routes and checks per format (explainer, maths, tutorial, story, Short, data, launch, logo, lyric, captions)
-- `references/art-forms.md` and `references/art-forms/<id>.md`: 30 art forms, each with visual rules, timing, a build recipe, assets, sound, pitfalls, sources and a tested demo (generated from `references/art-forms.json`)
+- `references/art-forms.md` and `references/art-forms/<id>.md`: 58 art forms, each with visual rules, timing, a build recipe, assets, sound, pitfalls, sources and a tested demo (generated from `references/art-forms.json`)
 - `art-forms/looks.js`, `art-forms/gallery.html`: one deterministic demo per look, and a viewer
 - `references/pipelines.md`: architecture diagram, route per beat, recipes for mixed pipelines, methods
 - `references/ecosystem.md`: 45+ open-source motion, 3D and agent-skill repos, when to use each, how to connect them

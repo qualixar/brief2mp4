@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tests/art_forms/check_looks.mjs: prove every art-form look in looks.js draws, moves and repeats exactly.
+// tests/art_forms/check_looks.mjs: prove every art-form look in the files of art-forms/looks-files.json draws, moves and repeats exactly.
 //   node tests/art_forms/check_looks.mjs                 check all, print PASS or FAIL per look
 //   node tests/art_forms/check_looks.mjs --sheet out.jpg  also write a contact sheet (one frame per look)
 //   node tests/art_forms/check_looks.mjs --frames dir      also write one PNG per look
@@ -40,7 +40,7 @@ async function launch(pw) {
   for (const t of tries) { try { return await pw.chromium.launch({ headless: true, ...t }); } catch { /* next */ } }
   console.error(`Could not start Chrome. Install Google Chrome, or run: npx playwright@${PW} install chromium, or set BRIEF2MP4_CHROME.`); process.exit(2);
 }
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json' };
 const server = http.createServer((req, res) => {
   const file = path.join(DIR, path.basename(new URL(req.url, 'http://x').pathname) || 'gallery.html');
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(req.url === '/favicon.ico' ? 204 : 404).end(); return; }
@@ -51,7 +51,8 @@ const base = `http://127.0.0.1:${server.address().port}/gallery.html`;
 
 const pw = await playwright(), browser = await launch(pw);
 const ctx = await browser.newContext({ viewport: { width: 1000, height: 700 }, deviceScaleFactor: 1 });
-const { IDS } = await import(pathToFileURL(path.join(DIR, 'looks.js')).href);
+const LOOK_FILES = JSON.parse(fs.readFileSync(path.join(DIR, 'looks-files.json'), 'utf8'));   // looks.js, looks-painted.js, ...
+const IDS = []; for (const f of LOOK_FILES) IDS.push(...Object.keys((await import(pathToFileURL(path.join(DIR, f)).href)).LOOKS));
 const ids = only.length ? only : IDS;
 const results = [], thumbs = [];
 // a short fingerprint of the canvas, and how much of it is not the corner colour

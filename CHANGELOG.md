@@ -2,6 +2,22 @@
 
 All notable changes to brief2mp4. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-11-22
+
+### Added
+- **28 new art forms, 58 in all**, each with a researched record, a tested demo and a generated reference page:
+  - painting and drawing: pencil sketch, charcoal, oil painting and impasto, gouache storybook, crayon and oil pastel, chalkboard, one continuous line, paint-on-glass, sand animation;
+  - folk and print traditions (a new family): Madhubani, Warli, Pattachitra, Gond, Indian miniature, engraving, silkscreen poster, art deco, stained glass, ukiyo-e;
+  - anime and cartoon: retro anime, manga, chibi, modern TV cartoon, gothic cartoon;
+  - craft: pop-up book, papercut and sanjhi, brick toy, string puppet and kathputli.
+- Folk records name the region and community each tradition comes from, and say the demo is a code study of the visual rules, not the craft itself.
+- `art-forms/looks-files.json` lists the demo files; the gallery, the browser check and the page builder all read it, so new looks go in their own file.
+- `tests/art_forms/contact_sheet.mjs`: renders chosen looks at chosen times into one PNG for review, and router cases for the new forms.
+
+### Changed
+- Chalkboard is its own form; whiteboard keeps the marker look. Whiteboard and line art drop the keywords that now belong to chalkboard and one continuous line.
+- The README picture shows one frame of every form.
+
 ## [0.5.0] - 2026-11-21
 
 ### Added

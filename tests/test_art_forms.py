@@ -14,7 +14,9 @@ REPO = Path(__file__).resolve().parents[1]
 SKILL = REPO / "plugin" / "skills" / "brief2mp4"
 REF = SKILL / "references"
 DATA = json.loads((REF / "art-forms.json").read_text(encoding='utf-8'))
-LOOKS_JS = (SKILL / "art-forms" / "looks.js").read_text(encoding="utf-8").replace("\r\n", "\n")
+FORMS_DIR = SKILL / "art-forms"
+LOOK_FILES = sorted(FORMS_DIR.glob("looks*.js"))   # looks.js, looks-painted.js, ...: one file per batch
+LOOKS_JS = "\n".join(f.read_text(encoding="utf-8").replace("\r\n", "\n") for f in LOOK_FILES)
 sys.path.insert(0, str(SKILL / "scripts"))
 import art_route  # noqa: E402
 
@@ -25,7 +27,7 @@ def look_ids() -> list[str]:
 
 def test_there_are_enough_forms_and_ids_are_unique():
     ids = [f["id"] for f in DATA["forms"]]
-    assert len(ids) >= 28
+    assert len(ids) >= 58
     assert len(ids) == len(set(ids))
 
 
@@ -46,10 +48,17 @@ def test_every_form_has_a_demo_and_every_demo_belongs_to_a_form():
     assert in_data == set(look_ids())
 
 
-def test_looks_never_read_a_clock_or_unseeded_randomness():
-    code = re.sub(r"//.*", "", LOOKS_JS)   # comments may name the things that are banned
+def test_the_manifest_lists_every_looks_file():
+    listed = json.loads((FORMS_DIR / "looks-files.json").read_text(encoding="utf-8"))
+    assert sorted(listed) == [f.name for f in LOOK_FILES], "art-forms/looks-files.json must list every looks*.js file, looks.js first"
+    assert listed[0] == "looks.js" and len(listed) >= 2
+
+
+@pytest.mark.parametrize("file", LOOK_FILES, ids=lambda f: f.name)
+def test_looks_never_read_a_clock_or_unseeded_randomness(file):
+    code = re.sub(r"//.*", "", file.read_text(encoding="utf-8"))   # comments may name the things that are banned
     for banned in ("Math.random", "Date.now", "performance.now", "setInterval", "setTimeout", "requestAnimationFrame", "new Date"):
-        assert banned not in code, f"looks.js must be a pure function of time: found {banned}"
+        assert banned not in code, f"{file.name} must be a pure function of time: found {banned}"
     assert "http://" not in code and "https://" not in code, "looks load nothing from the network"
 
 
@@ -84,7 +93,17 @@ def test_generated_pages_are_current():
     ("A bedtime story for children about a fox", "paper-cutout", "inferred"),
     ("A retro 90s promo that feels like an old tape", "vhs-glitch", "inferred"),
     ("A calm meditation intro", "watercolour", "inferred"),
-    ("chalkboard style maths lesson", "whiteboard", "named"),
+    ("a whiteboard style maths lesson", "whiteboard", "named"),
+    ("chalkboard style maths lesson", "chalkboard", "named"),   # chalkboard is its own form since 0.6.0
+    ("an oil painting style film", "oil-painting", "named"),
+    ("sand art story on a light table", "sand-art", "named"),
+    ("chalk drawings on a blackboard", "chalkboard", "named"),
+    ("a Warli style story", "warli", "named"),
+    ("Madhubani painting of a fish", "madhubani", "named"),
+    ("looks like a stained glass window", "stained-glass", "named"),
+    ("manga style action scene", "manga", "named"),
+    ("brick toy city", "brick-toy", "named"),
+    ("kathputli puppet show", "string-puppet", "named"),
 ])
 def test_router_picks_the_form(brief, expected, confidence):
     r = art_route.route(brief)
