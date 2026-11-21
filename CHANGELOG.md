@@ -2,6 +2,23 @@
 
 All notable changes to brief2mp4. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-11-22
+
+### Added
+- **24 new art forms, 82 in all**, each with a researched record, a tested demo and a generated reference page:
+  - 3D looks: stylised 3D cartoon, toon 3D, point cloud, tilt-shift miniature diorama, 2.5D parallax;
+  - screens and cinema (a new family): synthwave, cyberpunk night city, ASCII art, 1-bit dither, CRT terminal, hologram HUD, thermal camera, silent film, newsreel, film noir, archive documentary (pan and zoom over stills);
+  - information: maths diagram, sticker explainer, Memphis design;
+  - abstract and generative (a new family): particles, liquid metaball, flow-field generative, psychedelic, Bauhaus geometric.
+- **LightCraft in the edit pack** (`light`, v0.21.1): pinned like the other five apps, with SHA-256 checked against the release's SHA256SUMS and the hash pinned here, and the signature checked against the same key. New recipe `edit/recipes/light_grade.sh` grades a still with a built-in preset and leaves the original untouched. The edit pack now installs six free editors.
+- The art forms guide (`docs/art-forms-guide/`, PDF) is rebuilt for all 82 forms: 87 pages, with lead pages for the new families and counts taken from the data.
+
+### Changed
+- The README picture shows one frame of all 82 forms.
+
+### Fixed
+- `docs/art-forms-guide/build.py` had a syntax error on its last lines.
+
 ## [0.6.0] - 2026-11-22
 
 ### Added
