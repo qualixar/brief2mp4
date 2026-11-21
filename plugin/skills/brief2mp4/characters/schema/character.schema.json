@@ -85,6 +85,12 @@
       "items": {
         "$ref": "#/$defs/part"
       }
+    },
+    "spikes": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How spiky the anime skin's hair is, for shapes that carry a calm outline: 0 is the calm outline, 1 the spiky one. Default 0.6."
     }
   },
   "$defs": {
@@ -285,6 +291,14 @@
         },
         "shade": {
           "type": "boolean"
+        },
+        "calm": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "description": "For a poly: a second, calmer set of points, same count as pts. The character's spikes field blends between them."
         }
       }
     },

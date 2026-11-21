@@ -132,6 +132,8 @@ def _shapes_in(where: str, shapes: list, palette: set) -> list[str]:
         for key in NEEDS.get(shape.get("type"), []):
             if key not in shape:
                 errors.append(f"{where} shape {i}: a {shape['type']} needs '{key}'")
+        if "calm" in shape and len(shape["calm"]) != len(shape.get("pts", [])):
+            errors.append(f"{where} shape {i}: calm needs as many points as pts")
         for key in ("fill", "stroke"):
             if shape.get(key) and shape[key] not in palette:
                 errors.append(f"{where} shape {i}: {key} colour '{shape[key]}' is not in the palette")

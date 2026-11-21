@@ -2,7 +2,7 @@
  * skins-extra.js: four more skins on the same rig, written like the first two (see skins.js for the contract).
  *
  *   line-art         strokes only: one weight of line on a plain ground, the line boils on every held drawing
- *   shadow-puppet    black leather silhouettes with punched holes, visible rods, a warm lamp behind
+ *   shadow-puppet    black leather profile silhouettes (an optional eye hole), visible rods, a warm lamp behind
  *   motion-comic     flat colour, a bold ink line, halftone dots for shadow, a panel border and a caption box
  *   flat-explainer   clean flat vector: fills only, smooth motion, no outline and no shadow
  *
@@ -46,16 +46,16 @@
     out.reverse().forEach((it) => ctx.under(it));
   }
 
+  // A shadow puppet is a flat leather profile: one black shape per part, rods below, a lamp behind. The only thing
+  // cut out is an optional eye hole; no brows, mouth, pupils, stripes or patterns, and no front view (profileOnly).
   SKINS['shadow-puppet'] = {
-    id: 'shadow-puppet', name: 'Shadow puppetry', steps: 12, bg: '#e8a24e', ink: LEATHER,
+    id: 'shadow-puppet', name: 'Shadow puppetry', steps: 12, bg: '#e8a24e', ink: LEATHER, profileOnly: true,
     shape(ctx) {
-      const role = roleOf(ctx.shape), s = ctx.shape;
-      if (role === 'cel') return [];
+      const role = roleOf(ctx.shape), s = ctx.shape, id = ctx.part.id;
+      if (role === 'cel' || /^(brow|pupil)/.test(id) || (id === 'mouth' && ctx.part.mouth.kind === 'lips')) return [];
+      if (/^eye/.test(id)) return role === 'base' && s.fill && lum(ctx.color(s.fill)) > 600 ? [{ d: ctx.d, fill: LAMP, stroke: null }] : [];
       if (role === 'line') return [lineOf(ctx, 1.25, { stroke: LEATHER })];
-      if (!s.fill) return [];
-      // light colours, an open mouth and the small decorative shapes (pockets, plackets, stripes) are punched out of the leather
-      const punched = lum(ctx.color(s.fill)) > 690 || (role === 'mouth' && s.fill === 'mouth') || (role === 'detail' && s.fill !== 'blush' && s.fill !== 'skin3');
-      return [{ d: ctx.d, fill: punched ? LAMP : LEATHER, stroke: null }];
+      return s.fill ? [{ d: ctx.d, fill: LEATHER, stroke: null }] : [];
     },
     character: rods,
     sky: (c) => [{ d: c.rect, fill: { grad: 'radial', cx: c.W / 2, cy: c.H * 0.55, r0: 40, r: c.W * 0.62, stops: [[0, '#ffd27a'], [0.55, '#e08a3a'], [1, '#4a210a']] }, stroke: null }],

@@ -4,6 +4,7 @@
   "name": "Crow",
   "kind": "bird",
   "version": 1,
+  "poseOverrides": {"idle": {"armN_up": 0, "armN_lo": 0, "armF_up": 0.0, "armF_lo": 0}, "wave": {"armN_up": 105, "armN_lo": -8, "armF_up": 70, "armF_lo": 0}, "point": {"armN_up": 16, "armN_lo": 0, "armF_up": 0, "armF_lo": 0}, "sit": {"armN_up": 4, "armN_lo": 0, "armF_up": 3.2, "armF_lo": 0}, "run-ready": {"armN_up": 26, "armN_lo": 0, "armF_up": 20.8, "armF_lo": 0}, "jump": {"armN_up": 88, "armN_lo": 0, "armF_up": 72, "armF_lo": 0}, "surprised": {"armN_up": 38, "armN_lo": 0, "armF_up": 28, "armF_lo": 0}, "sad": {"armN_up": 0, "armN_lo": 0, "armF_up": 0.0, "armF_lo": 0}, "laugh": {"armN_up": 18, "armN_lo": 0, "armF_up": 14.4, "armF_lo": 0}, "think": {"armN_up": 8, "armN_lo": 0, "armF_up": 6.4, "armF_lo": 0}, "fight-ready": {"armN_up": 34, "armN_lo": 0, "armF_up": 27.200000000000003, "armF_lo": 0}, "bow": {"armN_up": 6, "armN_lo": 0, "armF_up": 4.800000000000001, "armF_lo": 0}, "strike": {"armN_up": 58, "armN_lo": -6, "armF_up": 0, "armF_lo": 0}, "hurt": {"armN_up": 50, "armN_lo": 0, "armF_up": 36, "armF_lo": 0}, "cheer": {"armN_up": 104, "armN_lo": 0, "armF_up": 92, "armF_lo": 0}},
   "palette": {"body": "#1e2330", "bodyShine": "#34405c", "wing": "#262e42", "wingShine": "#46557a", "wing2": "#181c28", "beak": "#4a4a54", "beak2": "#34343c", "beakHi": "#8a8a98", "leg": "#5c5c66", "eyewhite": "#efe9d2", "iris": "#e8b930", "ink": "#12141c", "white": "#fffaf0", "mouth": "#5b1f26"},
   "proportions": {"height": 170, "legLength": 62, "width": 200, "face": 52},
   "parts": [
@@ -51,6 +52,9 @@
      ]
     },
     {"id": "torso", "parent": "hip", "pivot": [0, -70], "z": 11,
+     "variants": {
+       "front": {"shapes": [{"type": "ellipse", "c": [2, -92], "r": [34, 34], "fill": "body", "stroke": null, "shade": false}, {"type": "poly", "pts": [[18, -70], [30, -88], [36, -104], [30, -76]], "smooth": true, "fill": "body", "stroke": null, "role": "cel"}]}
+     },
      "shapes": [
        {"type": "ellipse", "c": [-2, -98], "r": [44, 32], "fill": "body", "stroke": null, "rot": -18, "shade": false},
        {"type": "ellipse", "c": [8, -90], "r": [26, 15], "fill": "bodyShine", "stroke": null, "rot": -18, "role": "detail", "shade": false},
@@ -59,36 +63,37 @@
      ]
     },
     {"id": "tail", "parent": "torso", "pivot": [-36, -96], "z": 3,
+     "variants": {
+       "front": {"shapes": []}
+     },
      "shapes": [
        {"type": "poly", "pts": [[-36, -104], [-62, -102], [-94, -88], [-100, -75], [-90, -70], [-62, -78], [-38, -86]], "smooth": true, "fill": "wing", "stroke": null, "shade": false},
        {"type": "path", "d": "M-44 -96 L-92 -78", "fill": null, "stroke": "wingShine", "sw": 1.8, "role": "detail", "shade": false}
      ]
     },
-    {"id": "armF_up", "parent": "torso", "pivot": [2, -112], "z": 6,
+    {"id": "armF_up", "parent": "torso", "pivot": [12, -105], "z": 6, "sign": 1,
      "variants": {
-       "over": {"z": 14},
        "front": {"shapes": []}
      },
      "shapes": [
-       {"type": "poly", "pts": [[2, -112], [22, -104], [28, -78], [18, -52], [4, -44], [-12, -56], [-16, -86], [-10, -106]], "smooth": true, "fill": "wing2", "stroke": null},
-       {"type": "path", "d": "M4 -104 Q14 -84 10 -58", "fill": null, "stroke": "wing", "sw": 2.2, "role": "detail", "shade": false},
-       {"type": "path", "d": "M-4 -98 Q-2 -78 -4 -62", "fill": null, "stroke": "wing", "sw": 2, "role": "detail", "shade": false}
+       {"type": "poly", "pts": [[12.0, -107.0], [26.4, -101.6], [22.8, -89.0], [-0.6, -83.6], [-29.4, -80.0], [-52.8, -77.3], [-34.8, -89.0], [-11.4, -99.8], [3.0, -108.8]], "smooth": true, "fill": "wing2", "stroke": null},
+       {"type": "path", "d": "M16 -99 Q-14 -87 -46 -77", "fill": null, "stroke": "wing", "sw": 2, "role": "detail", "shade": false},
+       {"type": "path", "d": "M14 -93 Q-12 -83 -34 -79", "fill": null, "stroke": "wing", "sw": 1.6, "role": "detail", "shade": false}
      ]
     },
-    {"id": "armF_lo", "parent": "armF_up", "pivot": [6, -58], "z": 5,
+    {"id": "armF_lo", "parent": "armF_up", "pivot": [-24, -83], "z": 5, "sign": 1,
      "variants": {
        "front": {"shapes": []}
      },
      "shapes": [
-       {"type": "poly", "pts": [[6, -62], [18, -52], [21, -30], [13, -14], [4, -20], [-4, -42]], "smooth": true, "fill": "wing2", "stroke": null},
-       {"type": "path", "d": "M10 -52 L14 -22", "fill": null, "stroke": "wing", "sw": 1.8, "role": "detail", "shade": false},
-       {"type": "path", "d": "M3 -46 L6 -24", "fill": null, "stroke": "wing", "sw": 1.6, "role": "detail", "shade": false}
+       {"type": "poly", "pts": [[-24, -89], [-42, -86], [-68, -76], [-74, -71], [-58, -72], [-38, -76], [-22, -79]], "smooth": true, "fill": "wing2", "stroke": null},
+       {"type": "path", "d": "M-34 -83 L-66 -74", "fill": null, "stroke": "wing", "sw": 1.6, "role": "detail", "shade": false}
      ]
     },
     {"id": "head", "parent": "torso", "pivot": [22, -112], "z": 13,
      "variants": {
        "anime": {"shapes": [{"type": "capsule", "a": [14, -104], "b": [32, -124], "ra": 14, "rb": 12, "fill": "body", "stroke": null, "shade": false}, {"type": "poly", "pts": [[18, -140], [14, -158], [26, -148], [30, -166], [38, -148], [48, -160], [50, -142], [60, -130], [56, -112], [38, -108], [22, -112], [14, -126]], "smooth": false, "fill": "body", "stroke": null, "shade": false}, {"type": "poly", "pts": [[24, -148], [30, -160], [38, -150], [30, -146]], "smooth": false, "fill": "bodyShine", "stroke": null, "role": "detail", "shade": false}, {"type": "poly", "pts": [[52, -136], [84, -127], [53, -120]], "smooth": false, "fill": "beak", "stroke": null, "shade": false}, {"type": "poly", "pts": [[34, -112], [50, -122], [56, -132], [50, -113], [40, -108]], "smooth": true, "fill": "body", "stroke": null, "role": "cel"}]},
-       "front": {"pivot": [2, -112], "shapes": [{"type": "capsule", "a": [2, -104], "b": [2, -120], "ra": 18, "rb": 16, "fill": "body", "stroke": null, "shade": false}, {"type": "ellipse", "c": [2, -130], "r": [26, 24], "fill": "body", "stroke": null, "shade": false}, {"type": "ellipse", "c": [-6, -140], "r": [11, 6], "fill": "bodyShine", "stroke": null, "rot": -20, "role": "detail", "shade": false}, {"type": "poly", "pts": [[-6, -128], [10, -128], [2, -108]], "smooth": false, "fill": "beak", "stroke": null, "shade": false}, {"type": "path", "d": "M-2 -126 L2 -114", "fill": null, "stroke": "beakHi", "sw": 1.6, "role": "detail", "shade": false}, {"type": "poly", "pts": [[10, -108], [22, -120], [26, -132], [22, -112]], "smooth": true, "fill": "body", "stroke": null, "role": "cel"}]}
+       "front": {"pivot": [2, -112], "shapes": [{"type": "ellipse", "c": [2, -130], "r": [26, 24], "fill": "body", "stroke": null, "shade": false}, {"type": "ellipse", "c": [-6, -140], "r": [11, 6], "fill": "bodyShine", "stroke": null, "rot": -20, "role": "detail", "shade": false}, {"type": "poly", "pts": [[-6, -128], [10, -128], [2, -108]], "smooth": false, "fill": "beak", "stroke": null, "shade": false}, {"type": "path", "d": "M-2 -126 L2 -114", "fill": null, "stroke": "beakHi", "sw": 1.6, "role": "detail", "shade": false}, {"type": "poly", "pts": [[10, -108], [22, -120], [26, -132], [22, -112]], "smooth": true, "fill": "body", "stroke": null, "role": "cel"}]}
      },
      "shapes": [
        {"type": "capsule", "a": [14, -104], "b": [32, -124], "ra": 14, "rb": 12, "fill": "body", "stroke": null, "shade": false},
@@ -160,26 +165,23 @@
        {"type": "path", "d": "M54 -119 L74 -122", "fill": null, "stroke": "beakHi", "sw": 1.4, "role": "detail", "shade": false}
      ]
     },
-    {"id": "armN_up", "parent": "torso", "pivot": [-8, -112], "z": 12,
+    {"id": "armN_up", "parent": "torso", "pivot": [6, -110], "z": 12, "sign": 1,
      "variants": {
-       "over": {"z": 14},
        "front": {"shapes": []}
      },
      "shapes": [
-       {"type": "poly", "pts": [[-8, -112], [12, -104], [18, -78], [8, -52], [-6, -44], [-22, -56], [-26, -86], [-20, -106]], "smooth": true, "fill": "wing", "stroke": null},
-       {"type": "path", "d": "M-6 -104 Q4 -84 0 -58", "fill": null, "stroke": "wingShine", "sw": 2.2, "role": "detail", "shade": false},
-       {"type": "path", "d": "M-14 -98 Q-12 -78 -14 -62", "fill": null, "stroke": "wingShine", "sw": 2, "role": "detail", "shade": false}
+       {"type": "poly", "pts": [[6.0, -112.0], [22.0, -106.0], [18.0, -92.0], [-8.0, -86.0], [-40.0, -82.0], [-66.0, -79.0], [-46.0, -92.0], [-20.0, -104.0], [-4.0, -114.0]], "smooth": true, "fill": "wing", "stroke": null},
+       {"type": "path", "d": "M10 -104 Q-20 -92 -52 -82", "fill": null, "stroke": "wingShine", "sw": 2, "role": "detail", "shade": false},
+       {"type": "path", "d": "M8 -98 Q-18 -88 -40 -84", "fill": null, "stroke": "wingShine", "sw": 1.6, "role": "detail", "shade": false}
      ]
     },
-    {"id": "armN_lo", "parent": "armN_up", "pivot": [-4, -58], "z": 11,
+    {"id": "armN_lo", "parent": "armN_up", "pivot": [-30, -88], "z": 12.5, "sign": 1,
      "variants": {
-       "over": {"z": 14.1},
        "front": {"shapes": []}
      },
      "shapes": [
-       {"type": "poly", "pts": [[-4, -62], [8, -52], [11, -30], [3, -14], [-6, -20], [-14, -42]], "smooth": true, "fill": "wing", "stroke": null},
-       {"type": "path", "d": "M0 -52 L4 -22", "fill": null, "stroke": "wingShine", "sw": 1.8, "role": "detail", "shade": false},
-       {"type": "path", "d": "M-7 -46 L-4 -24", "fill": null, "stroke": "wingShine", "sw": 1.6, "role": "detail", "shade": false}
+       {"type": "poly", "pts": [[-30, -94], [-48, -91], [-74, -81], [-80, -76], [-64, -77], [-44, -81], [-28, -84]], "smooth": true, "fill": "wing", "stroke": null},
+       {"type": "path", "d": "M-40 -88 L-72 -79", "fill": null, "stroke": "wingShine", "sw": 1.6, "role": "detail", "shade": false}
      ]
     }
   ]

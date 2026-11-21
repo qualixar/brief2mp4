@@ -25,7 +25,7 @@ In a page, load the scripts in this order: `poses.js`, `rig.js`, `shapes.js`, `r
 
 ## The starter cast
 
-A child, an adult man in a kurta and dhoti-style outline (culturally neutral, no real person), a crow, and a tomato chef (an object character). Each is drawn from the same part list, in a three-quarter side view facing right, so poses, a walk and a fight read; each has a front-facing head drawing for close-ups, an anime redraw of the eyes, hair or crest, hard shadow shapes for the cel skin, and the hands, arms or wings it needs for open palms, pointing and a raised arm. The child holds a kite, the man a sword, the chef a ladle (`props: ["prop_kite"]` in a track). The crow's beak is a jaw that opens with the mouth shape.
+A child, an adult man in a kurta and dhoti-style outline (culturally neutral, no real person), a crow (a folded wing lying along the body, tip to the tail), and a tomato chef (an object character). Each is drawn from the same part list, in a three-quarter side view facing right, so poses, a walk and a fight read; each has a front-facing head drawing for close-ups, an anime redraw of the eyes, hair or crest, hard shadow shapes for the cel skin, and the hands, arms or wings it needs for open palms, pointing and a raised arm. The child holds a kite, the man a sword, the chef a ladle (`props: ["prop_kite"]` in a track). The crow's beak is a jaw that opens with the mouth shape.
 
 ## Look at a character first
 
@@ -56,6 +56,8 @@ A **track** is a list of keys, or an object:
   props: ["prop_kite"], view: "front", fx: { speedLines: [[2, 3]] } }
 ```
 
+A character that is not speaking keeps a closed mouth, so a listener never looks as if they are talking: the pose can still smile or frown, but a mouth shape appears only when the track asks for it. Give a key `mouth: "AI"` to hold that shape from the key until the next one, or set `poseMouths: true` on the track to let each pose show its own mouth (open for surprise, wide for a laugh).
+
 The ease on a key shapes the move **into** that key: `linear`, `in`, `out`, `inOut` (the default), `sine`, `backOut`, or `hold` (stay on the last pose until the key's time).
 
 Angles are degrees. For arms, hands and legs a positive angle swings the limb forward, the way the character faces; for the torso, head, brows and feet it turns clockwise on screen. `lift` moves the whole body up or down as a fraction of leg length, so one pose fits a child and an adult.
@@ -72,8 +74,8 @@ A skin is a style map plus hooks: `shape(ctx)` turns one shape into drawing prim
 |---|---|
 | `line-art` | Strokes only, one weight, the line boils 10 times a second; the ground's colour inside a shape only hides lines behind it |
 | `paper-cutout` | Flat fills, a thin lighter cut edge, paper grain, a tight shadow under each layer, edges that wobble on every held drawing |
-| `shadow-puppet` | Black leather silhouette, eyes, mouths and decorative shapes punched out to the lamp, visible rods from the torso and hands, a warm backlight on the stage |
-| `cel-shaded` | The anime redesign: parts with an `anime` variant are redrawn (large eyes with two highlights, spiky hair with a shine band, a tick for a nose), hard shadow shapes (`role: "cel"`) in a tinted tone, an ink outline sized to each shape, speed lines on a jump, a run, or `fx.speedLines` |
+| `shadow-puppet` | A flat black leather profile: one silhouette per part, props and the chef hat included, with at most an eye hole cut out. No brows, mouth, pupils or patterns, and no front view (a `view: "front"` track is drawn in profile and the sheet leaves the front cell out). Visible rods from the torso and hands, a warm backlight on the stage |
+| `cel-shaded` | The anime redesign: parts with an `anime` variant are redrawn (large eyes with two highlights, hair with a shine band, a tick for a nose), hard shadow shapes (`role: "cel"`) in a tinted tone, an ink outline sized to each shape, speed lines on a jump, a run, or `fx.speedLines`. How spiky the hair is comes from the character file: `"spikes": 0.35` (0 calm to 1 spiky, default 0.6) blends the two outlines of any hair shape that has a `calm` set of points |
 | `motion-comic` | Flat colour with a bold ink line, halftone dots for shadow, a panel border and a yellow caption box that carries the spoken line |
 | `flat-explainer` | Clean flat vector: fills only, smooth motion, no outline and no shadow |
 
@@ -139,7 +141,7 @@ python3 scripts/character_project.py --stage3d --cast child,crow --seconds 6 --o
 - Lip sync is letter rules, not a speech model: it is right for the mouth and wrong for pronunciation, and Hindi is approximate.
 - The walk and run are side-view cycles; stairs, slopes and turning on the spot are not built in.
 - A crow's beak and a robot's picture mouth open by amount, so some shapes (`rest` and `MBP`) look alike there.
-- Shadow puppets are jointless in the tradition; here they keep the rig's joints. The skin makes the look, not the movement.
+- Shadow puppets are jointless in the tradition; here they keep the rig's joints. The skin makes the look, not the movement. Their silhouettes show a mouth only where the shape itself moves (the crow's jaw), so a lip-synced human or tomato does not show speech in that skin.
 
 ## Bring your own art: image parts
 

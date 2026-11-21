@@ -55,7 +55,7 @@
     g2.setTransform(1, 0, 0, 1, 0, 0); g2.fillStyle = skin.bg; g2.fillRect(0, 0, W, H);
     g2.fillStyle = 'rgba(0,0,0,0.75)'; g2.font = '700 38px "Helvetica Neue", Arial, sans-serif'; g2.textAlign = 'left';
     g2.fillText(character.name + '  /  ' + skin.name, 40, 58);
-    const tint = 'rgba(255,255,255,0.28)', front = hasFront(character), left = front ? 780 : 600, colW = (1880 - left) / 3;
+    const tint = 'rgba(255,255,255,0.28)', front = hasFront(character) && !skin.profileOnly, left = front ? 780 : 600, colW = (1880 - left) / 3;
     cell(g2, 40, 90, 400, 560, tint, 'standing view'); drawBody(g2, character, skin, 'idle', { x: 40, y: 90, w: 400, h: 560 }, Math.min(2.1, (0.88 * 560) / character.proportions.height, (0.9 * 400) / bodyWidth(character)));
     if (front) { cell(g2, 460, 90, 300, 560, tint, 'front view (close-up)'); drawFront(g2, character, skin, { x: 460, y: 90, w: 300, h: 560 }); }
     POSES.forEach((name, i) => {

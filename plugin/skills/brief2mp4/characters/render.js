@@ -38,7 +38,7 @@
   // The drawing a part uses right now: its own, or a variant chosen by the pose (an open hand), the view
   // ('front' for a close-up facing the camera) or the skin (the anime skin redraws eyes and hair).
   function effectiveParts(character, posed, skin) {
-    const out = {}, view = posed.view || 'side', sv = skin && skin.variant;
+    const out = {}, view = skin && skin.profileOnly ? 'side' : posed.view || 'side', sv = skin && skin.variant;
     indexOf(character).topo.forEach((p) => {
       const names = [posed.variants && posed.variants[p.id], view !== 'side' && sv && view + '+' + sv, view !== 'side' && view, sv];
       const hit = p.variants && names.find((n) => n && p.variants[n]);
@@ -70,6 +70,14 @@
     return part.image || null;
   }
 
+  // A shape may carry `calm`, a second set of points for the same polygon. How far it goes towards `pts` is the
+  // character's `spikes` (0 to 1, default 0.6): hair drawn once as a spiky outline and once as a swept one.
+  function morph(character, shape) {
+    if (!shape.calm) return shape;
+    const k = character.spikes === undefined ? 0.6 : character.spikes;
+    return Object.assign({}, shape, { calm: undefined, pts: shape.pts.map((p, i) => [shape.calm[i][0] + (p[0] - shape.calm[i][0]) * k, shape.calm[i][1] + (p[1] - shape.calm[i][1]) * k]) });
+  }
+
   const placement = (o, posed) => mul(translate((o.x || 0) + posed.move.x, (o.y || 0) + posed.move.y), scaleM((o.scale || 1) * posed.move.flip, o.scale || 1));
 
   function posedWithJaw(eff, posed) {
@@ -91,8 +99,8 @@
     const under = (it) => items.unshift(it);
     Object.values(eff).sort((a, b) => a.z - b.z || a.order - b.order).forEach((part) => {
       if (part.prop && !shown.has(part.id)) return;
-      shapesOf(part, posed).forEach((shape, si) => {
-        const d = B.shapePath(shape);
+      shapesOf(part, posed).forEach((shapeIn, si) => {
+        const shape = morph(character, shapeIn), d = B.shapePath(shape);
         const ctx = { character, part, shape, d, posed, skin, frame: posed.frame, seed: character.id + ':' + part.id + ':' + si, color: (k) => B.colorOf(character, k), bounds: () => B.pathBounds(d) };
         skin.shape(ctx).forEach((prim) => items.push(Object.assign({ kind: 'path', part: part.id, m: round(W[part.id]) }, prim)));
       });
