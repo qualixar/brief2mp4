@@ -40,6 +40,19 @@ SUBJECTS = [
 ]
 
 
+# a brief with characters or dialogue also needs the character kit, whichever look it picks
+CHARACTERS = re.compile(r"\b(characters?|dialogue|dialog|conversation|skit|mascot|lip[- ]?sync(?:ed)?|short story|animated story|cartoon|talks? (?:to|with)|talking|speaks?|says)\b", re.I)
+KIT = 'characters/README-CHARACTERS.md'
+KIT_SKINS = ('line-art', 'paper-cutout', 'shadow-puppet', 'cel-shaded', 'motion-comic', 'flat-explainer')
+
+
+def kit_reason(form):
+    base = 'the brief has characters or dialogue: use the character kit (%s) for poses, walk cycles, blinks and lip sync' % KIT
+    if form in KIT_SKINS:
+        return base + '; it has a skin for this look'
+    return base + '; its skins are ' + ', '.join(KIT_SKINS) + ', so use the nearest and say so in SPEC.md'
+
+
 def load():
     return json.loads((REF / 'art-forms.json').read_text(encoding='utf-8'))
 
@@ -73,22 +86,24 @@ def route(brief, data=None):
         if m:
             for i, fid in enumerate(forms):
                 bump(fid, 4.5 - i, '%s ("%s")' % (reason, m.group(0).lower()), True)
+    kit = bool(CHARACTERS.search(text))
     ranked = sorted(((s, fid) for fid, s in score.items() if fid in strong or s >= 6), key=lambda x: (-x[0], [f['id'] for f in data['forms']].index(x[1])))
     by_id = {f['id']: f for f in data['forms']}
     if not ranked:
-        return {'form': None, 'confidence': 'none', 'why': ['the brief names no look, subject or mood the table knows'], 'alternatives': [], 'read': ['references/formats.md', 'references/art-forms.md']}
+        return {'form': None, 'confidence': 'none', 'why': ['the brief names no look, subject or mood the table knows'] + ([kit_reason(None)] if kit else []), 'alternatives': [], 'read': ['references/formats.md', 'references/art-forms.md'] + ([KIT] if kit else []), 'kit': KIT if kit else None}
     top = by_id[ranked[0][1]]
     return {
-        'form': top['id'], 'name': top['name'], 'confidence': 'named' if named and ranked[0][0] >= 20 else 'inferred', 'why': why[top['id']][:3],
+        'form': top['id'], 'name': top['name'], 'confidence': 'named' if named and ranked[0][0] >= 20 else 'inferred', 'why': why[top['id']][:3] + ([kit_reason(top['id'])] if kit else []), 'kit': KIT if kit else None,
         'cadence': 'steps %d times a second' % top['fps'] if top['fps'] else 'smooth, full frame rate', 'route': top['route'], 'blender': top['blender'],
         'pitfalls': top['pitfalls'], 'alternatives': [{'form': by_id[fid]['id'], 'name': by_id[fid]['name']} for _, fid in ranked[1:3]],
-        'read': ['references/art-forms/%s.md' % top['id'], 'references/art-forms.md'], 'demo': 'art-forms/gallery.html?look=%s' % top['looks'][0],
+        'read': ['references/art-forms/%s.md' % top['id'], 'references/art-forms.md'] + ([KIT] if kit else []), 'demo': 'art-forms/gallery.html?look=%s' % top['looks'][0],
     }
 
 
 def report(r):
     if not r['form']:
-        return 'Art form: none suggested. %s. Use a format from references/formats.md, or choose a look from references/art-forms.md and say why in SPEC.md.' % r['why'][0].capitalize()
+        note = ('\nCharacters: ' + r['why'][1] + '.') if len(r['why']) > 1 else ''
+        return 'Art form: none suggested. %s. Use a format from references/formats.md, or choose a look from references/art-forms.md and say why in SPEC.md.%s' % (r['why'][0].capitalize(), note)
     lines = ['Art form: %s (%s)' % (r['name'], 'named in the brief' if r['confidence'] == 'named' else 'inferred')]
     lines += ['  why: ' + w for w in r['why']]
     lines += ['  cadence: ' + r['cadence'], '  usual tool: ' + r['route']]

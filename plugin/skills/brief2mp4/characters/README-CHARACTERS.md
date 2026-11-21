@@ -12,13 +12,20 @@ Everything is plain JavaScript and JSON. Nothing is fetched at render time.
 | `poses.js` | 15 named poses, the cycles (walk, run, wave, laugh, breath) and the nine mouth shapes |
 | `shapes.js` | Turns shape records into paths; path tools for skins; the lip-sync mouth drawings |
 | `render.js` | `B2M.layout(...)` gives a display list; `drawCanvas` and `createSVG` draw it |
-| `skins.js` | The skins (`B2M.SKINS`): `paper-cutout` and `cel-shaded` so far |
+| `skins.js`, `skins-extra.js` | The six skins (`B2M.SKINS`) |
+| `stage.js`, `stage.html` | A 2D stage: backdrop, cast, captions; the page that plays a scene |
 | `sheet.js`, `sheet.html` | The character sheet page |
-| `cast/*.json` | Characters. `child.json` is the first |
+| `cast/*.json` | The starter cast: `child`, `adult`, `crow`, `tomato` |
 | `schema/character.schema.json`, `validate.py` | The format, and a standard-library validator |
 | `image-demo/` | A robot rigged from PNG part images that a script draws: the worked example for your own art |
 
-In a page, load the scripts in this order: `poses.js`, `rig.js`, `shapes.js`, `render.js`, `skins.js`. In Node, `require("<kit>/index.js")` loads them all. `scripts/character_project.py` copies the runtime into a HyperFrames project and inlines the cast as `characters/cast.js`.
+Scripts next to the skill's others: `scripts/lipsync.py` (mouth track), `scripts/character_sheet.py` (a PNG sheet), `scripts/character_project.py` (a scene, or the 2D-in-3D starter, to a HyperFrames project). The runnable example is `examples/09-story-characters/`.
+
+In a page, load the scripts in this order: `poses.js`, `rig.js`, `shapes.js`, `render.js`, `skins.js`, `skins-extra.js`, `stage.js`. In Node, `require("<kit>/index.js")` loads them all. `character_project.py` copies the runtime into a HyperFrames project and inlines the cast as `characters/cast.js`.
+
+## The starter cast
+
+A child, an adult man in a kurta and dhoti-style outline (culturally neutral, no real person), a crow, and a tomato chef (an object character). Each is drawn from the same part list, in a three-quarter side view facing right, so poses, a walk and a fight read; each has a front-facing head drawing for close-ups, an anime redraw of the eyes, hair or crest, hard shadow shapes for the cel skin, and the hands, arms or wings it needs for open palms, pointing and a raised arm. The child holds a kite, the man a sword, the chef a ladle (`props: ["prop_kite"]` in a track). The crow's beak is a jaw that opens with the mouth shape.
 
 ## Look at a character first
 
@@ -59,14 +66,18 @@ Angles are degrees. For arms, hands and legs a positive angle swings the limb fo
 
 ## Skins
 
-A skin is a style map plus hooks: `shape(ctx)` turns one shape into drawing primitives, and `character(ctx)` adds primitives for the whole figure. All wobble is seeded by the shape and the drawing number.
+A skin is a style map plus hooks: `shape(ctx)` turns one shape into drawing primitives, `character(ctx)` adds primitives for the whole figure, `sky(ctx)` and `foreground(ctx)` style the stage. All wobble is seeded by the shape and the drawing number. Each skin follows the rules of its page in `references/art-forms/`.
 
 | Skin | Look |
 |---|---|
+| `line-art` | Strokes only, one weight, the line boils 10 times a second; the ground's colour inside a shape only hides lines behind it |
 | `paper-cutout` | Flat fills, a thin lighter cut edge, paper grain, a tight shadow under each layer, edges that wobble on every held drawing |
-| `cel-shaded` | The anime redesign: parts with an `anime` variant are redrawn (large eyes with two highlights, spiky hair with a shine band, a tick for a nose), hard shadow shapes (`role: "cel"`) filled in a tinted tone, an ink outline sized to each shape, and speed lines on a jump, a run, or `fx.speedLines` |
+| `shadow-puppet` | Black leather silhouette, eyes, mouths and decorative shapes punched out to the lamp, visible rods from the torso and hands, a warm backlight on the stage |
+| `cel-shaded` | The anime redesign: parts with an `anime` variant are redrawn (large eyes with two highlights, spiky hair with a shine band, a tick for a nose), hard shadow shapes (`role: "cel"`) in a tinted tone, an ink outline sized to each shape, speed lines on a jump, a run, or `fx.speedLines` |
+| `motion-comic` | Flat colour with a bold ink line, halftone dots for shadow, a panel border and a yellow caption box that carries the spoken line |
+| `flat-explainer` | Clean flat vector: fills only, smooth motion, no outline and no shadow |
 
-Each skin follows the rules of its page in `references/art-forms/`.
+The handmade skins pass `steps: 12` (line art 10) to `pose`, so nothing changes more than that many times a second. The smooth skins pass `smooth: true` and cycles blend.
 
 ## Variants: one part, several drawings
 
@@ -87,6 +98,48 @@ Everything is drawn in one rest-pose coordinate system: feet on `y = 0`, the cha
 Shapes are `path` (absolute `M L C Q Z` only, so skins can wobble every point), `ellipse`, `circle`, `capsule` (a tapered limb), `rect` and `poly` (straight or a smooth curve through the points). `fill` and `stroke` name palette keys. `role` is `base`, `detail`, `hole`, `line`, `mouth` or `cel`. Validate with `python3 characters/validate.py cast/child.json`.
 
 The mouth part has a `mouth` block: `lips` (drawn from the nine-shape table, `size` scales it), `jaw` (a lower jaw that rotates open) or `images` (below).
+
+## Lip sync
+
+```bash
+npx hyperframes transcribe voice.wav                     # writes word timestamps (transcript.json)
+python3 scripts/lipsync.py transcript.json --fps 30      # -> [{ "t": 3.45, "v": "etc" }, { "t": 3.5, "v": "E" }, ...]
+python3 scripts/lipsync.py transcript.json --from 3.3 --to 6 --out kid-visemes.json    # one speaker's words
+python3 scripts/lipsync.py --wav voice.wav               # no timestamps: open, half-open, closed from loudness
+```
+
+Put the result in a track as `visemes`. The nine shapes are `rest`, `AI`, `E`, `O`, `U`, `MBP`, `FV`, `L` and `etc` (every other consonant). Words become shapes by letter rules with a small exceptions table, spread over the word's time in proportion to how long each sound takes. The mouth closes in any pause longer than 150 ms, no shape is held for less than one frame at `--fps`, and every key sits on the frame grid. `--lang hi` reads romanised Hindi (aa, ee, oo, kh, bh); it is a best-effort mapping, approximate by nature, and meant for a mouth that looks right, not a phonetic transcript. The picture follows the voice: never stretch the audio to fit the mouth.
+
+## A scene
+
+`stage.js` composes a frame: a backdrop in the skin's style, the cast, captions. A scene file names it all and the same file renders in any skin:
+
+```bash
+python3 scripts/character_project.py --scene examples/09-story-characters/scene.json --skin cel-shaded --out project/
+npx hyperframes render project -o raw.mp4 --quality delivery --fps 30
+bash scripts/finish.sh --in raw.mp4 --out final.mp4 --seconds 14 --audio voice.wav
+```
+
+A scene has `width`, `height`, `duration`, `ground` (the y where feet stand), a `palette` for the backdrop, optional `hills` and `set` shapes (`layer: "back"` draws behind the hills), the `cast` (`character`, `x`, `scale`, `track`) and `captions`. A track may hold `"visemesFrom": { "words": "words.json", "from": 3.3, "to": 6, "lang": "en" }`; the builder turns it into the mouth track. `examples/09-story-characters/` is a 14-second scene with a walk, a point, two spoken lines, a laugh and a wave, built once and rendered as paper cut-out and as anime.
+
+For feet that do not slide on a walk, give the move track `B2M.strideSpeed(character, "walk", steps) * scale` units per second.
+
+### Characters in a 3D set
+
+```bash
+python3 scripts/character_project.py --stage3d --cast child,crow --seconds 6 --out project/
+```
+
+`templates/threejs/characters-stage.html` puts each character on its own canvas, uses that canvas as the texture of a plane that faces the camera, and stands the planes in a Three.js set: a ground, four trees, a rock, a hut, a sun and a camera that moves. The frame is deterministic like the 2D stage. Edit the `ACTORS` list for who stands where and what they do.
+
+## Known limits
+
+- The cast is in a side view; a character that turns to face the camera mid-scene uses the front drawing for a close-up only (`view: "front"`), not a continuous turn.
+- Skins style vector shapes. A part picture is drawn as it is, with a drop shadow in the paper skin only.
+- Lip sync is letter rules, not a speech model: it is right for the mouth and wrong for pronunciation, and Hindi is approximate.
+- The walk and run are side-view cycles; stairs, slopes and turning on the spot are not built in.
+- A crow's beak and a robot's picture mouth open by amount, so some shapes (`rest` and `MBP`) look alike there.
+- Shadow puppets are jointless in the tradition; here they keep the rig's joints. The skin makes the look, not the movement.
 
 ## Bring your own art: image parts
 
