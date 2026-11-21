@@ -72,9 +72,28 @@ def test_text_boxes_closer_than_24_px_fail(tmp_path):
 
 
 def test_min_gap_is_adjustable(tmp_path):
-    boxes = [text("a", 100, 100), text("b", 100, 190)]                           # 10 px apart
+    boxes = [text("a", 100, 100), text("b", 410, 100)]                           # side by side, 10 px apart
     assert run_boxes(tmp_path, boxes).returncode == 1
     assert run_boxes(tmp_path, boxes, "--min-gap", "8").returncode == 0
+
+
+def test_tightly_stacked_lines_read_as_one_block(tmp_path):
+    lockup = [text("name", 100, 100), text("line1", 100, 185, h=40), text("line2", 100, 230, h=40)]  # 5 px gaps
+    assert run_boxes(tmp_path, lockup).returncode == 0
+    five_rows = lockup + [text("url", 100, 400), text("by", 100, 600)]          # 3 blocks, not 5
+    proc = run_boxes(tmp_path, five_rows)
+    assert proc.returncode == 0, proc.stdout
+
+
+def test_a_lockup_too_close_to_another_block_still_fails(tmp_path):
+    lockup = [text("name", 100, 100), text("line1", 100, 185, h=40)]
+    proc = run_boxes(tmp_path, lockup + [text("other", 100, 240)])               # 15 px under the lockup
+    assert proc.returncode == 1 and "'name+line1' and 'other' are 15 px apart" in proc.stdout
+
+
+def test_overlapping_lines_are_never_merged_into_a_block(tmp_path):
+    proc = run_boxes(tmp_path, [text("a", 100, 100), text("b", 100, 150)])       # 30 px overlap
+    assert proc.returncode == 1 and "(overlapping)" in proc.stdout
 
 
 def test_more_than_four_text_blocks_fail(tmp_path):

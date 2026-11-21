@@ -4,8 +4,10 @@
 The rules (each sample time is checked on its own):
   1. No card on card: two card boxes never overlap (--allow-nested lets one sit fully inside another).
      A text box may sit fully inside a card or fully outside it, but never straddle its edge.
-  2. At least 24 px between any two text boxes, zero tolerance. Overlapping boxes have a gap of 0.
+  2. At least 24 px between any two text blocks, zero tolerance. Overlapping text boxes always fail.
   3. At most 4 text blocks on screen at once. Two facts that both need the screen are shown one after the other.
+  A text block is one box, or several lines stacked as one group: boxes whose x-ranges overlap and whose
+  vertical gap is under 0.25x the shorter line's height (a title over its subtitle, the lines of a lockup).
   4. Nothing clipped: no text box may run past the frame edge, because a half-visible word reads as a bug.
 
 Where the boxes come from:
@@ -68,6 +70,36 @@ def name(b, i):
     return str(b.get("id") or b.get("text") or f"{b.get('kind', 'text')}#{i}")[:30]
 
 
+GROUP_LEADING = 0.25  # lines closer than this x line height, stacked over each other, read as one block
+
+
+def group_lines(texts):
+    """Merge stacked lines into blocks (union-find). Boxes that overlap are never merged (their v_gap is negative)."""
+    parent = list(range(len(texts)))
+
+    def root(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for i, (_, a) in enumerate(texts):
+        for j in range(i + 1, len(texts)):
+            b = texts[j][1]
+            x_shared = min(a[2], b[2]) - max(a[0], b[0]) > 0
+            v_gap = max(a[1], b[1]) - min(a[3], b[3])
+            line_h = min(a[3] - a[1], b[3] - b[1])
+            if x_shared and 0 <= v_gap < GROUP_LEADING * line_h:  # v_gap >= 0 already excludes overlapping boxes
+                parent[root(i)] = root(j)
+    groups = {}
+    for i, (n, r) in enumerate(texts):
+        groups.setdefault(root(i), []).append((n, r))
+    return [("+".join(n for n, _ in members),
+             (min(r[0] for _, r in members), min(r[1] for _, r in members),
+              max(r[2] for _, r in members), max(r[3] for _, r in members)))
+            for members in groups.values()]
+
+
 def check_sample(sample, frame, opts):
     """Return {rule: [message, ...]} for one sample."""
     boxes = [dict(b, kind=b.get("kind", "text")) for b in sample["boxes"]]
@@ -83,15 +115,16 @@ def check_sample(sample, frame, opts):
         for nc, c in cards:
             if overlap_area(t, c) > 0 and not inside(t, c):
                 found["card"].append(f"text '{nt}' straddles the edge of card '{nc}'")
-    for i, (na, a) in enumerate(texts):
-        for nb, b in texts[i + 1:]:
+    blocks = group_lines(texts)  # overlapping boxes are never merged, so they meet here with a gap of 0
+    for i, (na, a) in enumerate(blocks):
+        for nb, b in blocks[i + 1:]:
             g = gap(a, b)
             if g < opts["min_gap"]:
                 found["gap"].append(f"'{na}' and '{nb}' are {g:.0f} px apart" + (" (overlapping)" if overlap_area(a, b) > 0 else ""))
-    visible = [(n, t) for n, t in texts if overlap_area(t, full) > 0]
-    if len(visible) > opts["max_blocks"]:
-        found["blocks"].append(f"{len(visible)} text blocks on screen: " + ", ".join(n for n, _ in visible[:6]))
-    for n, t in visible:
+    visible_blocks = [(n, t) for n, t in blocks if overlap_area(t, full) > 0]
+    if len(visible_blocks) > opts["max_blocks"]:
+        found["blocks"].append(f"{len(visible_blocks)} text blocks on screen: " + ", ".join(n for n, _ in visible_blocks[:6]))
+    for n, t in [(n, t) for n, t in texts if overlap_area(t, full) > 0]:
         if not inside(t, full):
             found["clip"].append(f"text '{n}' runs past the frame edge")
     return found
@@ -99,7 +132,7 @@ def check_sample(sample, frame, opts):
 
 RULES = (
     ("card", "no card on card, text stays inside or outside each card"),
-    ("gap", "at least {min_gap:g} px between text boxes"),
+    ("gap", "at least {min_gap:g} px between text blocks, no overlapping text"),
     ("blocks", "at most {max_blocks} text blocks per frame"),
     ("clip", "no text clipped at the frame edge"),
 )
