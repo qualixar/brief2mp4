@@ -1,4 +1,4 @@
-# Art forms: 48 looks for animated video, and how to build each
+# Art forms: 58 looks for animated video, and how to build each
 
 Read this when a brief names a look ("claymation", "paper cut-out", "anime", "like a blueprint") or describes a feeling that a look would carry. It is the index. Each art form has its own page in `references/art-forms/` with its visual rules, timing, build recipe, assets, sound, pitfalls, sources and a tested demo. `scripts/art_route.py BRIEF.md` proposes one from a brief and says why.
 
@@ -24,6 +24,10 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [Shadow puppetry](art-forms/shadow-puppet.md) | Flat figures held between a lamp and a cloth screen: dark silhouettes with punched patterns on a warm, glowing field. | steps 12 times a second | HyperFrames (canvas or SVG) |
 | [Collage and mixed media](art-forms/collage.md) | Pieces of different papers, photographs and print stuck together: mismatched scale and texture, torn edges, hard shadows. | steps 8 times a second | HyperFrames (canvas or DOM) |
 | [Risograph and halftone print](art-forms/risograph.md) | The look of a cheap stencil print: two to four bright inks laid over each other, visible grain, dot screens, and layers that never quite line up. | steps 8 times a second | HyperFrames (canvas or DOM) |
+| [Pop-up book](art-forms/pop-up-book.md) | An open book seen at an angle: the pages swing open and layered card pieces stand up off them, each with a fold shadow, a visible card edge and a shadow on the page. | smooth, full frame rate | HyperFrames (canvas), Blender for real folded paper |
+| [Papercut and sanjhi (lace-cut paper)](art-forms/papercut.md) | One colour of cut paper on a plain ground: a scalloped medallion and corner pieces full of symmetrical cut-outs, with a soft shadow that shows the paper is a layer above the page. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Brick toy](art-forms/brick-toy.md) | Everything built from studded plastic bricks on a green baseplate: visible studs, a glossy edge, flat bright colours, and bricks that drop in one at a time on twos. | steps 12 times a second | HyperFrames (canvas), Blender for glossy plastic |
+| [String puppet and kathputli](art-forms/string-puppet.md) | Marionettes in bright Rajasthani dress: big painted wooden heads, turbans and ghagras, strings to a control bar at the top, jerky dangling motion, in a small theatre with red curtains and a gold valance. | steps 8 times a second | HyperFrames (canvas or SVG) |
 
 ## Drawn and painted
 
@@ -49,6 +53,11 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [One continuous line](art-forms/one-line.md) | A whole subject drawn by one unbroken line on a flat colour: the pen never lifts, crosses itself where it must, and the finished drawing is a single curve. | smooth, full frame rate | HyperFrames (SVG or canvas) |
 | [Paint-on-glass](art-forms/paint-on-glass.md) | Oil paint smeared on a lit sheet of glass: translucent colour that glows against the light, deeper where it is thick, finger streaks dragged behind, and shapes that melt from one thing into the next. | steps 12 times a second | HyperFrames (canvas) |
 | [Sand animation](art-forms/sand-art.md) | A light table seen from above: a warm glowing backlight, sand as dark sepia masses, and light showing through wherever the sand is thin, with soft graded edges. | steps 12 times a second | HyperFrames (canvas) |
+| [Retro anime (80s and 90s)](art-forms/retro-anime.md) | A hand-painted television look: hard two-tone shading, banded sunset skies, a striped sun, a lit skyline, a figure from behind with hair and scarf in the wind, a little film grain and a soft glow. | steps 8 times a second | HyperFrames (canvas), or Blender with a toon material for 3D |
+| [Manga (black and white with screentone)](art-forms/manga.md) | Black and white only: inked panels with thick borders, screentone dots for grey, speed lines and bursts, and one dramatic moment drawn large. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Chibi](art-forms/chibi.md) | A character two or three heads tall: a huge head, a tiny body, big shiny eyes, rosy cheeks and a bounce with a real squash and stretch. | steps 12 times a second | HyperFrames (canvas or SVG) |
+| [Modern TV cartoon](art-forms/tv-cartoon.md) | Thick, even outlines and flat, bright colour on simple geometric characters: squares, circles and triangles with big eyes, bouncing on twos against a plain, flat background. | steps 12 times a second | HyperFrames (canvas or SVG) |
+| [Gothic cartoon](art-forms/gothic-cartoon.md) | Spindly, hollow-eyed figures and crooked houses with lit windows under a pale moon, curly trees and bats, in purple and black: a cartoon that is spooky and funny at once. | steps 8 times a second | HyperFrames (canvas or SVG) |
 
 ## Geometry, pixels and 3D
 
@@ -84,6 +93,7 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [Silkscreen poster](art-forms/silkscreen.md) | A poster printed in a few flat inks that overprint, each a little out of register, with coarse halftone dots for tone: flat shapes, big blocks, and colours that mix where they overlap. | steps 8 times a second | HyperFrames (canvas) |
 | [Art deco](art-forms/art-deco.md) | Gold lines, sunbursts and stepped, symmetric geometry on a deep ground: fans and arcs, a tower in steps, zigzag borders and small stars, in gold on navy and burgundy. | smooth, full frame rate | HyperFrames (canvas or SVG) |
 | [Stained glass](art-forms/stained-glass.md) | Coloured panes held by thick dark lead lines in an arched window: a rose at the top, a diamond lattice below, and light glowing through each pane. | smooth, full frame rate | HyperFrames (canvas) |
+| [Ukiyo-e woodblock](art-forms/ukiyo-e.md) | A Japanese woodblock print: flat areas of colour, fine ink outlines, a great curling wave of deep blue with claw-like fingers of foam, a pale banded sky, a small distant mountain and a red seal. | steps 8 times a second | HyperFrames (canvas or SVG) |
 
 ## Choosing one from a brief
 
@@ -132,5 +142,5 @@ Each was cloned outside this repository and its licence file was read first. No 
 
 ## The demos
 
-The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (48 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
+The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (58 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
 These pages are generated from `references/art-forms.json` and those demo files by `scripts/build_art_forms.py`.

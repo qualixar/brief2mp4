@@ -2448,6 +2448,529 @@
    ],
    "thin": "",
    "checked": "2026-11-21"
+  },
+  {
+   "id": "retro-anime",
+   "name": "Retro anime (80s and 90s)",
+   "aliases": [
+    "80s anime",
+    "90s anime",
+    "retro cel anime"
+   ],
+   "family": "drawn",
+   "what": "A hand-painted television look: hard two-tone shading, banded sunset skies, a striped sun, a lit skyline, a figure from behind with hair and scarf in the wind, a little film grain and a soft glow.",
+   "origin": "Anime is animation originating from Japan; a characteristic art style emerged in the 1960s and spread in the following decades. Traditional animation paints the characters on transparent cels laid over a static painted background, a process generally credited to Earl Hurd, who patented it in 1914.",
+   "rules": [
+    "Hard-edged two-tone shading: one base colour and one shadow colour, no soft gradients on the characters",
+    "Banded, graded skies in stepped colour: violet to magenta to orange to cream",
+    "A big sun with horizontal slits, a lit skyline, a rim of warm light on the edges",
+    "Characters seen from behind or in profile, hair and scarf moving in the wind",
+    "Film grain, and a soft bloom around bright areas"
+   ],
+   "timing": "Drawn on threes: about 8 changes a second inside a 24 frames-a-second film. The sun rises slowly, windows twinkle and hair streams.",
+   "fps": 8,
+   "build": [
+    "Quantise time with `held(t, 8)` and key every flicker to `frameOf(t, 8)`",
+    "Sky: eight flat bands from `fillRect`; the sun is a clipped disc with a hard shadow tone and slits cut across it",
+    "Shade a character with a base polygon and a second polygon of the shadow colour on one side",
+    "Bloom: a radial gradient drawn with `lighter` over the picture; grain: a speckle with a seed from `frameOf(t, 8) % 6`"
+   ],
+   "assets": "All in code. For real character art, paint on layers and keep the shadow tone as its own layer.",
+   "sound": "A synth pad and a drum machine, city ambience, wind on the rooftop. Practice note.",
+   "pitfalls": [
+    "Smooth gradients on the figures: the shading is hard-edged",
+    "Smooth 24 frames-a-second motion on every layer, which loses the television feel",
+    "Copying a recognisable character"
+   ],
+   "route": "HyperFrames (canvas), or Blender with a toon material for 3D",
+   "blender": "",
+   "keywords": [
+    "retro anime",
+    "retro anim",
+    "80s anime",
+    "90s anime",
+    "vintage anime"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Anime",
+    "https://en.wikipedia.org/wiki/Cel"
+   ],
+   "looks": [
+    "retro-anime"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "manga",
+   "name": "Manga (black and white with screentone)",
+   "aliases": [
+    "manga style",
+    "black and white manga",
+    "manga panels"
+   ],
+   "family": "drawn",
+   "what": "Black and white only: inked panels with thick borders, screentone dots for grey, speed lines and bursts, and one dramatic moment drawn large.",
+   "origin": "Manga are comics or graphic novels originating from Japan; most conform to a style developed in Japan in the late 19th century, with a long history in earlier Japanese art.",
+   "rules": [
+    "Pure black and pure white: no greys and no colour",
+    "Panels with thick black borders and uneven sizes: one big panel for the moment, smaller ones around it",
+    "Tone: halftone dots of one size per area, at a slant, for shadow and mood",
+    "Speed lines that converge on the point of impact; a burst shape for the hit",
+    "Bold line weights and spiky hair; faces in extreme close-up for emotion"
+   ],
+   "timing": "Panels slam in one after another, 0.1 to 2.2 seconds, and the speed lines re-roll about 8 times a second. Stepped, not smooth.",
+   "fps": 8,
+   "build": [
+    "Each panel: a clipped rectangle that scales from 1.12 to 1 with `easeOut` as it appears",
+    "Speed lines: thin black wedges between two radii with a seeded length per line, re-seeded on each step (`speedLines()` in `looks-toon.js`)",
+    "Screentone: a rotated dot grid whose radius follows a value function (`halftone()` in `looks-folk.js`)",
+    "Draw figures from local coordinates and mirror them for the second fighter",
+    "Use only `#000` and `#fff`: no antialiased greys except at edges"
+   ],
+   "assets": "All in code.",
+   "sound": "Sharp impact hits, a sword-ring or a drum, silence between panels. Practice note.",
+   "pitfalls": [
+    "Any grey or colour",
+    "Panels that are all the same size",
+    "Speed lines that do not converge on the action"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "manga",
+    "screentone",
+    "speed lines",
+    "manga panel",
+    "black and white comic"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Manga"
+   ],
+   "looks": [
+    "manga"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "chibi",
+   "name": "Chibi",
+   "aliases": [
+    "super deformed",
+    "sd character",
+    "chibi style"
+   ],
+   "family": "drawn",
+   "what": "A character two or three heads tall: a huge head, a tiny body, big shiny eyes, rosy cheeks and a bounce with a real squash and stretch.",
+   "origin": "Chibi, also known as super deformation (SD), is an art style originating in Japan and common in anime and manga, where characters are drawn small and chubby with stubby limbs, oversized eyes and heads, tiny noses and bodies, and minimal detail. The word comes from chibi kyara, \"tiny character\".",
+   "rules": [
+    "The head is as wide as the body is tall: two to three heads high",
+    "Big eyes with a gradient iris and two highlights; tiny nose and mouth",
+    "Stubby limbs and minimal detail on the body",
+    "Soft rounded outlines in a darker shade of the fill, not black",
+    "Bounce with squash on landing and stretch in the air"
+   ],
+   "timing": "A bounce about once a second on twos (12 changes a second), with a blink every 2 to 3 seconds.",
+   "fps": 12,
+   "build": [
+    "Pose the whole character in local coordinates and apply `ctx.scale(1 + s, 1 - s)` about the feet, where `s` follows the landing and the air time",
+    "Eyes: a white ellipse, a radial-gradient iris, a dark pupil, two white highlight discs and a heavy upper lash arc",
+    "Twin tails swing by an angle that follows the bounce",
+    "Floating star sparkles drift by stepped time"
+   ],
+   "assets": "All in code. Original characters only: do not trace an existing one.",
+   "sound": "A bright, bouncy pop track, a spring boing on each landing. Practice note.",
+   "pitfalls": [
+    "A body longer than the head",
+    "Squash with no matching stretch",
+    "Copying a recognisable character"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "chibi",
+    "super deformed",
+    "kawaii",
+    "big head cute",
+    "sd character"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Chibi_(slang)"
+   ],
+   "looks": [
+    "chibi"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "ukiyo-e",
+   "name": "Ukiyo-e woodblock",
+   "aliases": [
+    "ukiyo-e",
+    "ukiyoe",
+    "japanese woodblock print",
+    "floating world print"
+   ],
+   "family": "folk",
+   "what": "A Japanese woodblock print: flat areas of colour, fine ink outlines, a great curling wave of deep blue with claw-like fingers of foam, a pale banded sky, a small distant mountain and a red seal.",
+   "origin": "Ukiyo-e is a genre of Japanese art that flourished from the 17th through 19th centuries, with woodblock prints and paintings; the term means \"pictures of the floating world\". By the 1740s artists were using several blocks to print areas of colour, and Hokusai's The Great Wave off Kanagawa is one of the best-known works of Japanese art.",
+   "rules": [
+    "Flat colour areas, no gradients except a soft band at the top of the sky",
+    "Fine ink outlines round every shape",
+    "A deep Prussian-style blue for water, with darker contour lines that follow the wave",
+    "Foam as claw-like white fingers curling from the crest, with a few spray dots",
+    "A small mountain far away, a red seal, a thin border, paper grain"
+   ],
+   "timing": "The wave rises and the foam fingers grow over about 2 seconds; the sea and boats bob gently. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "Wave: a closed spline through hand-placed points (`closed()`), filled and outlined",
+    "Contour lines: scale the same outline about its centre several times and clip them to the wave",
+    "Foam fingers: tapering bands along short curves (`ribbon()`), one per crest point, growing in turn",
+    "Sea: a polyline whose height follows a sine of stepped time",
+    "Add paper grain with `speckle()`"
+   ],
+   "assets": "All in code. Public-domain scans of historic prints are a better source for real prints; check the museum's terms.",
+   "sound": "A shamisen and a taiko, the sound of surf. Practice note.",
+   "pitfalls": [
+    "Smooth shading and gradients on the water",
+    "Thick or uneven outlines: the lines are fine",
+    "Copying an existing print: the demo is an original study"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "ukiyo",
+    "woodblock",
+    "hokusai",
+    "hiroshige",
+    "japanese print"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Ukiyo-e"
+   ],
+   "looks": [
+    "ukiyo-e"
+   ],
+   "thin": "Wikipedia's ukiyo-e article does not describe Prussian blue, wave contour lines or claw-like foam; those rules are a practice summary from looking at the genre, not sourced facts.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "tv-cartoon",
+   "name": "Modern TV cartoon",
+   "aliases": [
+    "tv cartoon",
+    "flat tv cartoon",
+    "saturday morning cartoon"
+   ],
+   "family": "drawn",
+   "what": "Thick, even outlines and flat, bright colour on simple geometric characters: squares, circles and triangles with big eyes, bouncing on twos against a plain, flat background.",
+   "origin": "In the animation sense a cartoon is a motion picture that relies on a sequence of illustrations. Limited animation reuses frames of character animation to save time and money, and in the late 1990s web animators using cutout and limited animation produced clean, vector-graphic pictures at small file sizes.",
+   "rules": [
+    "One thick outline weight round everything, in a near-black",
+    "Flat, saturated colour with no shading or only one flat shadow",
+    "Characters built from simple shapes: squares, circles, triangles",
+    "Big round eyes with a small pupil; a simple wide mouth",
+    "Plain, flat backgrounds: a hill, a cloud, a sun, a tree"
+   ],
+   "timing": "Drawn on twos, 12 changes a second, with holds, bounces and a blink every couple of seconds.",
+   "fps": 12,
+   "build": [
+    "Draw each shape with a fill and an 8 px outline of the same dark colour (`ell()` and `polyFill()` in `looks-toon.js`)",
+    "Bounce: a parabola from the cycle phase, with a squash of a few percent at landing",
+    "Blink: replace the eye with a line for 0.15 seconds",
+    "Limbs are single thick strokes with a circle at the end",
+    "Keep the palette to six or seven colours"
+   ],
+   "assets": "All in code. Original characters only.",
+   "sound": "A quick jazz or brass bed with a boing on each bounce. Practice note.",
+   "pitfalls": [
+    "Gradients, textures and thin outlines",
+    "Realistic proportions",
+    "Copying a recognisable show's characters"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "modern cartoon",
+    "flat cartoon",
+    "thick outlines",
+    "tv animation",
+    "saturday morning"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Cartoon",
+    "https://en.wikipedia.org/wiki/Limited_animation",
+    "https://en.wikipedia.org/wiki/Flash_animation"
+   ],
+   "looks": [
+    "tv-cartoon"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "gothic-cartoon",
+   "name": "Gothic cartoon",
+   "aliases": [
+    "spooky cartoon",
+    "macabre cartoon",
+    "gothic animation"
+   ],
+   "family": "drawn",
+   "what": "Spindly, hollow-eyed figures and crooked houses with lit windows under a pale moon, curly trees and bats, in purple and black: a cartoon that is spooky and funny at once.",
+   "origin": "Gothic fiction is a literary aesthetic of fear and haunting; the name comes from the Renaissance use of \"gothic\" for the medieval and barbaric, and the first work labelled Gothic was Horace Walpole's 1764 novel The Castle of Otranto.",
+   "rules": [
+    "Tall, thin figures with long limbs, big heads, hollow eyes and spiky hair",
+    "Crooked houses and trees: nothing stands straight; roofs are tall and pointed",
+    "A palette of purple and near-black with a pale moon and a few lit windows",
+    "Curly, spiral branches and moon marks",
+    "Bats, stars and a low fog, with everything swaying a little"
+   ],
+   "timing": "Everything sways on twos, about 8 changes a second: houses lean back and forth, trees swing, figures step and bats flap.",
+   "fps": 8,
+   "build": [
+    "Lean every house with `ctx.transform(1, 0, lean, 1, 0, 0)` where `lean` is a small sine of stepped time plus a fixed tilt",
+    "Trees: a curved trunk with spiral ends from `curlPts()`",
+    "Figures: thin rectangles and strokes in local coordinates, scaled for depth",
+    "A fog gradient across the ground and a few flickering windows"
+   ],
+   "assets": "All in code. Original characters only.",
+   "sound": "A creaking harpsichord or a music box, a distant wolf, wind. Practice note.",
+   "pitfalls": [
+    "Straight lines and symmetric buildings",
+    "Bright, cheerful colour",
+    "Copying a recognisable character or a studio's house style"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "gothic",
+    "spooky",
+    "macabre",
+    "halloween",
+    "haunted"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Gothic_fiction"
+   ],
+   "looks": [
+    "gothic-cartoon"
+   ],
+   "thin": "No source on the page describes a gothic cartoon look; the rules are a practice summary. The origin line is only the root of the word.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "pop-up-book",
+   "name": "Pop-up book",
+   "aliases": [
+    "pop up book",
+    "popup book",
+    "paper engineering",
+    "movable book"
+   ],
+   "family": "craft",
+   "what": "An open book seen at an angle: the pages swing open and layered card pieces stand up off them, each with a fold shadow, a visible card edge and a shadow on the page.",
+   "origin": "A pop-up book is any book with three-dimensional pages, often with elements that pop up as a page is turned; designing them is sometimes called paper engineering. The first known movable in a book was made by the Benedictine monk Matthew Paris, whose Chronica Majora, covering a period beginning in 1240, had volvelles attached to some pages.",
+   "rules": [
+    "A book at an angle with a spine shadow and a cover edge",
+    "Card pieces that stand up from the pages in layers, near and far",
+    "A thin offset edge and a fold shadow where each piece meets the page",
+    "A shadow on the page under each piece",
+    "Bright, flat, paper-craft colours"
+   ],
+   "timing": "The right page swings open over about 1.2 seconds, then each piece pops up in turn with a slight overshoot. Smooth motion.",
+   "fps": null,
+   "build": [
+    "Map page space to the screen with a perspective-like function: width narrows toward the back, and `cos(pi (1 - open))` swings the right page",
+    "Each piece: a draw function in its own local coordinates, scaled vertically by an overshooting `k`",
+    "Draw the piece twice: a dark copy offset sideways as the card edge, then the front",
+    "A small ellipse shadow and a gradient fold shadow at the base",
+    "Sort pieces back to front"
+   ],
+   "assets": "All in code. For a real pop-up, build it in Blender with folded geometry.",
+   "sound": "A page turn, a paper pop and a music-box bed. Practice note.",
+   "pitfalls": [
+    "Pieces that float: each needs a base on the page and a shadow",
+    "No overshoot on the pop",
+    "A flat book with no angle"
+   ],
+   "route": "HyperFrames (canvas), Blender for real folded paper",
+   "blender": "",
+   "keywords": [
+    "pop-up",
+    "pop up",
+    "popup",
+    "paper engineering",
+    "movable book"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Pop-up_book"
+   ],
+   "looks": [
+    "pop-up-book"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "papercut",
+   "name": "Papercut and sanjhi (lace-cut paper)",
+   "aliases": [
+    "papercutting",
+    "sanjhi",
+    "kirigami",
+    "lace-cut paper"
+   ],
+   "family": "craft",
+   "what": "One colour of cut paper on a plain ground: a scalloped medallion and corner pieces full of symmetrical cut-outs, with a soft shadow that shows the paper is a layer above the page. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself.",
+   "origin": "Papercutting is the art of making designs cut from a single sheet of paper, which has developed in many cultures; the oldest surviving paper cutout, a symmetrical circle from the 6th century, was found in Xinjiang, China. Japanese paper cutting is called kirigami.",
+   "rules": [
+    "One paper colour only: red on cream, or white on a dark ground",
+    "Symmetry: radial for a medallion, mirrored for corners",
+    "Cut-outs in rings: leaves, drops, round holes, fine dots",
+    "A scalloped or pointed edge and thin bridges between the holes",
+    "A slight drop shadow and a trace of sway"
+   ],
+   "timing": "The rings open one after another over about 3 seconds, and the paper trembles a fraction of a degree. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "One `Path2D`: the outline plus every hole as a subpath, filled with the even-odd rule (`holesPath()` in `looks-toon.js`)",
+    "Rings of holes by `laceRing()`: leaf, drop and dot shapes at equal angles, scaled up from nothing to open them",
+    "Shadow: `shadowBlur`, `shadowOffsetX` and `shadowOffsetY` on the fill",
+    "Mirror a corner piece four ways with `ctx.scale(+-1, +-1)`"
+   ],
+   "assets": "All in code. A scanned sheet of cream paper helps if the user has one.",
+   "sound": "A scissors snip as each ring opens, a soft drone. Practice note.",
+   "pitfalls": [
+    "Two or more colours: that is collage, not a single sheet",
+    "Holes with no bridges, which would fall apart",
+    "Presenting a machine-made picture as authentic sanjhi work"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "papercut",
+    "paper lace",
+    "cut paper",
+    "sanjhi",
+    "lace paper"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Papercutting"
+   ],
+   "looks": [
+    "papercut"
+   ],
+   "thin": "The sources do not cover sanjhi, the Indian stencil papercutting tradition: it is named here only as an alias. Add a primary or museum source for it before a film makes claims about it.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "brick-toy",
+   "name": "Brick toy",
+   "aliases": [
+    "toy brick",
+    "plastic brick",
+    "building brick",
+    "brick built"
+   ],
+   "family": "craft",
+   "what": "Everything built from studded plastic bricks on a green baseplate: visible studs, a glossy edge, flat bright colours, and bricks that drop in one at a time on twos.",
+   "origin": "Brick toys are a kind of construction set: a standardised assortment of pieces for building models, most often marketed as toys.",
+   "rules": [
+    "Every object is made of rectangular bricks on a stud grid",
+    "A baseplate with a stud on every cell",
+    "Flat, bright primary colours with a lighter top and darker sides",
+    "A bright edge and a glossy highlight on the studs",
+    "Models built layer by layer, brick by brick"
+   ],
+   "timing": "Bricks drop in one at a time over about 4 seconds, each falling about six layers and settling. Drawn on twos, 12 changes a second.",
+   "fps": 12,
+   "build": [
+    "An isometric projection: `sx = cx + (x - y) * cw`, `sy = cy + (x + y) * ch - z * bh` (`iso()` in `looks-toon.js`)",
+    "Each brick: a top and two sides in three shades of one colour, then a stud on each cell (`brick()`, `stud()`)",
+    "Sort bricks by `x + y` then by height so that nearer bricks cover farther ones",
+    "Drop each brick with `easeOut` from above and fade it in"
+   ],
+   "assets": "All in code. No logos, no brand names, no printed lettering on the studs.",
+   "sound": "Click and clack of plastic, a cheerful ukulele bed. Practice note.",
+   "pitfalls": [
+    "Smooth sloped surfaces: only bricks and plates",
+    "No studs",
+    "Any brand name or logo"
+   ],
+   "route": "HyperFrames (canvas), Blender for glossy plastic",
+   "blender": "",
+   "keywords": [
+    "lego",
+    "minifigure",
+    "brick built",
+    "studs",
+    "baseplate"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Brick_toys"
+   ],
+   "looks": [
+    "brick-toy"
+   ],
+   "thin": "The source describes construction sets in general. Brand names appear only in the router keywords, so that the router understands a request; they are never used in a name, a rule or a picture.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "string-puppet",
+   "name": "String puppet and kathputli",
+   "aliases": [
+    "kathputli",
+    "marionette",
+    "string puppets",
+    "puppet on strings"
+   ],
+   "family": "craft",
+   "what": "Marionettes in bright Rajasthani dress: big painted wooden heads, turbans and ghagras, strings to a control bar at the top, jerky dangling motion, in a small theatre with red curtains and a gold valance. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself.",
+   "origin": "Kathputli is a string puppet theatre native to Rajasthan, India, and the most popular form of Indian puppetry; the name means a wooden doll, and the puppets are made of wood, cotton cloth and metal wire. A marionette, or string puppet, is controlled from above using wires or strings and a controller; puppetry is recorded in Ancient Greece in the 5th century BC.",
+   "rules": [
+    "A large, painted head with big eyes, strong brows and a moustache for the king, a veil and nose ring for the dancer",
+    "Bright costume: red turban and yellow tunic, a pink and orange gathered skirt with gold trim",
+    "Strings run straight from a bar at the top to the head, hands and feet",
+    "Jerky, swinging limbs, as if on strings, with the whole puppet swaying",
+    "A small stage with red curtains, a gold valance and a plank floor"
+   ],
+   "timing": "The limbs swing on twos, about 8 changes a second, each with its own phase, and the bar tilts slowly.",
+   "fps": 8,
+   "build": [
+    "Compute each hand and foot from a swinging angle (`puppet()` in `looks-toon.js`), then draw the strings from the bar anchors to those points first",
+    "Body parts as polygons and strokes in local coordinates, with an outline",
+    "Stage: stripes, an arch, two curtain drapes with gold fringe and a scalloped valance",
+    "Use stepped time `held(t, 8)` so the motion is jerky"
+   ],
+   "assets": "All in code.",
+   "sound": "Dholak and harmonium, folk song, the wooden clack of puppets. Practice note.",
+   "pitfalls": [
+    "Smooth, floaty limbs: marionettes swing and stop",
+    "Strings that do not reach the limbs",
+    "Presenting a machine-made picture as an authentic kathputli show"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "kathputli",
+    "marionette",
+    "puppet strings",
+    "rajasthani puppet",
+    "control bar"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Kathputli_(puppetry)",
+    "https://en.wikipedia.org/wiki/Marionette"
+   ],
+   "looks": [
+    "string-puppet"
+   ],
+   "thin": "Wikipedia describes the Kathputli as worked by a single string over the puppeteer; the demo uses a Western-style control bar, with strings to the head, hands and feet, so that the strings are easy to read. Check a real rig before a film shows one.",
+   "checked": "2026-11-21"
   }
  ]
 }

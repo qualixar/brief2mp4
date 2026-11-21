@@ -5,24 +5,24 @@ import { TAU, clamp, lerp, prog, easeOut, easeInOut, hash, frameOf, held, jit, g
 import { rgba, mix, spline, bounds, tooth, speckle } from './looks-painted.js';
 
 const INK = '#15100d';
-const centroid = (pts) => [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
-const scaleAbout = (pts, k) => { const [cx, cy] = centroid(pts); return pts.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]); };
-const closed = (pts, per = 8) => { const n = pts.length; return spline([pts[n - 1], ...pts, pts[0], pts[1]], per).slice(per, per * (n + 1) + 1); };   // a smooth closed curve through the points
-const rot = (pts, x, y, a, sx = 1, sy = sx) => pts.map(([u, v]) => [x + (u * sx) * Math.cos(a) - (v * sy) * Math.sin(a), y + (u * sx) * Math.sin(a) + (v * sy) * Math.cos(a)]);
-const leaf = (x, y, len, wid, ang) => closed(rot([[0, 0], [0.3, -0.5], [0.72, -0.4], [1, 0], [0.72, 0.4], [0.3, 0.5]], x, y, ang, len, wid * 2), 4);   // a pointed leaf or petal, root at (x, y)
-const fish = (cx, cy, L, H, dir = 1, a = 0) => closed(rot([[1, 0], [0.55, -0.42], [-0.1, -0.5], [-0.55, -0.22], [-0.7, -0.06], [-1.0, -0.42], [-0.92, 0], [-1.0, 0.42], [-0.7, 0.06], [-0.55, 0.22], [-0.1, 0.5], [0.55, 0.42]].map(([x, y]) => [x * dir, y]), cx, cy, a, L, H), 6);
+export const centroid = (pts) => [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
+export const scaleAbout = (pts, k) => { const [cx, cy] = centroid(pts); return pts.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]); };
+export const closed = (pts, per = 8) => { const n = pts.length; return spline([pts[n - 1], ...pts, pts[0], pts[1]], per).slice(per, per * (n + 1) + 1); };   // a smooth closed curve through the points
+export const rot = (pts, x, y, a, sx = 1, sy = sx) => pts.map(([u, v]) => [x + (u * sx) * Math.cos(a) - (v * sy) * Math.sin(a), y + (u * sx) * Math.sin(a) + (v * sy) * Math.cos(a)]);
+export const leaf = (x, y, len, wid, ang) => closed(rot([[0, 0], [0.3, -0.5], [0.72, -0.4], [1, 0], [0.72, 0.4], [0.3, 0.5]], x, y, ang, len, wid * 2), 4);   // a pointed leaf or petal, root at (x, y)
+export const fish = (cx, cy, L, H, dir = 1, a = 0) => closed(rot([[1, 0], [0.55, -0.42], [-0.1, -0.5], [-0.55, -0.22], [-0.7, -0.06], [-1.0, -0.42], [-0.92, 0], [-1.0, 0.42], [-0.7, 0.06], [-0.55, 0.22], [-0.1, 0.5], [0.55, 0.42]].map(([x, y]) => [x * dir, y]), cx, cy, a, L, H), 6);
 // parallel lines over a box, at an angle
-function lines(g, bb, ang, sp, w, col, from = 0) {
+export function lines(g, bb, ang, sp, w, col, from = 0) {
   const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, D = Math.hypot(bb[2] - bb[0], bb[3] - bb[1]) / 2 + 2, dx = Math.cos(ang), dy = Math.sin(ang);
   g.strokeStyle = col; g.lineWidth = w; g.beginPath();
   for (let c = -D + from; c <= D; c += sp) { const x = cx - dy * c, y = cy + dx * c; g.moveTo(x - dx * D, y - dy * D); g.lineTo(x + dx * D, y + dy * D); }
   g.stroke();
 }
-function dots(g, bb, sp, r, col) { g.fillStyle = col; g.beginPath(); for (let y = bb[1], j = 0; y <= bb[3]; y += sp, j++) for (let x = bb[0] + (j % 2) * sp / 2; x <= bb[2]; x += sp) { g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU); } g.fill(); }
-function scales(g, bb, r, col, w = 2) { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); for (let y = bb[1], j = 0; y <= bb[3] + r; y += r * 0.8, j++) for (let x = bb[0] - r + (j % 2) * r; x <= bb[2] + r; x += r * 2) { g.moveTo(x + r, y); g.arc(x, y, r, 0, Math.PI); } g.stroke(); }
+export function dots(g, bb, sp, r, col) { g.fillStyle = col; g.beginPath(); for (let y = bb[1], j = 0; y <= bb[3]; y += sp, j++) for (let x = bb[0] + (j % 2) * sp / 2; x <= bb[2]; x += sp) { g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU); } g.fill(); }
+export function scales(g, bb, r, col, w = 2) { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); for (let y = bb[1], j = 0; y <= bb[3] + r; y += r * 0.8, j++) for (let x = bb[0] - r + (j % 2) * r; x <= bb[2] + r; x += r * 2) { g.moveTo(x + r, y); g.arc(x, y, r, 0, Math.PI); } g.stroke(); }
 // a shape that is drawn on in stages: the outline travels round it, the fill comes in, a pattern fills it, and a second inner line follows.
 // o: { start, dur, fill, line, lw, inner, pattern(g, bb) }; pts must be a closed polyline
-function folkShape(g, pts, o, ts) {
+export function folkShape(g, pts, o, ts) {
   const k = prog(ts, o.start, o.dur); if (k <= 0) return;
   if (k > 0.5 && o.fill) {
     g.save(); g.globalAlpha = clamp((k - 0.5) / 0.3); g.fillStyle = o.fill; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill();
@@ -42,9 +42,9 @@ function borderTriangles(g, W, H, cols, shown) {
     }
   }
 }
-const disc = (g, x, y, r, col, line = 0) => { g.fillStyle = col; g.beginPath(); g.arc(x, y, Math.max(0, r), 0, TAU); g.fill(); if (line) { g.strokeStyle = INK; g.lineWidth = line; g.stroke(); } };
+export const disc = (g, x, y, r, col, line = 0) => { g.fillStyle = col; g.beginPath(); g.arc(x, y, Math.max(0, r), 0, TAU); g.fill(); if (line) { g.strokeStyle = INK; g.lineWidth = line; g.stroke(); } };
 // a flower seen from the front: round petals round a centre
-function rosette(g, x, y, r, n, col, col2, seed = 0) {
+export function rosette(g, x, y, r, n, col, col2, seed = 0) {
   g.fillStyle = col; for (let i = 0; i < n; i++) { const a = (i / n) * TAU + seed; g.beginPath(); g.ellipse(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.46, r * 0.26, a, 0, TAU); g.fill(); }
   disc(g, x, y, r * 0.3, col2); disc(g, x, y, r * 0.12, INK);
 }
@@ -67,7 +67,7 @@ function warliTree(g, x, y, sc, k) {
 // a curl of vine: an Archimedean spiral that winds out from (x, y)
 const curl = (x, y, r, turns = 2.2, dir = 1) => Array.from({ length: 30 }, (_, i) => { const a = (i / 29) * turns * TAU * dir, rr = r * (1 - i / 36); return [x + Math.cos(a) * rr, y + Math.sin(a) * rr]; });
 
-const ellipseLine = (x, y, rx, ry, a = 0) => rot(circlePts(0, 0, 1, 28), x, y, a, rx, ry);
+export const ellipseLine = (x, y, rx, ry, a = 0) => rot(circlePts(0, 0, 1, 28), x, y, a, rx, ry);
 // Gond bands: each band is a solid base colour with fine marks of one contrasting colour: dots, dashes, parallel lines or fish-scale arcs
 const GOND = [['#b3182a', '#f7c948'], ['#f2a81d', '#15100d'], ['#1f4fa8', '#f6f0dc'], ['#2d8a3e', '#f7c948'], ['#15100d', '#f2a81d'], ['#b3182a', '#f6f0dc'], ['#f2a81d', '#b3182a'], ['#1f4fa8', '#f2a81d']];
 function gondBands(g, bb, ang, seed = 0) {
@@ -84,12 +84,12 @@ function gondBands(g, bb, ang, seed = 0) {
   g.restore();
 }
 // a tapering band along a curve: used for tree trunks and branches
-function ribbon(ctrl, w0, w1) {
+export function ribbon(ctrl, w0, w1) {
   const pts = spline(ctrl, 8), n = pts.length, L = [], R = [];
   pts.forEach(([x, y], i) => { const p = pts[Math.max(0, i - 1)], q = pts[Math.min(n - 1, i + 1)], a = Math.atan2(q[1] - p[1], q[0] - p[0]), w = lerp(w0, w1, i / (n - 1)); L.push([x + Math.sin(a) * w, y - Math.cos(a) * w]); R.push([x - Math.sin(a) * w, y + Math.cos(a) * w]); });
   return [...L, ...R.reverse(), L[0]];
 }
-function halftone(g, bb, pitch, ang, val) {
+export function halftone(g, bb, pitch, ang, val) {
   const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, n = Math.ceil(Math.hypot(bb[2] - bb[0], bb[3] - bb[1]) / 2 / pitch), c = Math.cos(ang), s = Math.sin(ang);
   g.beginPath();
   for (let j = -n; j <= n; j++) for (let i = -n; i <= n; i++) { const x = cx + (i * c - j * s) * pitch, y = cy + (i * s + j * c) * pitch; if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) continue; const r = pitch * 0.72 * Math.sqrt(clamp(val(x, y))); if (r > 0.4) { g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU); } }
