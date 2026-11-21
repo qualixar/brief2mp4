@@ -27,7 +27,7 @@ def look_ids() -> list[str]:
 
 def test_there_are_enough_forms_and_ids_are_unique():
     ids = [f["id"] for f in DATA["forms"]]
-    assert len(ids) >= 63
+    assert len(ids) >= 74
     assert len(ids) == len(set(ids))
 
 
@@ -107,6 +107,9 @@ def test_generated_pages_are_current():
     ("a tilt-shift miniature town", "diorama", "named"),
     ("glowing point cloud scan", "point-cloud", "named"),
     ("cel shaded 3D like a comic", "toon-3d", "named"),
+    ("like an old silent movie", "silent-film", "named"),
+    ("a thermal camera view", "thermal", "named"),
+    ("synthwave retro grid", "synthwave", "named"),
 ])
 def test_router_picks_the_form(brief, expected, confidence):
     r = art_route.route(brief)
