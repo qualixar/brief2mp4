@@ -22,7 +22,20 @@ REFS = SKILL / "references"
 
 needs_ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
                                   reason="ffmpeg/ffprobe not found")
-needs_bash = pytest.mark.skipif(shutil.which("bash") is None, reason="bash not found")
+def _find_bash():
+    """bash for the shell scripts. On Windows `bash` on PATH is often the WSL launcher in System32, which cannot run
+    these scripts, so look for Git Bash instead (B2M_BASH overrides); skip when it is not installed."""
+    if os.name != "nt":
+        return shutil.which("bash")
+    for cand in (os.environ.get("B2M_BASH"), r"C:\Program Files\Git\bin\bash.exe",
+                 r"C:\Program Files\Git\usr\bin\bash.exe", shutil.which("bash")):
+        if cand and os.path.isfile(cand) and "system32" not in cand.lower():
+            return cand
+    return None
+
+
+BASH = _find_bash()
+needs_bash = pytest.mark.skipif(BASH is None, reason="bash (Git Bash on Windows) not found")
 
 X264 = ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "14"]
 
@@ -44,7 +57,7 @@ def py_script(name: str, *args, **kw) -> subprocess.CompletedProcess:
 
 
 def bash_script(name: str, *args, **kw) -> subprocess.CompletedProcess:
-    return run(["bash", SCRIPTS / name, *args], **kw)
+    return run([BASH, SCRIPTS / name, *args], **kw)
 
 
 # ---- clips -----------------------------------------------------------------------------------------------------

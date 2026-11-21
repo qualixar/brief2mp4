@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from craft_common import REFS, SCRIPTS, SKILL, needs_bash
+from craft_common import BASH, REFS, SCRIPTS, SKILL, needs_bash
 
 NEW_REFS = ["motion-doctrine.md", "render-traps.md", "review-checklist.md", "sound.md"]
 NEW_PY = ["check_seams.py", "check_clutter.py", "beat_grid.py", "fetch_music.py"]
@@ -75,4 +75,4 @@ def test_python_scripts_print_help(name):
 @needs_bash
 @pytest.mark.parametrize("name", NEW_SH + ["check_delivery.sh"])
 def test_shell_scripts_parse(name):
-    assert subprocess.run(["bash", "-n", str(SCRIPTS / name)], capture_output=True).returncode == 0
+    assert subprocess.run([BASH, "-n", str(SCRIPTS / name)], capture_output=True).returncode == 0
