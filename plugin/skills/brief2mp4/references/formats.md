@@ -2,7 +2,7 @@
 
 Read this when the brief names a kind of video ("an explainer", "a Short", "a tutorial intro") or when it is vague about structure. Each format gives a beat sheet that works, the route for each beat, and the checks that matter most for it. Times are for the length shown; scale them to the brief.
 
-Rules that hold for every format:
+Rules that hold for every format (the numbers behind them are in `motion-doctrine.md`, section 13):
 
 - **Something is on screen and moving by 0.3 s.** Viewers decide in the first second.
 - **One idea per beat, one hero moment per video.** Put the hero moment in the beat sheet with a time.
@@ -22,7 +22,7 @@ Length 30-120 s, 16:9. Route: HyperFrames for everything; Three.js only for a si
 | Example | 38-52 s | One concrete case: numbers counting up, a before and after, or a UI mock |
 | Takeaway | 52-60 s | One sentence, held still |
 
-Techniques: build diagrams with SVG paths that draw on (`stroke-dashoffset`), reveal labels word by word, move a highlight box instead of cutting, keep one consistent visual metaphor through the whole video. Use a narrow palette: background, ink, one accent for "the thing that matters".
+Techniques: build diagrams with SVG paths that draw on (`stroke-dashoffset` with the measured path length in pixels, see `references/render-traps.md`), reveal labels word by word, move a highlight box instead of cutting, keep one consistent visual metaphor through the whole video. Use a narrow palette: background, ink, one accent for "the thing that matters".
 
 Checks: every label spelled exactly; nothing overlapping when the diagram is complete (pull a still at the end of each build); the accent colour used only for the key element.
 
