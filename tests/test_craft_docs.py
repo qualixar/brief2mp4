@@ -16,7 +16,7 @@ NEW_FILES = [REFS / n for n in NEW_REFS] + [SCRIPTS / n for n in NEW_PY + NEW_SH
 SKILL_TEXT = (SKILL / "SKILL.md").read_text(encoding="utf-8")
 
 # Nothing personal, no private paths or channels, and no "ideas from" credits: only tools that are called or installed get credit.
-BANNED = ["varun", "qualixar", "diary", "my channel", "subscribers", "/users/v", "ideas from", "inspired by", "reanimate", "lottiefiles"]
+BANNED = ["varun", "qualixar", "diary", "my channel", "subscribers", "/us" + "ers/v", "ideas from", "inspired by", "reanimate", "lottiefiles"]
 
 
 @pytest.mark.parametrize("path", NEW_FILES, ids=lambda p: p.name)
