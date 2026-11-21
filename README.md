@@ -229,7 +229,7 @@ The brief does the asking. "Parts fall and settle" becomes a physics bake with a
 
 ## The edit pack
 
-Motion graphics are half of a video. The other half is editing: cutting your screen recording or footage on a timeline, mixing a voiceover over music so the music ducks when you speak, compositing titles, making the thumbnail. The optional edit pack installs the command-line tools of five free, open-source desktop editors, the ArtCraft apps by [storytold](https://github.com/storytold) (MIT or Apache-2.0, at your option), so Claude Code or Codex can do that work too, headless, and hand the result to the same checks.
+Motion graphics are half of a video. The other half is editing: cutting your screen recording or footage on a timeline, mixing a voiceover over music so the music ducks when you speak, compositing titles, making the thumbnail. The optional edit pack installs the command-line tools of six free, open-source desktop editors, the ArtCraft apps by [storytold](https://github.com/storytold) (MIT or Apache-2.0, at your option), so Claude Code or Codex can do that work too, headless, and hand the result to the same checks.
 
 <p align="center">
   <img src="assets/edit-pack-recipes.png" alt="Output of the four edit-pack recipes: a FilmCraft timeline mid cross-dissolve, an EffectCraft animated title, a PhotoCraft thumbnail reading Cut faster, and a VectorCraft lower third" width="720">
@@ -242,10 +242,11 @@ Motion graphics are half of a video. The other half is editing: cutting your scr
 | `effect` | [EffectCraft](https://github.com/storytold/effectcraft) 0.24.1 | After Effects | layered, keyframed compositing and titles | `effect_title.sh` |
 | `photo` | [PhotoCraft](https://github.com/storytold/photocraft) 0.23.1 | Photoshop | thumbnails, title cards | `photo_thumbnail.sh` |
 | `vector` | [VectorCraft](https://github.com/storytold/vectorcraft) 0.24.1 | Illustrator | logos and lower thirds as SVG | `vector_lower_third.sh` |
+| `light` | [LightCraft](https://github.com/storytold/lightcraft) 0.21.1 | Lightroom | colour grading of stills, presets, raw development | `light_grade.sh` |
 
 ```bash
 bash install.sh --with-edit                                  # film + sound
-bash install.sh --with-edit=film,sound,effect,photo,vector   # all five, about 420 MB download on macOS
+bash install.sh --with-edit=film,sound,effect,photo,vector,light   # all six, about 540 MB download on macOS
 ```
 
 ```powershell

@@ -63,7 +63,7 @@ def test_dry_run_plans_every_component_per_platform_and_changes_nothing(tmp_path
     proc = run([BASH, INSTALL_SH, "--components", "all", "--dry-run"], {"B2M_EDIT_HOME": str(home), "B2M_EDIT_PLATFORM": plat})
     assert proc.returncode == 0, proc.stderr
     lines = [l for l in proc.stdout.splitlines() if "would download" in l]
-    assert len(lines) == 5 and all(suffix in l and " MB, from https://github.com/storytold/" in l for l in lines)
+    assert len(lines) == 6 and all(suffix in l and " MB, from https://github.com/storytold/" in l for l in lines)
     assert not home.exists()
 
 
@@ -110,10 +110,11 @@ def test_detect_branches_on_a_cli_that_actually_runs(tmp_path):
     make_stub_cli(home / "soundcraft" / "bin" / "soundcraft-cli")       # Linux layout
     make_stub_cli(home / "effectcraft" / "effectcraft-cli.exe")         # Windows layout
     make_stub_cli(home / "photocraft" / "photocraft-cli", exit_code=1)  # present but broken
+    make_stub_cli(home / "lightcraft" / "bin" / "lightcraft-cli")       # Linux layout, a sixth app
     (home / "vectorcraft").mkdir(parents=True)
     (home / "vectorcraft" / "vectorcraft-cli").write_text("not a program")  # present, not executable
     out = run([BASH, DETECT_SH], {"B2M_EDIT_HOME": str(home)})
-    assert out.returncode == 0 and out.stdout.strip() == "edit: ready (film,sound,effect)"
+    assert out.returncode == 0 and out.stdout.strip() == "edit: ready (film,sound,effect,light)"
 
 
 @posix_only
@@ -190,7 +191,7 @@ def test_uninstall_skips_unsafe_manifest_entries_and_missing_manifest(tmp_path):
 
 def test_there_is_one_recipe_per_app():
     assert sorted(p.name for p in RECIPE_FILES if p.name != "_lib.sh") == [
-        "effect_title.sh", "film_timeline.sh", "photo_thumbnail.sh", "sound_mix.sh", "vector_lower_third.sh"]
+        "effect_title.sh", "film_timeline.sh", "light_grade.sh", "photo_thumbnail.sh", "sound_mix.sh", "vector_lower_third.sh"]
 
 
 @posix_only
@@ -200,7 +201,7 @@ def test_recipe_help_and_missing_cli_message(recipe, tmp_path):
     assert helped.returncode == 0 and "--out" in helped.stdout and "Command ids used" in helped.stdout
     assert run([BASH, recipe, "--bogus"]).returncode == 2
     # A pinned CLI that is not installed is a clear error, and an older copy on the PATH is never used.
-    name = {"film": "filmcraft", "sound": "soundcraft", "effect": "effectcraft", "photo": "photocraft", "vector": "vectorcraft"}[
+    name = {"film": "filmcraft", "sound": "soundcraft", "effect": "effectcraft", "photo": "photocraft", "vector": "vectorcraft", "light": "lightcraft"}[
         recipe.name.split("_")[0]]
     make_stub_cli(tmp_path / "pathbin" / f"{name}-cli")
     proc = run([BASH, recipe, "--out", str(tmp_path / "o.out")],
@@ -311,7 +312,7 @@ def test_readme_matches_the_pins():
     for app in VERSIONS["apps"].values():
         assert app["name"] in text.lower() or app["name"].capitalize() in text
         assert app["version"] in text, f"README-EDIT.md does not mention {app['name']} {app['version']}"
-    for recipe in ("film_timeline.sh", "sound_mix.sh", "effect_title.sh", "photo_thumbnail.sh", "vector_lower_third.sh"):
+    for recipe in ("film_timeline.sh", "sound_mix.sh", "effect_title.sh", "photo_thumbnail.sh", "vector_lower_third.sh", "light_grade.sh"):
         assert recipe in text
     for must in ("storytold", "Apache-2.0", "alpha", "finish.sh", "check_delivery.sh", "B2M_EDIT_HOME", "--uninstall",
                  "untested", "automation-read-root"):
