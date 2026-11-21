@@ -60,9 +60,8 @@ This is the look from `art-forms/looks-painted.js`, which `tests/art_forms/check
     layer(1.0, 'up', () => { shape([[0, 440], [200, 392], [420, 424], [640, 384], [960, 430], [960, 540], [0, 540]], '#3f7440', 12); shape([[322, 408], [354, 408], [430, 470], [520, 540], [290, 540], [350, 470]], '#e8d29c', 13); });
     layer(1.5, 'right', () => { shape([[250, 336], [430, 336], [430, 414], [250, 414]], '#e9b676', 14); shape([[392, 270], [416, 270], [416, 320], [392, 320]], '#8f3c32', 15); });
     layer(1.9, 'right', () => shape([[226, 340], [340, 262], [454, 340]], '#b8463a', 16));
-    layer(2.3, 'right', () => { shape([[318, 366], [356, 366], [356, 414], [318, 414]], '#6a3b2b', 17); shape([[266, 350], [302, 350], [302, 386], [266, 386]], '#ffd45e', 18); g.strokeStyle = '#a0622f'; g.lineWidth = 3; g.beginPath(); g.moveTo(284, 350); g.lineTo(284, 386); g.moveTo(266, 368); g.lineTo(302, 368); g.stroke(); });
+    layer(2.3, 'right', () => { flatShape(g, () => blob(g, 284, 368, 36, 19, 0.04), '#f3cc78', 19, [248, 332, 320, 404]); shape([[318, 366], [356, 366], [356, 414], [318, 414]], '#6a3b2b', 17); shape([[266, 350], [302, 350], [302, 386], [266, 386]], '#ffd45e', 18); g.strokeStyle = '#a0622f'; g.lineWidth = 3; g.beginPath(); g.moveTo(284, 350); g.lineTo(284, 386); g.moveTo(266, 368); g.lineTo(302, 368); g.stroke(); });
     [[560, 428, 150], [640, 436, 196], [738, 422, 142], [868, 436, 176]].forEach(([x, b, h], i) => layer(2.4 + i * 0.22, 'up', () => pine(x, b, h, 30 + i * 5)));
-    const glow = prog(ts, 2.6, 0.3); g.fillStyle = `rgba(255,212,94,${0.1 * glow})`; for (let r = 100; r > 40; r -= 30) { g.beginPath(); g.arc(284, 368, r + (f % 3), 0, TAU); g.fill(); }
     for (let i = 0; i < 3; i++) { const s = prog(ts, 2.9, 1.2), y = 262 - ((s * 3 + i * 0.9) % 2.6) * 34; if (s > 0) { g.fillStyle = 'rgba(232,226,208,.8)'; g.beginPath(); g.arc(404 + Math.sin(f * 0.7 + i) * 4 + i * 4, y, 7 + i * 3, 0, TAU); g.fill(); } }
     paper(g, W, H, 4, 16);
   } }

@@ -52,7 +52,7 @@ This is the look from `art-forms/looks-painted.js`, which `tests/art_forms/check
     const fillIn = (clip, bb, col, start, dur, seed, w) => { g.save(); g.clip(clip); scribble(g, bb, col, prog(ts, start, dur), f, seed, w); g.restore(); };
     const outline = (pts, col, start, dur) => { g.strokeStyle = rgba(col, 0.9); g.lineWidth = 6; g.lineJoin = 'round'; strokePart(g, pts, prog(ts, start, dur), f + 5, 1.8); };
     fillIn(poly([[0, 0], [W, 0], [W, 392], [0, 392]]), [0, 0, W, 392], [120, 190, 235], 0, 0.9, 1, 14);
-    [[300, 92], [640, 78]].forEach(([x, y], i) => { const c = circlePts(x, y, 52, 24); fillIn(poly(c), [x - 70, y - 60, x + 70, y + 50], [252, 252, 248], 0.9 + i * 0.2, 0.4, 40 + i, 11); });
+    [[470, 96, 1], [760, 70, 0.8]].forEach(([x, y, k], i) => { const c = cloudPts(x, y, k); fillIn(poly(c), [x - 90 * k, y - 60 * k, x + 90 * k, y + 40 * k], [252, 252, 250], 0.9 + i * 0.2, 0.4, 40 + i, 11); outline(c, [110, 160, 215], 1.0 + i * 0.2, 0.4); });   // clouds: puffed outlines scribbled white
     const sun = circlePts(170, 130, 62, 28); fillIn(poly(sun), [100, 60, 240, 200], [250, 205, 40], 0.6, 0.5, 2, 10); outline(sun, [235, 150, 30], 0.7, 0.4);
     for (let i = 0; i < 10; i++) { const a = (i / 10) * TAU; g.strokeStyle = rgba([240, 140, 30], 0.9); g.lineWidth = 7; strokePart(g, [[170 + Math.cos(a) * 80, 130 + Math.sin(a) * 80], [170 + Math.cos(a) * 112, 130 + Math.sin(a) * 112]], prog(ts, 1.1 + i * 0.03, 0.15), f, 1.5); }
     fillIn(poly([[0, 372], [W, 372], [W, H], [0, H]]), [0, 372, W, H], [70, 170, 60], 1.3, 0.7, 3, 11);

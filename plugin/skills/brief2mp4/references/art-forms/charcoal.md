@@ -55,18 +55,18 @@ This is the look from `art-forms/looks-painted.js`, which `tests/art_forms/check
       g.strokeStyle = rgba([58, 56, 60], (0.22 - i * 0.025) * (0.4 + hash(i, j, 4))); g.lineWidth = 3 + hash(i, j, 5) * 16; g.lineCap = 'round'; strokePart(g, [[x0, y], [(x0 + x1) / 2, y + jit(i, j, 14)], [x1, y + jit(i, j + 9, 14)]], k);
     }
     const sun = g.createRadialGradient(W * 0.66, H * 0.34, 10, W * 0.66, H * 0.34, 150); sun.addColorStop(0, rgba(P, 1)); sun.addColorStop(0.45, rgba(P, 0.7)); sun.addColorStop(1, rgba(P, 0));
-    g.fillStyle = sun; g.globalAlpha = easeOut(prog(ts, 0.6, 0.8)); g.fillRect(W * 0.4, 0, W * 0.6, H * 0.7);
+    g.fillStyle = sun; g.globalAlpha = easeOut(prog(ts, 0.3, 0.6)); g.fillRect(W * 0.4, 0, W * 0.6, H * 0.7);
     g.fillStyle = rgba(P, 0.95); blob(g, W * 0.66, H * 0.34, 50, 77, 0.07); g.fill(); g.globalAlpha = 1;   // the sun: a clean disc lifted out with a kneaded eraser
     for (let pass = 0; pass < 2; pass++) for (let c = 0; c <= 40; c++) {
       const x = (c * W) / 40, top = H * 0.78 + Math.sin(c * 0.33) * 22 + Math.sin(c * 0.11) * 18 + hash(c, 4) * 8;
-      if (c / 40 < prog(ts, 0.5 + pass * 0.4, 0.9)) dabs(g, x, top, x + jit(c, 1, 8), H + 20, 48, 0.17, 100 + c + pass * 50, 1, [20, 19, 22]);
+      if (c / 40 < prog(ts, pass * 0.4, 0.7)) dabs(g, x, top, x + jit(c, 1, 8), H + 20, 48, 0.17, 100 + c + pass * 50, 1, [20, 19, 22]);
     }
     const limb = (x, y, a, len, w, depth, seed, start) => {
       const x1 = x + Math.cos(a) * len, y1 = y + Math.sin(a) * len; dabs(g, x, y, x1, y1, w, 0.55, seed, easeOut(prog(ts, start, 0.3)), [18, 17, 20]);
       if (!depth) return;
-      for (let c = 0; c < 2 + (hash(seed, depth) > 0.5 ? 1 : 0); c++) limb(x1, y1, a + (c === 2 ? jit(seed, c, 0.25) : (c ? 1 : -1) * (0.34 + 0.34 * hash(seed, c, depth))), len * (0.7 + 0.1 * hash(seed, c)), w * 0.62, depth - 1, seed * 7 + c + 1, start + 0.28);
+      for (let c = 0; c < 2 + (hash(seed, depth) > 0.5 ? 1 : 0); c++) limb(x1, y1, a + (c === 2 ? jit(seed, c, 0.25) : (c ? 1 : -1) * (0.34 + 0.34 * hash(seed, c, depth))), len * (0.7 + 0.1 * hash(seed, c)), w * 0.62, depth - 1, seed * 7 + c + 1, start + 0.2);
     };
-    limb(bx, by + 6, -Math.PI / 2 + 0.1, 110, 24, 4, 3, 0.6);
+    limb(bx, by + 6, -Math.PI / 2 + 0.1, 110, 24, 4, 3, 0);
     g.strokeStyle = rgba(P, 0.5); g.lineWidth = 5; g.lineCap = 'round'; strokePart(g, [[bx - 9, by - 2], [bx - 5, by - 50], [bx - 3, by - 96]], easeOut(prog(ts, 1.4, 0.4)), 0, 0.8);   // a highlight lifted off the trunk
     dabs(g, W * 0.52, H * 0.2, W * 0.92, H * 0.12, 11, 0.13, 22, prog(ts, 1.8, 0.5), P);
     for (let i = 0; i < 3; i++) { g.strokeStyle = 'rgba(30,29,32,.8)'; g.lineWidth = 3; g.lineCap = 'round'; strokePart(g, [[W * 0.74 + i * 34, H * 0.2 + i * 9], [W * 0.755 + i * 34, H * 0.2 + i * 9 - 8], [W * 0.77 + i * 34, H * 0.2 + i * 9]], prog(ts, 2.8 + i * 0.12, 0.2)); }

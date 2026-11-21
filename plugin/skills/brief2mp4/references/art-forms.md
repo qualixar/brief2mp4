@@ -48,7 +48,7 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [Chalkboard](art-forms/chalkboard.md) | White and coloured chalk on a dark green-black board: dusty, broken lines that draw themselves, ghosts of old eraser swipes, and a stub of chalk at the tip of each line. | steps 10 times a second | HyperFrames (canvas or SVG) |
 | [One continuous line](art-forms/one-line.md) | A whole subject drawn by one unbroken line on a flat colour: the pen never lifts, crosses itself where it must, and the finished drawing is a single curve. | smooth, full frame rate | HyperFrames (SVG or canvas) |
 | [Paint-on-glass](art-forms/paint-on-glass.md) | Oil paint smeared on a lit sheet of glass: translucent colour that glows against the light, deeper where it is thick, finger streaks dragged behind, and shapes that melt from one thing into the next. | steps 12 times a second | HyperFrames (canvas) |
-| [Sand animation](art-forms/sand-art.md) | Light shining through a thin layer of sand on a light table: figures are wiped out as bright lines, thin sand glows amber, and the piles at the edges stay dark. | steps 12 times a second | HyperFrames (canvas) |
+| [Sand animation](art-forms/sand-art.md) | A light table seen from above: a warm glowing backlight, sand as dark sepia masses, and light showing through wherever the sand is thin, with soft graded edges. | steps 12 times a second | HyperFrames (canvas) |
 
 ## Geometry, pixels and 3D
 

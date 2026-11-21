@@ -55,6 +55,7 @@ function hatch(g, clips, o, ts, f) {
   }
   g.restore();
 }
+const cloudPts = (x, y, k) => [...Array.from({ length: 37 }, (_, i) => { const u = i / 36; return [x + (-72 + 144 * u) * k, y + (30 - (26 + 26 * Math.abs(Math.sin(u * 3 * Math.PI)) ** 0.5) * Math.sin(u * Math.PI) ** 0.35) * k]; }), [x + 72 * k, y + 30 * k], [x - 72 * k, y + 30 * k]];   // a flat-bottomed cloud with three puffs
 const applePts = (cx, cy, R, n = 72) => Array.from({ length: n + 1 }, (_, i) => {
   const a = (i / n) * TAU - Math.PI / 2, c = Math.cos(a), s = Math.sin(a);   // wider at the shoulders, a dimple at the top and a small one below
   return [cx + R * c * (1.06 - 0.1 * s), cy + R * 0.94 * s + (s < 0 ? -0.22 * R * s * Math.exp(-c * c * 14) : -0.07 * R * s * Math.exp(-c * c * 14))];
@@ -115,16 +116,6 @@ function chalk(g, pts, k, f, col = '#f1eee4', w = 4) {
   g.setLineDash([]); g.globalAlpha = 1;
   if (k > 0 && k < 1) { const [x, y, a] = at(pts, k); g.save(); g.translate(x, y); g.rotate(a + 0.5); g.fillStyle = '#f6f3ea'; g.beginPath(); g.roundRect(0, -5, 34, 10, 3); g.fill(); g.restore(); }
 }
-// a stroke of wiped sand: a dark pile either side, a soft thin-sand glow, a bright core; a small heap of sand ahead of the finger
-function wipe(g, pts, k, w, f) {
-  if (k <= 0) return;
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  g.strokeStyle = 'rgba(44,22,6,.42)'; g.lineWidth = w * 2.1; strokePart(g, pts, k, f, 0.6);
-  g.strokeStyle = 'rgba(255,200,110,.5)'; g.lineWidth = w * 1.5; strokePart(g, pts, k, f, 0.6);
-  g.strokeStyle = 'rgba(255,247,222,.97)'; g.lineWidth = w; strokePart(g, pts, k, f, 0.5);
-  if (k < 1) { const [x, y] = at(pts, k); for (let i = 0; i < 16; i++) { g.fillStyle = `rgba(48,26,8,${0.5 + hash(i, f) * 0.4})`; g.beginPath(); g.arc(x + 12 + (hash(i, 1) - 0.3) * 20, y + (hash(i, 2) - 0.5) * 22, 1.5 + hash(i, 3) * 2.2, 0, TAU); g.fill(); } }
-}
-
 // one daub of translucent paint on lit glass: the colour, a deeper rim where it is thick, and finger streaks dragged behind it
 function daub(g, build, col, box, f, seed, a = 0.8) {
   g.save(); build(); g.fillStyle = rgba(col, a); g.fill(); g.lineWidth = 7; g.strokeStyle = rgba(col.map((v) => v * 0.5), 0.5); g.stroke(); g.restore();
@@ -135,12 +126,18 @@ function daub(g, build, col, box, f, seed, a = 0.8) {
     g.strokeStyle = gr; g.lineWidth = 3 + hash(j, seed, 3) * 8; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x - len / 2, y + bend * 1.6, x - len, y + bend); g.stroke();
   }
 }
-// the outline of the sand figure: a spiky sun at m = 0, a round-petalled flower at m = 1, and every shape between
-const sandFigure = (cx, cy, R, m, n = 128) => Array.from({ length: n + 1 }, (_, i) => {
-  const a = (i / n) * TAU - Math.PI / 2, sun = 0.6 + 0.4 * Math.max(0, Math.cos(16 * a)) ** 2, flower = 0.4 + 0.6 * Math.abs(Math.cos(4 * a)) ** 0.7, r = R * lerp(sun, flower, m);
-  return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
-});
-
+// the sand figure as ten soft ellipses [x, y, rx, ry, angle] in units of R: a sun (a disc and eight rays), a flower (a core and eight petals) or a bird in flight.
+// Every figure has ten, so any two can be blended number by number: that is how one shape is pushed into the next
+const radial = (a, r, rx, ry) => [Math.cos(a) * r, Math.sin(a) * r, rx, ry, a];
+const SAND_SUN = [[0, 0, 0.55, 0.55, 0], ...Array.from({ length: 8 }, (_, i) => radial((i * TAU) / 8, 1.05, 0.42, 0.09)), [0, 0, 0.01, 0.01, 0]];
+const SAND_FLOWER = [[0, 0, 0.3, 0.3, 0], ...Array.from({ length: 8 }, (_, i) => radial((i * TAU) / 8, 0.74, 0.44, 0.27)), [0, 0, 0.01, 0.01, 0]];
+const SAND_BIRD = [[0, 0.05, 0.72, 0.3, 0.12], [-0.78, -0.12, 0.2, 0.17, 0], [-1.0, -0.1, 0.17, 0.045, 0.1], [0.95, 0.12, 0.4, 0.1, 0.3], [0.92, 0.22, 0.36, 0.09, 0.55], [0.5, -0.7, 0.8, 0.2, -0.9], [-0.5, -0.7, 0.8, 0.2, -2.25], [0.98, -1.0, 0.42, 0.11, -0.6], [-0.92, -1.0, 0.4, 0.11, -2.5], [0.05, 0.15, 0.5, 0.25, 0]];
+const blendShapes = (a, b, k) => a.map((e, i) => e.map((v, j) => lerp(v, b[i][j], k)));
+// sand as a mass: a wide, pale halo where it is thin, then the dark sepia body with a soft edge
+function sandMass(g, shapes, R) {
+  const pass = (scale, blur, style) => { g.filter = `blur(${blur}px)`; g.fillStyle = style; shapes.forEach(([x, y, rx, ry, a]) => { g.beginPath(); g.ellipse(x * R, y * R, Math.max(0.01, rx * R * scale), Math.max(0.01, ry * R * scale), a, 0, TAU); g.fill(); }); };
+  pass(1.3, 16, 'rgba(120,58,12,.32)'); pass(1.1, 8, 'rgba(60,28,6,.6)'); pass(1, 4, 'rgba(26,11,3,.95)'); g.filter = 'none';
+}
 // the one line of the swan, as points evenly spaced along its length so the pen moves at a steady speed
 function swanLine() {
   const C = spline([[430, 360], [398, 322], [376, 282], [372, 240], [386, 200], [392, 164], [380, 134]], 8), n = C.length - 1;
@@ -182,18 +179,18 @@ export const LOOKS = {
       g.strokeStyle = rgba([58, 56, 60], (0.22 - i * 0.025) * (0.4 + hash(i, j, 4))); g.lineWidth = 3 + hash(i, j, 5) * 16; g.lineCap = 'round'; strokePart(g, [[x0, y], [(x0 + x1) / 2, y + jit(i, j, 14)], [x1, y + jit(i, j + 9, 14)]], k);
     }
     const sun = g.createRadialGradient(W * 0.66, H * 0.34, 10, W * 0.66, H * 0.34, 150); sun.addColorStop(0, rgba(P, 1)); sun.addColorStop(0.45, rgba(P, 0.7)); sun.addColorStop(1, rgba(P, 0));
-    g.fillStyle = sun; g.globalAlpha = easeOut(prog(ts, 0.6, 0.8)); g.fillRect(W * 0.4, 0, W * 0.6, H * 0.7);
+    g.fillStyle = sun; g.globalAlpha = easeOut(prog(ts, 0.3, 0.6)); g.fillRect(W * 0.4, 0, W * 0.6, H * 0.7);
     g.fillStyle = rgba(P, 0.95); blob(g, W * 0.66, H * 0.34, 50, 77, 0.07); g.fill(); g.globalAlpha = 1;   // the sun: a clean disc lifted out with a kneaded eraser
     for (let pass = 0; pass < 2; pass++) for (let c = 0; c <= 40; c++) {
       const x = (c * W) / 40, top = H * 0.78 + Math.sin(c * 0.33) * 22 + Math.sin(c * 0.11) * 18 + hash(c, 4) * 8;
-      if (c / 40 < prog(ts, 0.5 + pass * 0.4, 0.9)) dabs(g, x, top, x + jit(c, 1, 8), H + 20, 48, 0.17, 100 + c + pass * 50, 1, [20, 19, 22]);
+      if (c / 40 < prog(ts, pass * 0.4, 0.7)) dabs(g, x, top, x + jit(c, 1, 8), H + 20, 48, 0.17, 100 + c + pass * 50, 1, [20, 19, 22]);
     }
     const limb = (x, y, a, len, w, depth, seed, start) => {
       const x1 = x + Math.cos(a) * len, y1 = y + Math.sin(a) * len; dabs(g, x, y, x1, y1, w, 0.55, seed, easeOut(prog(ts, start, 0.3)), [18, 17, 20]);
       if (!depth) return;
-      for (let c = 0; c < 2 + (hash(seed, depth) > 0.5 ? 1 : 0); c++) limb(x1, y1, a + (c === 2 ? jit(seed, c, 0.25) : (c ? 1 : -1) * (0.34 + 0.34 * hash(seed, c, depth))), len * (0.7 + 0.1 * hash(seed, c)), w * 0.62, depth - 1, seed * 7 + c + 1, start + 0.28);
+      for (let c = 0; c < 2 + (hash(seed, depth) > 0.5 ? 1 : 0); c++) limb(x1, y1, a + (c === 2 ? jit(seed, c, 0.25) : (c ? 1 : -1) * (0.34 + 0.34 * hash(seed, c, depth))), len * (0.7 + 0.1 * hash(seed, c)), w * 0.62, depth - 1, seed * 7 + c + 1, start + 0.2);
     };
-    limb(bx, by + 6, -Math.PI / 2 + 0.1, 110, 24, 4, 3, 0.6);
+    limb(bx, by + 6, -Math.PI / 2 + 0.1, 110, 24, 4, 3, 0);
     g.strokeStyle = rgba(P, 0.5); g.lineWidth = 5; g.lineCap = 'round'; strokePart(g, [[bx - 9, by - 2], [bx - 5, by - 50], [bx - 3, by - 96]], easeOut(prog(ts, 1.4, 0.4)), 0, 0.8);   // a highlight lifted off the trunk
     dabs(g, W * 0.52, H * 0.2, W * 0.92, H * 0.12, 11, 0.13, 22, prog(ts, 1.8, 0.5), P);
     for (let i = 0; i < 3; i++) { g.strokeStyle = 'rgba(30,29,32,.8)'; g.lineWidth = 3; g.lineCap = 'round'; strokePart(g, [[W * 0.74 + i * 34, H * 0.2 + i * 9], [W * 0.755 + i * 34, H * 0.2 + i * 9 - 8], [W * 0.77 + i * 34, H * 0.2 + i * 9]], prog(ts, 2.8 + i * 0.12, 0.2)); }
@@ -232,9 +229,8 @@ export const LOOKS = {
     layer(1.0, 'up', () => { shape([[0, 440], [200, 392], [420, 424], [640, 384], [960, 430], [960, 540], [0, 540]], '#3f7440', 12); shape([[322, 408], [354, 408], [430, 470], [520, 540], [290, 540], [350, 470]], '#e8d29c', 13); });
     layer(1.5, 'right', () => { shape([[250, 336], [430, 336], [430, 414], [250, 414]], '#e9b676', 14); shape([[392, 270], [416, 270], [416, 320], [392, 320]], '#8f3c32', 15); });
     layer(1.9, 'right', () => shape([[226, 340], [340, 262], [454, 340]], '#b8463a', 16));
-    layer(2.3, 'right', () => { shape([[318, 366], [356, 366], [356, 414], [318, 414]], '#6a3b2b', 17); shape([[266, 350], [302, 350], [302, 386], [266, 386]], '#ffd45e', 18); g.strokeStyle = '#a0622f'; g.lineWidth = 3; g.beginPath(); g.moveTo(284, 350); g.lineTo(284, 386); g.moveTo(266, 368); g.lineTo(302, 368); g.stroke(); });
+    layer(2.3, 'right', () => { flatShape(g, () => blob(g, 284, 368, 36, 19, 0.04), '#f3cc78', 19, [248, 332, 320, 404]); shape([[318, 366], [356, 366], [356, 414], [318, 414]], '#6a3b2b', 17); shape([[266, 350], [302, 350], [302, 386], [266, 386]], '#ffd45e', 18); g.strokeStyle = '#a0622f'; g.lineWidth = 3; g.beginPath(); g.moveTo(284, 350); g.lineTo(284, 386); g.moveTo(266, 368); g.lineTo(302, 368); g.stroke(); });
     [[560, 428, 150], [640, 436, 196], [738, 422, 142], [868, 436, 176]].forEach(([x, b, h], i) => layer(2.4 + i * 0.22, 'up', () => pine(x, b, h, 30 + i * 5)));
-    const glow = prog(ts, 2.6, 0.3); g.fillStyle = `rgba(255,212,94,${0.1 * glow})`; for (let r = 100; r > 40; r -= 30) { g.beginPath(); g.arc(284, 368, r + (f % 3), 0, TAU); g.fill(); }
     for (let i = 0; i < 3; i++) { const s = prog(ts, 2.9, 1.2), y = 262 - ((s * 3 + i * 0.9) % 2.6) * 34; if (s > 0) { g.fillStyle = 'rgba(232,226,208,.8)'; g.beginPath(); g.arc(404 + Math.sin(f * 0.7 + i) * 4 + i * 4, y, 7 + i * 3, 0, TAU); g.fill(); } }
     paper(g, W, H, 4, 16);
   } },
@@ -244,7 +240,7 @@ export const LOOKS = {
     const fillIn = (clip, bb, col, start, dur, seed, w) => { g.save(); g.clip(clip); scribble(g, bb, col, prog(ts, start, dur), f, seed, w); g.restore(); };
     const outline = (pts, col, start, dur) => { g.strokeStyle = rgba(col, 0.9); g.lineWidth = 6; g.lineJoin = 'round'; strokePart(g, pts, prog(ts, start, dur), f + 5, 1.8); };
     fillIn(poly([[0, 0], [W, 0], [W, 392], [0, 392]]), [0, 0, W, 392], [120, 190, 235], 0, 0.9, 1, 14);
-    [[300, 92], [640, 78]].forEach(([x, y], i) => { const c = circlePts(x, y, 52, 24); fillIn(poly(c), [x - 70, y - 60, x + 70, y + 50], [252, 252, 248], 0.9 + i * 0.2, 0.4, 40 + i, 11); });
+    [[470, 96, 1], [760, 70, 0.8]].forEach(([x, y, k], i) => { const c = cloudPts(x, y, k); fillIn(poly(c), [x - 90 * k, y - 60 * k, x + 90 * k, y + 40 * k], [252, 252, 250], 0.9 + i * 0.2, 0.4, 40 + i, 11); outline(c, [110, 160, 215], 1.0 + i * 0.2, 0.4); });   // clouds: puffed outlines scribbled white
     const sun = circlePts(170, 130, 62, 28); fillIn(poly(sun), [100, 60, 240, 200], [250, 205, 40], 0.6, 0.5, 2, 10); outline(sun, [235, 150, 30], 0.7, 0.4);
     for (let i = 0; i < 10; i++) { const a = (i / 10) * TAU; g.strokeStyle = rgba([240, 140, 30], 0.9); g.lineWidth = 7; strokePart(g, [[170 + Math.cos(a) * 80, 130 + Math.sin(a) * 80], [170 + Math.cos(a) * 112, 130 + Math.sin(a) * 112]], prog(ts, 1.1 + i * 0.03, 0.15), f, 1.5); }
     fillIn(poly([[0, 372], [W, 372], [W, H], [0, H]]), [0, 372, W, H], [70, 170, 60], 1.3, 0.7, 3, 11);
@@ -305,20 +301,22 @@ export const LOOKS = {
     for (let i = 0; i < 4; i++) { const bx = x - 180 - i * 46 + Math.sin(ts * 2 + i) * 6, by = y - 40 - ((ts * 28 + i * 40) % 160) * (1 - m * 0.4); g.beginPath(); g.arc(bx, by, 7 + i * 3, 0, TAU); g.stroke(); }
   } },
   'sand-art': { kind: '2d', fps: 12, draw(g, t, W, H) {
-    // a sun that becomes a flower, wiped out of a layer of sand on a light table: bright where the sand is cleared, amber where it is thin, dark in the piles
-    const ts = held(t, 12), f = frameOf(t, 12), m = easeInOut(prog(ts, 1.7, 1.8)), cx = W / 2, cy = H * 0.42 - m * 24, R = 118, gy = H * 0.88;
-    bg(g, W, H, '#fff3d4'); g.fillStyle = 'rgb(204,126,42)'; g.fillRect(0, 0, W, H); const glow = g.createRadialGradient(W / 2, H * 0.42, 20, W / 2, H * 0.42, W * 0.5); glow.addColorStop(0, 'rgba(255,226,150,.5)'); glow.addColorStop(1, 'rgba(255,226,150,0)'); g.fillStyle = glow; g.fillRect(0, 0, W, H);
-    for (let i = 0; i < 9; i++) { const bx = hash(i, 1) * W, by = hash(i, 2) * H, b = g.createRadialGradient(bx, by, 10, bx, by, 150 + hash(i, 3) * 110); b.addColorStop(0, i % 2 ? 'rgba(255,196,96,.3)' : 'rgba(70,34,6,.32)'); b.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = b; g.fillRect(0, 0, W, H); }   // the sand is thicker in some places
-    wipe(g, spline([[40, gy + 6], [240, gy - 8], [480, gy + 4], [720, gy - 10], [920, gy + 2]], 10), easeOut(prog(ts, 0.05, 0.9)), 7, f);
-    wipe(g, sandFigure(cx, cy, R, m), prog(ts, 0.25, 1.4), 8, f);
-    wipe(g, circlePts(cx, cy, 0.3 * R, 30), prog(ts, 1.1, 0.5), 6, f);
-    for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU + m, k = prog(ts, 2.0 + i * 0.05, 0.1) * m; if (k > 0) { g.fillStyle = 'rgba(255,248,222,.95)'; g.beginPath(); g.arc(cx + Math.cos(a) * 0.55 * R, cy + Math.sin(a) * 0.55 * R, 4.5 * k, 0, TAU); g.fill(); } }
-    const sb = cy + R, mid = lerp(sb, gy, 0.55);   // the flower's lowest petal is at R below the centre
-    wipe(g, spline([[cx, sb], [cx - 7, mid], [cx + 3, gy]], 10), prog(ts, 2.3, 0.9), 7, f);
-    wipe(g, spline([[cx - 3, mid + 8], [cx + 50, mid - 38], [cx + 112, mid - 34], [cx + 66, mid - 2], [cx - 3, mid + 8]], 10), prog(ts, 2.9, 0.7), 6, f);
-    wipe(g, spline([[cx - 4, mid + 40], [cx - 56, mid + 2], [cx - 116, mid + 6], [cx - 70, mid + 38], [cx - 4, mid + 40]], 10), prog(ts, 3.2, 0.7), 6, f);
-    g.drawImage(grain(W, H, 41, 150, [255, 226, 160]), 0, 0); g.drawImage(grain(W, H, 42, 130, [46, 22, 4]), 0, 0);   // loose sand over everything, light and dark
-    g.save(); g.globalCompositeOperation = 'multiply'; const v = g.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.98); v.addColorStop(0, 'rgba(255,255,255,0)'); v.addColorStop(1, 'rgba(60,28,0,.5)'); g.fillStyle = v; g.fillRect(0, 0, W, H); g.restore();
+    // a light table seen from above: a warm backlight, sand as dark sepia masses with soft graded edges, light coming through where it is thin. A sun is pushed into a flower, then the flower into a bird
+    const ts = held(t, 12), f = frameOf(t, 12), m1 = easeInOut(prog(ts, 1.0, 1.3)), m2 = easeInOut(prog(ts, 2.6, 1.3)), R = 104 * easeOut(prog(ts, 0.05, 0.8)), cx = W / 2, cy = H * 0.44;
+    bg(g, W, H, '#fff0c4'); const lamp = g.createRadialGradient(W / 2, H * 0.45, 30, W / 2, H * 0.45, W * 0.62); lamp.addColorStop(0, '#fff6d2'); lamp.addColorStop(0.6, '#f6c25e'); lamp.addColorStop(1, '#b8661c'); g.fillStyle = lamp; g.fillRect(0, 0, W, H);
+    const gy = lerp(H * 1.06, H * 0.86, easeOut(prog(ts, 0.05, 1)));   // a bank of sand along the bottom
+    for (const [blur, style, dy] of [[22, 'rgba(120,58,12,.3)', -14], [10, 'rgba(60,28,6,.6)', -4], [4, 'rgba(26,11,3,.95)', 0]]) { g.filter = `blur(${blur}px)`; g.fillStyle = style; g.beginPath(); g.moveTo(-40, H + 40); g.lineTo(-40, gy + dy); g.bezierCurveTo(W * 0.25, gy + dy - 26, W * 0.4, gy + dy + 14, W * 0.55, gy + dy - 6); g.bezierCurveTo(W * 0.72, gy + dy - 24, W * 0.88, gy + dy + 10, W + 40, gy + dy - 8); g.lineTo(W + 40, H + 40); g.fill(); }
+    g.filter = 'none';
+    g.save(); g.translate(cx, cy);
+    sandMass(g, blendShapes(blendShapes(SAND_SUN, SAND_FLOWER, m1), SAND_BIRD, m2), R);
+    const stem = easeOut(prog(m1, 0.2, 0.8)) * (1 - m2), top = R * 0.95, bottom = gy - cy + 20;   // the stem and leaves grow with the flower and are swept away for the bird
+    if (stem > 0.01) { g.filter = 'blur(4px)'; g.strokeStyle = 'rgba(26,11,3,.95)'; g.lineWidth = 13; g.lineCap = 'round'; g.beginPath(); g.moveTo(0, top); g.quadraticCurveTo(-8, lerp(top, bottom, 0.5), 3, lerp(top, bottom, stem)); g.stroke(); g.fillStyle = 'rgba(26,11,3,.95)'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 52 * stem, lerp(top, bottom, 0.55) - 18 * stem, 52 * stem, 15 * stem, -s * 0.5, 0, TAU); g.fill(); } g.filter = 'none'; }
+    const eye = m1 * (1 - m2); if (eye > 0.02) { g.filter = 'blur(3px)'; g.fillStyle = `rgba(255,236,170,${0.9 * eye})`; g.beginPath(); g.arc(0, 0, 0.2 * R, 0, TAU); g.fill(); g.filter = 'none'; }   // the flower's core is thin sand: light shows through
+    const push = 4 * (m1 * (1 - m1) + m2 * (1 - m2));   // grains heaped along the edge while the sand is being swept
+    for (let i = 0; i < 46 * push; i++) { const a = hash(i, f) * TAU, r = R * (0.9 + hash(i, f, 1) * 0.6); g.fillStyle = `rgba(30,13,4,${0.4 + hash(i, 2) * 0.5})`; g.beginPath(); g.arc(Math.cos(a) * r, Math.sin(a) * r * 0.85, 1.4 + hash(i, f, 3) * 2.4, 0, TAU); g.fill(); }
+    g.restore();
+    speckle(g, W, H, 41, 70, [50, 24, 6]); speckle(g, W, H, 42, 90, [255, 226, 150]);   // loose grains: dark on the light, bright pinholes in the dark
+    g.save(); g.globalCompositeOperation = 'multiply'; const v = g.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.98); v.addColorStop(0, 'rgba(255,255,255,0)'); v.addColorStop(1, 'rgba(70,32,0,.5)'); g.fillStyle = v; g.fillRect(0, 0, W, H); g.restore();
   } },
 };
 export const IDS = Object.keys(LOOKS);

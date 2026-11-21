@@ -1936,29 +1936,30 @@
     "sand painting animation"
    ],
    "family": "drawn",
-   "what": "Light shining through a thin layer of sand on a light table: figures are wiped out as bright lines, thin sand glows amber, and the piles at the edges stay dark. A figure morphs as the sand is pushed.",
+   "what": "A light table seen from above: a warm glowing backlight, sand as dark sepia masses, and light showing through wherever the sand is thin, with soft graded edges. The picture is made of filled shapes, and one shape is pushed into the next.",
    "origin": "A form of stop motion in which sand is shaped under a camera, often lit from behind by a lightbox so that the thickness of the sand gives shading and lines. Sand art is older than film: Navajo, Aboriginal Australian and Tibetan cultures made it, and the Japanese bonseki has been practised since at least the 7th century. Swiss animators Gisèle and Nag Ansorge and the American Caroline Leaf took it up for films in the 1960s.",
    "rules": [
-    "An amber, grainy field lit from behind, brightest at the centre and darker at the edges",
-    "Figures are bright wiped lines with a soft glow, with darker piles of sand at the sides",
-    "A small heap of sand ahead of the finger while a line is drawn",
-    "Loose grains over everything, light and dark",
-    "One form flows into the next as the sand is pushed"
+    "A bright, warm backlight, strongest at the centre and falling off at the edges",
+    "Sand is dark sepia to near-black where it is thick; bright where there is no sand; amber and soft where it is thin",
+    "Filled masses with soft, graded edges, never outlines",
+    "One form flows into the next as a hand sweeps the sand: sun to flower to bird",
+    "Loose grains: dark specks on the light, bright pinholes in the dark masses"
    ],
-   "timing": "Lines are wiped on over 0.5 to 1.5 seconds each and the figure morphs over about 2 seconds. The picture steps about 12 times a second.",
+   "timing": "A figure grows in over about a second, then each change of form takes about 1.3 seconds. The picture steps about 12 times a second.",
    "fps": 12,
    "build": [
-    "Fill with a warm amber, add blotches of lighter and darker sand with radial gradients, then a soft central glow",
-    "Each wiped line: a dark wide pass, an amber glow pass, a bright core pass (`wipe()` in `looks-painted.js`)",
-    "Morph the outline by interpolating radius functions of the angle (`sandFigure()`), so sun rays become petals",
-    "Finish with light and dark grain and a dark multiplied vignette"
+    "Paint the table as a radial gradient from pale cream to amber to brown",
+    "Describe each figure as the same number of soft ellipses (position, size, angle); blend two figures number by number with `easeInOut` to morph (`SAND_SUN`, `SAND_FLOWER`, `SAND_BIRD` in `looks-painted.js`)",
+    "Draw each mass three times with `filter: blur()`: a wide amber halo, a mid brown body, a dark core (`sandMass()`)",
+    "Heap a few dark grains at the edge while a shape is moving",
+    "Finish with dark and light speckle and a multiplied vignette"
    ],
    "assets": "All in code. Real sand photographed on a light table makes a good grain layer.",
-   "sound": "A soft, dry, whispering rub under each wipe, a slow music bed that suits a story. Practice note.",
+   "sound": "A soft, dry, whispering rub as the sand moves, a slow music bed that suits a story. Practice note.",
    "pitfalls": [
-    "Clean vector lines on a flat colour, which is not sand",
-    "A dark background with no glow",
-    "Figures that appear without being wiped on"
+    "Bright outlines drawn on a dark ground: that reads as lines scratched in beach sand, not as sand on a light table",
+    "A flat brown background with no backlight glow",
+    "Hard-edged vector shapes: the edges of sand are soft and graded"
    ],
    "route": "HyperFrames (canvas)",
    "blender": "",
