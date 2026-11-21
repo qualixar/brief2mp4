@@ -1,0 +1,232 @@
+/*
+ * rig.js: the character rig runtime. No dependencies; runs in a HyperFrames page, on a canvas, and in Node.
+ *
+ *   B2M.pose(character, track, t [, opts]) -> the transform of every part at time t
+ *
+ * The result is a pure function of (character, track, t, opts). It reads no clock and no unseeded randomness:
+ * blinks and talk gestures come from a seeded hash of (character id, time bucket), so two renders of the same
+ * frame match exactly.
+ *
+ * A track is a list of keys { t, pose, ease } or an object:
+ *   { keys: [{ t, pose, ease }],            the ease shapes the move INTO that key (linear, in, out, inOut, sine, backOut, hold)
+ *     move: [{ t, x, y, flip, ease }],       where the character stands, in scene units; flip -1 faces left
+ *     layers: [{ cycle, from, to, steps }],  walk, run, wave, laugh, breath, talk; steps = new drawings per second
+ *     visemes: [{ t, v }],                   the lip-sync track from scripts/lipsync.py
+ *     blink: true, props: ["prop_kite"], fx: { speedLines: [[t0, t1]] } }
+ * opts.steps quantises time (a handmade skin holds each drawing for 1/steps of a second); leave it out for smooth motion.
+ * Cycles hold their drawings at the layer's steps per second; opts.smooth: true (for a smooth skin) blends between them instead.
+ */
+(function (g) {
+  'use strict';
+  if (typeof require === 'function' && !(g.B2M && g.B2M.POSES)) require('./poses.js');
+  const B = (g.B2M = g.B2M || {});
+  const EPS = 1e-6;
+  const CHANNELS = ['r', 'x', 'y', 'sx', 'sy'];
+  const SPECIAL = new Set(['lift', 'smile', 'gaze', 'mouth']);
+  const clamp01 = (x) => Math.min(1, Math.max(0, x));
+  const lerp = (a, b, k) => a + (b - a) * k;
+
+  const EASE = {
+    linear: (x) => x,
+    in: (x) => x * x * x,
+    out: (x) => 1 - Math.pow(1 - x, 3),
+    inOut: (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+    sine: (x) => 0.5 - 0.5 * Math.cos(Math.PI * x),
+    backOut: (x) => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2),
+    hold: (x) => (x >= 1 ? 1 : 0),
+  };
+
+  function ease(name, x) {
+    const f = EASE[name || 'inOut'];
+    if (!f) throw new Error('unknown ease "' + name + '". Use one of: ' + Object.keys(EASE).join(', '));
+    return f(clamp01(x));
+  }
+
+  // Seeded hash of (string, integer) to [0, 1). Same inputs, same number, on every machine.
+  function hash(id, n) {
+    let h = 2166136261;
+    const s = String(id);
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    h ^= (Math.floor(n) + 0x9e3779b9) | 0;
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  const quantise = (t, steps) => (steps ? Math.floor(t * steps + EPS) / steps : t);
+  const channels = (v) => (typeof v === 'number' ? { r: v } : v || {});
+  const restOf = (k) => (k === 'sx' || k === 'sy' ? 1 : 0);
+
+  function resolvePose(character, name) {
+    const base = B.POSES[name];
+    if (!base) throw new Error('unknown pose "' + name + '". Poses: ' + Object.keys(B.POSES).join(', '));
+    const over = character.poseOverrides && character.poseOverrides[name];
+    return over ? Object.assign({}, base, over) : base;
+  }
+
+  function mixPoses(a, b, k, nearest) {
+    const out = {};
+    const joints = new Set(Object.keys(a).concat(Object.keys(b)));
+    joints.forEach((j) => {
+      if (SPECIAL.has(j)) return;
+      const ca = channels(a[j]), cb = channels(b[j]), o = {};
+      CHANNELS.forEach((c) => {
+        const va = ca[c] === undefined ? restOf(c) : ca[c], vb = cb[c] === undefined ? restOf(c) : cb[c];
+        if (va !== restOf(c) || vb !== restOf(c)) o[c] = lerp(va, vb, k);
+      });
+      out[j] = o;
+    });
+    out.lift = lerp(a.lift || 0, b.lift || 0, k);
+    out.smile = lerp(a.smile || 0, b.smile || 0, k);
+    const ga = a.gaze || [0, 0], gb = b.gaze || [0, 0];
+    out.gaze = [lerp(ga[0], gb[0], k), lerp(ga[1], gb[1], k)];
+    out.mouth = nearest.mouth;
+    return out;
+  }
+
+  function sampleKeys(character, keysIn, ts) {
+    const keys = (keysIn && keysIn.length ? keysIn : [{ t: 0, pose: 'idle' }]).slice().sort((p, q) => p.t - q.t);
+    let i = -1;
+    for (let n = 0; n < keys.length; n++) if (keys[n].t <= ts + EPS) i = n;
+    const first = resolvePose(character, keys[0].pose);
+    if (i < 0) return mixPoses(first, first, 0, first);
+    const a = resolvePose(character, keys[i].pose);
+    if (i === keys.length - 1) return mixPoses(a, a, 0, a);
+    const b = resolvePose(character, keys[i + 1].pose);
+    const k = ease(keys[i + 1].ease, (ts - keys[i].t) / (keys[i + 1].t - keys[i].t));
+    return mixPoses(a, b, k, k < 0.5 ? a : b);
+  }
+
+  function visemeAt(track, t) {
+    if (!track || !track.length) return 'rest';
+    let lo = 0, hi = track.length - 1, found = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (track[mid].t <= t + EPS) { found = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    return found < 0 ? 'rest' : track[found].v;
+  }
+
+  function addDelta(acc, joint, value, w) {
+    const target = acc[joint] || (acc[joint] = { r: 0, x: 0, y: 0, sx: 1, sy: 1 });
+    const ch = channels(value);
+    CHANNELS.forEach((c) => { if (ch[c] !== undefined) target[c] += ch[c] * w; });
+  }
+
+  function layerWeight(ts, layer) {
+    const from = layer.from || 0, to = layer.to === undefined ? Infinity : layer.to, fade = layer.fade === undefined ? 0.1 : layer.fade;
+    if (ts < from - EPS || ts > to + EPS) return 0;
+    const inK = fade > 0 ? clamp01((ts - from) / fade) : 1;
+    const outK = fade > 0 && Number.isFinite(to) ? clamp01((to - ts) / fade) : 1;
+    return Math.min(inK, outK) * (layer.amp === undefined ? 1 : layer.amp);
+  }
+
+  function cycleDeltas(layer, ts, smooth) {
+    const def = B.CYCLES[layer.cycle];
+    const steps = layer.steps || def.steps, n = def.frames;
+    const c = (ts - (layer.from || 0)) * steps + EPS;
+    const useSmooth = layer.smooth !== undefined ? layer.smooth : def.smooth || smooth;
+    const idx = useSmooth ? c : Math.floor(c);
+    return def.fn((((idx % n) + n) % n) / n);
+  }
+
+  function talkDeltas(character, layer, ts, smooth) {
+    const rate = layer.rate || 7;
+    const k = (ts - (layer.from || 0)) * rate + EPS, i = Math.floor(k), f = k - i;
+    const mix = smooth ? f * f * (3 - 2 * f) : 0;
+    const v = (salt) => lerp(hash(character.id + salt, i), hash(character.id + salt, i + 1), mix) - 0.5;
+    const big = lerp(hash(character.id + 'g', i), hash(character.id + 'g', i + 1), mix);
+    const gesture = big > 0.62 ? big : 0;
+    return { head: 5 * v('a'), torso: 1.2 * v('b'), armN_up: 18 * gesture, armN_lo: 14 * gesture, handN: 10 * gesture, armF_up: 6 * gesture * (v('c') + 0.5), head_y: 2.5 * v('d') };
+  }
+
+  function applyLayers(character, track, ts, opts, acc, speaking) {
+    const smooth = !!opts.smooth;
+    (track.layers || []).forEach((layer) => {
+      const w = layerWeight(ts, layer);
+      if (w <= 0) return;
+      let deltas;
+      if (layer.cycle === 'talk') {
+        deltas = talkDeltas(character, layer, ts, smooth);
+        const wt = w * (speaking ? 1 : 0.25);
+        const { head_y: dy, ...rest } = deltas;
+        Object.keys(rest).forEach((j) => addDelta(acc, j, rest[j], wt));
+        addDelta(acc, 'head', { y: dy }, wt);
+        return;
+      }
+      if (!B.CYCLES[layer.cycle]) throw new Error('unknown cycle "' + layer.cycle + '". Cycles: talk, ' + Object.keys(B.CYCLES).join(', '));
+      deltas = cycleDeltas(layer, ts, smooth);
+      Object.keys(deltas).forEach((j) => addDelta(acc, j, deltas[j], w));
+    });
+  }
+
+  function blinkAmount(character, track, ts) {
+    if (track.blink === false || character.blink === false) return 0;
+    const period = 3.2, k = Math.floor(ts / period + EPS);
+    const start = k * period + 0.5 + hash(character.id, k) * 2.2, u = (ts - start) / 0.18;
+    if (u < 0 || u > 1) return 0;
+    return u < 0.4 ? u / 0.4 : 1 - (u - 0.4) / 0.6;
+  }
+
+  function sampleMove(moves, ts) {
+    if (!moves || !moves.length) return { x: 0, y: 0, flip: 1 };
+    const keys = moves.slice().sort((p, q) => p.t - q.t);
+    let i = -1;
+    for (let n = 0; n < keys.length; n++) if (keys[n].t <= ts + EPS) i = n;
+    const val = (m) => ({ x: m.x || 0, y: m.y || 0, flip: m.flip === undefined ? 1 : m.flip });
+    if (i < 0) return val(keys[0]);
+    const a = val(keys[i]);
+    if (i === keys.length - 1) return a;
+    const k = ease(keys[i + 1].ease, (ts - keys[i].t) / (keys[i + 1].t - keys[i].t)), b = val(keys[i + 1]);
+    return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), flip: a.flip };
+  }
+
+  function visibleProps(list, ts) {
+    return (list || []).filter((p) => typeof p === 'string' || ((p.from === undefined || ts >= p.from) && (p.to === undefined || ts <= p.to))).map((p) => (typeof p === 'string' ? p : p.id));
+  }
+
+  function inRanges(ranges, ts) {
+    return (ranges || []).some((r) => ts >= r[0] && ts <= r[1]);
+  }
+
+  const signOf = (part) => (part.sign !== undefined ? part.sign : B.SIGN[part.id] === undefined ? 1 : B.SIGN[part.id]);
+
+  function pose(character, trackIn, t, opts) {
+    const o = opts || {};
+    const track = Array.isArray(trackIn) ? { keys: trackIn } : trackIn || {};
+    const steps = o.steps !== undefined ? o.steps : track.steps || null;
+    const ts = quantise(t, steps);
+    const base = sampleKeys(character, track.keys, ts);
+    const vis = track.visemes && track.visemes.length ? track.visemes : null;
+    const inSpeech = vis && ts >= vis[0].t - EPS && ts <= vis[vis.length - 1].t + EPS;
+    const viseme = inSpeech ? visemeAt(vis, ts) : base.mouth || 'rest';
+    const acc = {};
+    Object.keys(base).forEach((j) => { if (!SPECIAL.has(j)) addDelta(acc, j, base[j], 1); });
+    const layers = track.breath === false ? track.layers || [] : [{ cycle: 'breath' }].concat(track.layers || []);
+    applyLayers(character, Object.assign({}, track, { layers }), ts, o, acc, viseme !== 'rest');
+    const blink = blinkAmount(character, track, ts);
+    const legLength = (character.proportions && character.proportions.legLength) || 0;
+    addDelta(acc, 'hip', { y: base.lift * legLength }, 1);
+    ['eyeN', 'eyeF'].forEach((j) => { if (blink) addDelta(acc, j, { sy: -0.92 * blink * (channels(acc[j]).sy || 1) }, 1); });
+    ['pupilN', 'pupilF'].forEach((j) => addDelta(acc, j, { x: base.gaze[0] * 3, y: base.gaze[1] * 3 }, 1));
+    const parts = {};
+    character.parts.forEach((p) => {
+      const a = acc[p.id] || { r: 0, x: 0, y: 0, sx: 1, sy: 1 };
+      parts[p.id] = { r: a.r * signOf(p), x: a.x, y: a.y, sx: a.sx, sy: a.sy };
+    });
+    return {
+      t, ts, frame: steps ? Math.round(ts * steps) : Math.round(t * 60), parts, viseme, blink, smile: base.smile,
+      move: sampleMove(track.move, ts), props: visibleProps(track.props, ts), speedLines: inRanges(track.fx && track.fx.speedLines, ts),
+    };
+  }
+
+  // Units per second a walking character must travel for its feet to stay planted: four leg lengths times the
+  // sine of the swing, per cycle. Use it for the move track of a walk layer.
+  function strideSpeed(character, cycle, steps) {
+    const def = B.CYCLES[cycle || 'walk'];
+    return (4 * character.proportions.legLength * Math.sin(B.rad(def.amp)) * (steps || def.steps)) / def.frames;
+  }
+
+  Object.assign(B, { pose, visemeAt, hash, ease, quantise, strideSpeed, EASES: Object.keys(EASE) });
+  if (typeof module !== 'undefined' && module.exports) module.exports = B;
+})(globalThis);

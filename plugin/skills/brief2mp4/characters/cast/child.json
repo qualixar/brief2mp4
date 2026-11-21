@@ -1,0 +1,140 @@
+{
+  "$schema": "../schema/character.schema.json",
+  "id": "child",
+  "name": "Child",
+  "kind": "biped",
+  "version": 1,
+  "palette": {"skin": "#f0b48a", "skin2": "#d9976c", "hair": "#2b1d1a", "shirt": "#f2a31b", "shirt2": "#fff1cf", "pants": "#3f5aa6", "pants2": "#33498a", "shoes": "#b8352b", "ink": "#231b2a", "blush": "#ea8a80", "white": "#fffaf0", "kite": "#e5484d", "kite2": "#ffd23f", "string": "#6b5a4a"},
+  "proportions": {"height": 232, "legLength": 78},
+  "parts": [
+    {"id": "hip", "parent": null, "pivot": [0, -78], "z": 10,
+     "shapes": [
+       {"type": "poly", "pts": [[-23, -85], [22, -85], [25, -66], [1, -61], [-25, -66]], "smooth": true, "fill": "pants", "stroke": null}
+     ]
+    },
+    {"id": "legF_up", "parent": "hip", "pivot": [5, -78], "z": 6,
+     "shapes": [
+       {"type": "capsule", "a": [5, -78], "b": [8, -42], "ra": 12, "rb": 10, "fill": "pants2", "stroke": null}
+     ]
+    },
+    {"id": "legF_lo", "parent": "legF_up", "pivot": [8, -42], "z": 5,
+     "shapes": [
+       {"type": "capsule", "a": [8, -42], "b": [9, -13], "ra": 9, "rb": 8, "fill": "skin2", "stroke": null}
+     ]
+    },
+    {"id": "footF", "parent": "legF_lo", "pivot": [9, -12], "z": 4,
+     "shapes": [
+       {"type": "ellipse", "c": [19, -6], "r": [18, 8.5], "fill": "shoes", "stroke": null}
+     ]
+    },
+    {"id": "legN_up", "parent": "hip", "pivot": [0, -78], "z": 10,
+     "shapes": [
+       {"type": "capsule", "a": [0, -78], "b": [3, -42], "ra": 12, "rb": 10, "fill": "pants", "stroke": null}
+     ]
+    },
+    {"id": "legN_lo", "parent": "legN_up", "pivot": [3, -42], "z": 9,
+     "shapes": [
+       {"type": "capsule", "a": [3, -42], "b": [4, -13], "ra": 9, "rb": 8, "fill": "skin", "stroke": null}
+     ]
+    },
+    {"id": "footN", "parent": "legN_lo", "pivot": [4, -12], "z": 8,
+     "shapes": [
+       {"type": "ellipse", "c": [14, -6], "r": [18, 8.5], "fill": "shoes", "stroke": null}
+     ]
+    },
+    {"id": "torso", "parent": "hip", "pivot": [0, -84], "z": 11,
+     "shapes": [
+       {"type": "capsule", "a": [2, -120], "b": [4, -140], "ra": 9, "rb": 8, "fill": "skin", "stroke": null, "shade": false},
+       {"type": "poly", "pts": [[-22, -124], [20, -127], [27, -102], [22, -80], [-21, -80], [-27, -102]], "smooth": true, "fill": "shirt", "stroke": null},
+       {"type": "rect", "x": -25, "y": -110, "w": 51, "h": 7, "r": 2, "fill": "shirt2", "stroke": null, "role": "detail", "shade": false},
+       {"type": "rect", "x": -24, "y": -95, "w": 49, "h": 7, "r": 2, "fill": "shirt2", "stroke": null, "role": "detail", "shade": false}
+     ]
+    },
+    {"id": "armF_up", "parent": "torso", "pivot": [4, -118], "z": 6,
+     "shapes": [
+       {"type": "capsule", "a": [4, -118], "b": [8, -90], "ra": 8.5, "rb": 7.5, "fill": "shirt", "stroke": null}
+     ]
+    },
+    {"id": "armF_lo", "parent": "armF_up", "pivot": [8, -90], "z": 5,
+     "shapes": [
+       {"type": "capsule", "a": [8, -90], "b": [14, -66], "ra": 6.8, "rb": 5.8, "fill": "skin2", "stroke": null}
+     ]
+    },
+    {"id": "handF", "parent": "armF_lo", "pivot": [14, -63], "z": 7,
+     "shapes": [
+       {"type": "circle", "c": [15, -57], "r": 8, "fill": "skin2", "stroke": null}
+     ]
+    },
+    {"id": "head", "parent": "torso", "pivot": [2, -134], "z": 13,
+     "shapes": [
+       {"type": "ellipse", "c": [-4, -172], "r": [33, 36], "fill": "hair", "stroke": null, "shade": false},
+       {"type": "ellipse", "c": [6, -167], "r": [34, 36], "fill": "skin", "stroke": null},
+       {"type": "ellipse", "c": [-5, -165], "r": [6, 8.5], "fill": "skin2", "stroke": null, "shade": false},
+       {"type": "ellipse", "c": [40, -163], "r": [6, 5.5], "fill": "skin", "stroke": null, "shade": false},
+       {"type": "poly", "pts": [[-33, -170], [-30, -196], [-8, -209], [20, -205], [36, -187], [41, -176], [26, -186], [9, -183], [-4, -191], [-17, -177]], "smooth": true, "fill": "hair", "stroke": null},
+       {"type": "poly", "pts": [[-6, -206], [0, -224], [12, -207]], "smooth": true, "fill": "hair", "stroke": null, "shade": false},
+       {"type": "ellipse", "c": [24, -152], "r": [7, 4], "fill": "blush", "stroke": null, "role": "detail", "shade": false}
+     ]
+    },
+    {"id": "eyeN", "parent": "head", "pivot": [10, -170], "z": 15,
+     "shapes": [
+       {"type": "ellipse", "c": [10, -170], "r": [8, 10], "fill": "white", "stroke": "ink", "sw": 1.6, "shade": false}
+     ]
+    },
+    {"id": "eyeF", "parent": "head", "pivot": [28, -171], "z": 15,
+     "shapes": [
+       {"type": "ellipse", "c": [28, -171], "r": [6.5, 9.2], "fill": "white", "stroke": "ink", "sw": 1.6, "shade": false}
+     ]
+    },
+    {"id": "pupilN", "parent": "eyeN", "pivot": [12, -170], "z": 16,
+     "shapes": [
+       {"type": "ellipse", "c": [12, -169], "r": [5, 6.5], "fill": "ink", "stroke": null, "shade": false},
+       {"type": "circle", "c": [13.8, -172], "r": 1.8, "fill": "white", "stroke": null, "shade": false}
+     ]
+    },
+    {"id": "pupilF", "parent": "eyeF", "pivot": [30, -171], "z": 16,
+     "shapes": [
+       {"type": "ellipse", "c": [30, -170], "r": [4.2, 5.8], "fill": "ink", "stroke": null, "shade": false},
+       {"type": "circle", "c": [31.4, -173], "r": 1.5, "fill": "white", "stroke": null, "shade": false}
+     ]
+    },
+    {"id": "browN", "parent": "head", "pivot": [10, -186], "z": 16,
+     "shapes": [
+       {"type": "path", "d": "M2 -185 Q10 -190 19 -187", "fill": null, "stroke": "hair", "sw": 4, "role": "line"}
+     ]
+    },
+    {"id": "browF", "parent": "head", "pivot": [28, -187], "z": 16,
+     "shapes": [
+       {"type": "path", "d": "M22 -187 Q29 -191 36 -186", "fill": null, "stroke": "hair", "sw": 3.6, "role": "line"}
+     ]
+    },
+    {"id": "mouth", "parent": "head", "pivot": [20, -147], "z": 15, "mouth": {"kind": "lips", "size": 1.2},
+     "shapes": []
+    },
+    {"id": "armN_up", "parent": "torso", "pivot": [-2, -118], "z": 12,
+     "shapes": [
+       {"type": "capsule", "a": [-2, -118], "b": [2, -90], "ra": 8.5, "rb": 7.5, "fill": "shirt", "stroke": null}
+     ]
+    },
+    {"id": "armN_lo", "parent": "armN_up", "pivot": [2, -90], "z": 11,
+     "shapes": [
+       {"type": "capsule", "a": [2, -90], "b": [8, -66], "ra": 6.8, "rb": 5.8, "fill": "skin", "stroke": null}
+     ]
+    },
+    {"id": "handN", "parent": "armN_lo", "pivot": [8, -63], "z": 15,
+     "shapes": [
+       {"type": "circle", "c": [9, -57], "r": 8, "fill": "skin", "stroke": null}
+     ]
+    },
+    {"id": "prop_kite", "parent": "handN", "pivot": [8, -60], "z": 20, "prop": true,
+     "shapes": [
+       {"type": "path", "d": "M8 -56 Q22 -10 14 32", "fill": null, "stroke": "string", "sw": 2, "role": "line"},
+       {"type": "poly", "pts": [[14, 30], [32, 60], [14, 96], [-4, 60]], "smooth": false, "fill": "kite", "stroke": "ink", "sw": 2},
+       {"type": "poly", "pts": [[14, 30], [32, 60], [14, 96]], "smooth": false, "fill": "kite2", "stroke": null, "role": "detail", "shade": false},
+       {"type": "path", "d": "M14 30 L14 96", "fill": null, "stroke": "ink", "sw": 1.4, "role": "line"},
+       {"type": "path", "d": "M-4 60 L32 60", "fill": null, "stroke": "ink", "sw": 1.4, "role": "line"},
+       {"type": "path", "d": "M14 96 Q28 112 12 128 Q-2 142 14 158", "fill": null, "stroke": "kite2", "sw": 3, "role": "line"}
+     ]
+    }
+  ]
+}
