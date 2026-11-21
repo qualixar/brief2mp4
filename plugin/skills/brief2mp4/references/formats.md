@@ -28,7 +28,7 @@ Checks: every label spelled exactly; nothing overlapping when the diagram is com
 
 ## Explainer and documentary (film mode)
 
-Length 1-10 min, 16:9, with a narrator. One brief goes in and a finished `final.mp4` plus `REPORT.md` comes out, with every stage's file left in the project folder so the prompts and decisions can be read. Route: `scripts/film.py`, which runs the stages below in order. Each stage reads the file the one before wrote, can be skipped, and can be run again alone (`film.py run --from retime`, `film.py voice --voice take --take take.wav`). The look is the **archive desk**: a dark editorial page, one still or map as a plate with a slow push-in, a serif caption under it, a narrow column for the date stamp, a ledger counter and the credit. It is a layout, not a cork board: nothing is pinned and nothing is connected by string.
+Length 1-10 min, 16:9, with a narrator. One brief goes in and a finished `final.mp4` plus `REPORT.md` comes out, with every stage's file left in the project folder so the prompts and decisions can be read. Route: `scripts/film.py`, which runs the stages below in order. Each stage reads the file the one before wrote, can be skipped, and can be run again alone (`film.py run --from retime`, `film.py voice --voice take --take take.wav`). The look is the **archive desk**: a dark editorial page, one still or map as a plate with a slow push-in, a serif caption under it, a narrow column for the date stamp, a ledger counter and the credit.
 
 The beat sheet (times scale with the length; the table is for 3 minutes):
 

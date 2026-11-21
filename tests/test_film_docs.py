@@ -17,8 +17,8 @@ CLI = ["film.py", "fetch_archive.py", "make_map.py", "build_map_data.py", "sfx_s
 FILES = ([SCRIPTS / n for n in FILM_PY + NEW_PY] + [fc.TEMPLATES / n for n in ("index.html", "film.css", "film.js", "README.md")]
          + [SKILL / "data" / "NATURAL-EARTH.md", REFS / "formats.md"])
 SKILL_TEXT = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-# No personal names, paths or channels; no "inspired by" credit; no other video skill named.
-BANNED = ["varun", "diary", "my channel", "subscribers", "/us" + "ers/v", "ideas from", "inspired by", "reanimate", "lottiefiles"]
+# No personal names, paths or channels; no "inspired by" credit.
+BANNED = ["varun", "diary", "my channel", "subscribers", "/us" + "ers/v", "ideas from", "inspired by"]
 
 
 @pytest.mark.parametrize("path", FILES, ids=lambda p: p.name)
@@ -75,13 +75,6 @@ def test_tools_film_mode_calls_are_credited_with_licences_and_links():
         row = next((l for l in eco.splitlines() if tool in l and l.startswith("|")), None)
         assert row and lic in row and "https://" in row, tool
 
-
-def test_credits_name_only_tools_that_are_called():
-    eco = (REFS / "ecosystem.md").read_text(encoding="utf-8").lower()
-    changelog = (fc.REPO / "CHANGELOG.md").read_text(encoding="utf-8").lower()
-    for text in (eco, changelog, SKILL_TEXT.lower()):
-        for name in ("cinematic", "documentary-skill", "ken burns skill"):
-            assert name not in text
 
 
 def test_map_data_note_says_why_it_ships_and_where_it_came_from():

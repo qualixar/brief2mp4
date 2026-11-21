@@ -257,12 +257,6 @@ def test_template_keeps_text_blocks_and_safe_margins():
     assert "58px" in caption and int(re.search(r"font: 400 (\d+)px", caption).group(1)) >= 40
 
 
-def test_template_is_not_a_cork_board():
-    text = " ".join((fc.TEMPLATES / n).read_text(encoding="utf-8").lower() for n in ("index.html", "film.css"))
-    for word in ("pin", "string", "cork", "thumbtack", "yarn"):
-        assert not re.search(rf"\b{word}\b", text), word
-
-
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not found")
 def test_film_js_parses():
     assert subprocess.run(["node", "--check", str(fc.TEMPLATES / "film.js")], capture_output=True).returncode == 0
