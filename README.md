@@ -30,15 +30,13 @@
   <a href="#faq">FAQ</a>
 </p>
 
+https://github.com/user-attachments/assets/40f4f310-5ce1-46b9-a899-ded3ba520e79
+
+<p align="center"><b>One kite story, 24 art forms.</b> Paper cut-out, Madhubani, anime, oil paint, synthwave, silent film and more, each scene made with brief2mp4 from <a href="#art-forms-ask-for-a-look-by-name">its 82 art forms</a>. Sound on.</p>
+
 <p align="center">
-  <a href="assets/example08-five-worlds.mp4"><img src="assets/example08-five-worlds.webp" alt="Example 08: the words of a brief lift off the page into a 3D city of light, the camera flies into a 2D chart world, rides a bar up into a spiral galaxy of particles, and the galaxy becomes the full stop in brief2mp4. One camera move, no cuts." width="100%"></a>
+  <a href="https://youtu.be/l9mEZQon6JM">▶ Fable 5.2 vs Opus 5.5 vs GPT-6.1, the contest video</a> · <a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched</a> · <a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 104-page guide</a> · <a href="https://qualixar.com/research/blog/brief2mp4-deep-dive">How it was built</a>
 </p>
-
-<p align="center"><b>One brief, five worlds, no cuts.</b> This is <a href="examples/08-brief-becomes-world/BRIEF.md">example 08</a>: the brief was pasted as written and the skill made the video, 2D type and charts in HyperFrames, the city and 27,000 particles in Three.js, finished with ffmpeg. Its <a href="examples/08-brief-becomes-world/SAMPLE-REPORT.md">report</a> shows 0 scene cuts and a first-to-last frame SSIM of 0.97, so it loops. <a href="examples/08-brief-becomes-world/README.md"><b>Make it yourself and check it</b></a> · <a href="assets/example08-five-worlds.mp4">Full-quality MP4 with sound</a>.</p>
-
-<p align="center"><b>▶ The 90-second story:</b> three AIs, one brief, and why brief2mp4 checks its own work. Press play, sound on.</p>
-
-https://github.com/user-attachments/assets/8e975937-03d7-4648-b527-19b712c7e6c8
 
 | You give it | You get back |
 |---|---|
@@ -46,17 +44,9 @@ https://github.com/user-attachments/assets/8e975937-03d7-4648-b527-19b712c7e6c8
 
 brief2mp4 is a free, MIT-licensed agent skill. You paste a written brief (length, size, exact words, what happens when). The agent writes a spec with a checkable "done when" list, routes each beat to the right tool (HyperFrames for type and 2D motion, Three.js for stylised 3D, an optional 3D pack for CAD models, materials and physics, Blender for photoreal shots), renders, finishes the file with ffmpeg, measures it, looks at real frames, fixes what misses and hands you `final.mp4` with a `REPORT.md` that shows the evidence for every line. Everything runs on your own machine.
 
-<p align="center">
-  <a href="https://youtu.be/l9mEZQon6JM"><img src="assets/video-thumbnail.jpg" alt="Watch the video: Fable 5.2 vs Opus 5.5 vs GPT-6.1, who makes better motion graphics?" width="720"></a>
-</p>
+<p align="center">⭐ <b>Free and MIT. If brief2mp4 makes a video you keep, <a href="https://github.com/qualixar/brief2mp4">star the repo</a></b>; it is how other Claude Code and Codex users find it. Made something? Post it in <a href="https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell">Show and tell</a>.</p>
 
-<p align="center">
-  <b><a href="https://youtu.be/l9mEZQon6JM">▶ Watch the video</a></b> &nbsp;·&nbsp; <b><a href="https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing">All 11 contest films, untouched</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/learn/guides/brief2mp4-guide">Free 104-page guide</a></b> &nbsp;·&nbsp; <b><a href="https://qualixar.com/research/blog/brief2mp4-deep-dive">How it was built</a></b>
-</p>
-
-<p align="center">⭐ <b>Free and MIT. If brief2mp4 makes a video you keep, <a href="https://github.com/qualixar/brief2mp4">star the repo</a>.</b> It is the only signal I get that it worked for you, and it is how other Claude Code and Codex users find it. Made something? Post it in <a href="https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell">Show and tell</a>.</p>
-
-<p align="center"><b>New in 0.7.0:</b> <a href="#art-forms-ask-for-a-look-by-name"><b>82 art forms</b></a>: painting, Indian folk art, anime and manga, 3D looks, screens and cinema (synthwave, silent film, film noir), and abstract (particles, flow-field, Bauhaus). LightCraft joins the <a href="#the-edit-pack">edit pack</a>, six free editors in all. From 0.5.0: <a href="#characters-that-talk">characters that talk</a>.</p>
+<p align="center"><b>New in 0.7.0:</b> <a href="#art-forms-ask-for-a-look-by-name">82 art forms</a> and LightCraft in the <a href="#the-edit-pack">edit pack</a>, six free editors in all. From 0.5.0: <a href="#characters-that-talk">characters that talk</a>.</p>
 
 ## Quick start
 
@@ -86,8 +76,6 @@ When it says it is done, send one follow-up:
 > Check it against the brief.
 
 That makes the agent go back to your original brief line by line, show the evidence for each line, fix what falls short and render again. In our run of example 01 it caught headlines that cleared the 120 px minimum by only a few pixels, enlarged them and rendered again.
-
-**Why a star helps.** brief2mp4 is a one-person project with no ads and no paywall. A star tells the next person looking for a motion-graphics skill that someone else got it working, and it tells me which direction to keep building in. If it fell short on your brief, an issue with the `REPORT.md` helps just as much.
 
 ### Requirements
 
@@ -152,9 +140,6 @@ Say "claymation", "paper cut-out", "anime", "like a blueprint" or "shadow puppet
 | Abstract and generative | particles, liquid metaball, flow-field generative, psychedelic, Bauhaus geometric |
 
 Three rules carry all of them: the picture is a function of time, handmade looks hold their drawings at 8 to 12 changes a second while the video stays at 24 or 30, and every wobble, flicker and misregistration is seeded by the drawing number, so two renders of the same frame match. `python3 plugin/skills/brief2mp4/scripts/art_route.py BRIEF.md` proposes a form from a brief and says why. The demos are browser pictures checked for determinism; they are starting points for a scene, not finished films. The [art forms guide](docs/art-forms-guide/brief2mp4-art-forms.pdf) (PDF, 87 pages) covers every form with a picture, and its HTML, CSS and Python source is in the same folder.
-
-**Proof the skill works:** example brief 01, pasted as written, came back as a 12.000 s, 1920x1080, 30 fps file that passed the delivery check. Its [report](examples/01-kinetic-type/SAMPLE-REPORT.md) lists every requirement with its evidence: which still shows which line, the measured headline height (126 px against a 120 px minimum), the text bounds and the loudness at each sound accent.
-
 ## How it works
 
 <p align="center">
@@ -286,7 +271,7 @@ Sound: a quiet bed with a low hit at 4.0 s.
 Done when: every line is readable, nothing touches the frame edge, headlines are at least 100 px tall.
 ```
 
-The "done when" lines matter most, because they are what the self-check measures. The [free 69-page field guide](https://qualixar.com/learn/guides/brief2mp4-guide) goes through brief writing, every format, each tool, the 3D and edit packs and the checks in detail, and includes every brief and setting from the contest in the video. The [technical deep dive](https://qualixar.com/research/blog/brief2mp4-deep-dive) explains the engineering: determinism, baked physics, the loudness loop and the self-check.
+The "done when" lines matter most, because they are what the self-check measures. The [free 104-page field guide](https://qualixar.com/learn/guides/brief2mp4-guide) goes through brief writing, every format, each tool, the 3D and edit packs and the checks in detail, and includes every brief and setting from the contest in the video. The [technical deep dive](https://qualixar.com/research/blog/brief2mp4-deep-dive) explains the engineering: determinism, baked physics, the loudness loop and the self-check.
 
 ## How it compares
 
@@ -332,14 +317,16 @@ plugin/
   .codex-plugin/plugin.json        Codex plugin manifest
   skills/brief2mp4/
     SKILL.md                       the loop the agent follows
-    references/                    formats, pipelines, ecosystem, hyperframes, threejs, blender, ffmpeg
+    references/                    formats, pipelines, art forms, ecosystem, hyperframes, threejs, blender, ffmpeg
     scripts/                       finish, check_delivery, contact_sheet, sound_bed, doctor, detect_3d,
-                                   detect_edit, bounds.py, vendor_libs
+                                   detect_edit, art_route, lipsync, character_project, bounds.py, vendor_libs
     templates/                     SPEC.md, a Three.js scene, a Blender turntable
+    art-forms/                     82 deterministic art-form demos
+    characters/                    the character kit: rig, poses, six skins, starter cast
     3d/                            the optional 3D pack and its installers
     edit/                          the optional edit pack: verified installers, pinned versions, recipes
-docs/                              getting started, architecture, 3D walkthrough
-examples/                          seven briefs; 01, 05, 06 and 07 with sample reports, 04 with a worked build
+docs/                              getting started, architecture, 3D walkthrough, art forms guide (PDF)
+examples/                          nine briefs, several with sample reports; 04 with a worked build, 09 a character scene
 tests/                             fast checks and render tests (bash tests/run_tests.sh [--slow])
 ```
 
