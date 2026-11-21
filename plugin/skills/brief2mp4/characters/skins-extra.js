@@ -32,7 +32,7 @@
   };
 
   // ---- shadow puppet ----
-  const LEATHER = '#150b06', LAMP = '#f4b862', ROD = '#2c180a';
+  const LEATHER = '#150b06', LAMP = '#f7c470', ROD = '#2c180a';
   const screenPoint = (m, p) => [m[0] * p[0] + m[2] * p[1] + m[4], m[1] * p[0] + m[3] * p[1] + m[5]];
   function rods(ctx) {
     const ix = ctx.character.parts.reduce((o, p) => { o[p.id] = p; return o; }, {}), out = [];
@@ -47,18 +47,33 @@
   }
 
   // A shadow puppet is a flat leather profile: one black shape per part, rods below, a lamp behind. The only thing
-  // cut out is an optional eye hole; no brows, mouth, pupils, stripes or patterns, and no front view (profileOnly).
+  // cut out is an optional eye hole and the hinged jaw's gap; no brows, mouth, pupils or patterns, and no front view
+  // (profileOnly). Parts with a "shadow" variant are redrawn with a profile edge (nose, lips, chin, hem, cuffs, hands).
+  // The jaw is a separate leather piece on a hinge (parts jaw and jawGap): it swings open with the mouth shape.
+  // Scenery uses the screen's own tones so black figures never vanish into it: mid-tone hills, a mid-brown ground,
+  // black set pieces, and set shapes with role "light" (sun, moon, lamp, fire) stay light.
+  const SCREEN = { hills: ['#d98a35', '#bd6a22'], ground: '#a85a1c', light: '#fff4c2' };
+  function scenery(ctx, role) {
+    const id = ctx.part.id, hill = /^hill(\d+)/.exec(id);
+    if (hill) return [{ d: ctx.d, fill: SCREEN.hills[Math.min(+hill[1], SCREEN.hills.length - 1)], stroke: null }];
+    if (id === 'ground') return [{ d: ctx.d, fill: SCREEN.ground, stroke: null }];
+    if (role === 'light') return [{ d: ctx.d, fill: SCREEN.light, stroke: null }];
+    return ctx.shape.fill ? [{ d: ctx.d, fill: LEATHER, stroke: null }] : [lineOf(ctx, 1, { stroke: LEATHER })];
+  }
+
   SKINS['shadow-puppet'] = {
-    id: 'shadow-puppet', name: 'Shadow puppetry', steps: 12, bg: '#e8a24e', ink: LEATHER, profileOnly: true,
+    id: 'shadow-puppet', name: 'Shadow puppetry', steps: 12, bg: '#e8a24e', ink: LEATHER, profileOnly: true, variant: 'shadow', screen: SCREEN,
     shape(ctx) {
       const role = roleOf(ctx.shape), s = ctx.shape, id = ctx.part.id;
+      if (ctx.character.id === 'scene') return scenery(ctx, role);
       if (role === 'cel' || /^(brow|pupil)/.test(id) || (id === 'mouth' && ctx.part.mouth.kind === 'lips')) return [];
+      if (role === 'hole') return [{ d: ctx.d, fill: LAMP, stroke: null }];
       if (/^eye/.test(id)) return role === 'base' && s.fill && lum(ctx.color(s.fill)) > 600 ? [{ d: ctx.d, fill: LAMP, stroke: null }] : [];
       if (role === 'line') return [lineOf(ctx, 1.25, { stroke: LEATHER })];
       return s.fill ? [{ d: ctx.d, fill: LEATHER, stroke: null }] : [];
     },
     character: rods,
-    sky: (c) => [{ d: c.rect, fill: { grad: 'radial', cx: c.W / 2, cy: c.H * 0.55, r0: 40, r: c.W * 0.62, stops: [[0, '#ffd27a'], [0.55, '#e08a3a'], [1, '#4a210a']] }, stroke: null }],
+    sky: (c) => [{ d: c.rect, fill: { grad: 'radial', cx: c.W / 2, cy: c.H * 0.5, r0: 40, r: c.W * 0.7, stops: [[0, '#ffe29a'], [0.55, '#f0a64a'], [1, '#c4691f']] }, stroke: null }],
   };
 
   // ---- motion comic ----

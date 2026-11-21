@@ -165,6 +165,18 @@
        {"type": "path", "d": "M20 -176 Q30 -184 42 -174", "fill": null, "stroke": "ink", "sw": 4.4, "role": "line"}
      ]
     },
+    {"id": "jawGap", "parent": "torso", "pivot": [-14, -112], "z": 15.3,
+     "variants": {
+       "shadow": {"shapes": [{"type": "poly", "pts": [[-11.7, -111.1], [31.5, -111.1], [30.6, -103.0], [22.5, -96.7], [6.3, -94.9], [-6.3, -98.5], [-12.6, -104.8]], "smooth": false, "fill": "white", "stroke": null, "role": "hole", "shade": false}]}
+     },
+     "shapes": []
+    },
+    {"id": "jaw", "parent": "torso", "pivot": [-14, -112], "z": 15.4, "mouth": {"kind": "jaw", "maxOpen": 32},
+     "variants": {
+       "shadow": {"shapes": [{"type": "poly", "pts": [[-14, -112], [34, -112], [33, -103], [24, -96], [6, -94], [-8, -98], [-15, -105]], "smooth": false, "fill": "ink", "stroke": null, "shade": false}]}
+     },
+     "shapes": []
+    },
     {"id": "nose", "parent": "torso", "pivot": [14, -138], "z": 15,
      "variants": {
        "anime": {"shapes": []},
