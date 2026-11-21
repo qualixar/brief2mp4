@@ -222,8 +222,10 @@
               "base",
               "detail",
               "hole",
-              "line"
-            ]
+              "line",
+              "light"
+            ],
+            "x-hint": "light: a sun, moon, lamp or fire that stays light in the shadow-puppet skin"
           },
           "layer": {
             "enum": [
@@ -429,6 +431,10 @@
                   "backOut",
                   "hold"
                 ]
+              },
+              "walk": {
+                "type": "boolean",
+                "x-hint": "true: walk to this key's x from the key before, with the walk cycle at the speed that keeps the feet on the ground"
               }
             }
           }

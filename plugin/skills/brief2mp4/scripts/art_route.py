@@ -53,6 +53,11 @@ def kit_reason(form):
     return base + '; its skins are ' + ', '.join(KIT_SKINS) + ', so use the nearest and say so in SPEC.md'
 
 
+def norm(text):
+    """Lower case, with hyphens, underscores and runs of spaces as single spaces: "Shadow-Puppet" and "shadow  puppet" match."""
+    return re.sub(r'[\s_\-]+', ' ', str(text or '').lower()).strip()
+
+
 def load():
     return json.loads((REF / 'art-forms.json').read_text(encoding='utf-8'))
 
@@ -71,15 +76,17 @@ def route(brief, data=None):
             strong.add(fid)
 
     named = False
+    flat = norm(text)
     for f in data['forms']:
-        for nm in [f['name']] + f['aliases'] + [f['id'].replace('-', ' ')]:
-            short = re.sub(r'\s*\(.*\)', '', nm).split(' and ')[0].strip()
-            if len(short) > 3 and re.search(r'\b%s\b' % re.escape(short), text, re.I):
-                bump(f['id'], 20, 'the brief names "%s"' % short.lower(), True)
+        for nm in [f['name']] + f['aliases'] + [f['id']]:
+            short = norm(re.sub(r'\s*\(.*\)', '', nm).split(' and ')[0])
+            # hyphens, spaces and plurals do not matter: "shadow-puppet", "shadow puppets" and "shadow puppetry" all name Shadow puppetry
+            if len(short) > 3 and re.search(r'\b%s(?:s|es|ry|ing|ed)?\b' % re.escape(short), flat):
+                bump(f['id'], 20, 'the brief names "%s"' % short, True)
                 named = True
                 break
         for kw in f['keywords']:
-            if re.search(r'\b%s\w*\b' % re.escape(kw), text, re.I):
+            if re.search(r'\b%s\w*\b' % re.escape(norm(kw)), flat):
                 bump(f['id'], 3, 'it says "%s"' % kw)
     for pattern, forms, reason in SUBJECTS:
         m = re.search(pattern, text, re.I)

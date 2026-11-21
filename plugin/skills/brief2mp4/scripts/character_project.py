@@ -126,21 +126,58 @@ def resolve_scene(scene: dict, base: Path) -> dict:
 _PATHS_JS = """
 const fs = require('fs'); const B2M = require(process.argv[1]);
 const scene = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const skin = B2M.SKINS[scene.skin], W = scene.width;
 const out = {};
-scene.cast.forEach((m) => {
-  const ch = require(process.argv[1] + '/../cast/' + m.character + '.json'), home = B2M.homeOf(m, scene), x = [], flip = [];
-  for (let t = 0; t <= scene.duration + 1e-9; t += 0.1) {
-    const p = B2M.pose(ch, m.track || {}, t, { home }).move;
-    x.push(p.x === null ? home.x : p.x); flip.push(p.flip);
+const hexToRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const lumOf = (rgb) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
+const colourOf = (fill, x, y) => {
+  if (typeof fill === 'string') return /^#[0-9a-f]{6}$/i.test(fill) ? hexToRgb(fill) : null;
+  if (fill && fill.grad === 'radial') {
+    const k = Math.min(1, Math.max(0, (Math.hypot(x - fill.cx, y - fill.cy) - (fill.r0 || 0)) / (fill.r - (fill.r0 || 0))));
+    let i = 0; while (i < fill.stops.length - 2 && fill.stops[i + 1][0] < k) i++;
+    const a = fill.stops[i], b = fill.stops[i + 1], u = Math.min(1, Math.max(0, (k - a[0]) / (b[0] - a[0] || 1))), p = hexToRgb(a[1]), q = hexToRgb(b[1]);
+    return p.map((v, n) => v + (q[n] - v) * u);
   }
-  out[m.id] = { x, flip, half: ((ch.proportions.width || ch.proportions.height * 0.6) * (m.scale || 1)) / 2 };
+  return null;
+};
+const inside = (d, x, y) => {
+  const pts = []; B2M.parsePath(d).forEach((s) => s.pts.forEach((p) => pts.push(p)));
+  let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) if ((pts[i][1] > y) !== (pts[j][1] > y) && x < ((pts[j][0] - pts[i][0]) * (y - pts[i][1])) / (pts[j][1] - pts[i][1]) + pts[i][0]) c = !c;
+  return c;
+};
+const backdrop = B2M.createStage(Object.assign({}, scene, { cast: [], captions: [] }), {}).items(0).filter((i) => i.kind === 'path' && i.d && !['panel', 'caption'].includes(i.part));
+const behind = (x, y) => { for (let n = backdrop.length - 1; n >= 0; n--) { const it = backdrop[n], c = colourOf(it.fill, x, y); if (c && inside(it.d, x, y)) return c; } return null; };
+scene.cast.forEach((m) => {
+  const ch = require(process.argv[1] + '/../cast/' + m.character + '.json'), home = B2M.homeOf(m, scene), x = [], flip = [], y = [];
+  for (let t = 0; t <= scene.duration + 1e-9; t += 0.1) {
+    const p = B2M.pose(ch, m.track || {}, t, { home, scale: m.scale || 1 }).move;
+    x.push(p.x === null ? home.x : p.x); flip.push(p.flip); y.push(p.y === null ? home.y : p.y);
+  }
+  // the colour the figure mostly is (weighted by area) and the colours of the background behind its middle and its feet
+  const posed = B2M.pose(ch, m.track || {}, 0, { home, scale: m.scale || 1, steps: skin.steps, smooth: !skin.steps });
+  const items = B2M.layout(ch, skin, posed, { x: home.x, y: home.y, scale: m.scale || 1 }).filter((i) => i.kind === 'path' && typeof i.fill === 'string' && !['fx', 'rod'].includes(i.part));
+  let sum = [0, 0, 0], wsum = 0, box = null;
+  items.forEach((i) => {
+    const q = B2M.pathBounds(B2M.mapPoints(i.d, (px, py) => [i.m[0] * px + i.m[2] * py + i.m[4], i.m[1] * px + i.m[3] * py + i.m[5]])), c = colourOf(i.fill, 0, 0), a = Math.max(1, (q.x1 - q.x0) * (q.y1 - q.y0));
+    box = box ? { x0: Math.min(box.x0, q.x0), y0: Math.min(box.y0, q.y0), x1: Math.max(box.x1, q.x1), y1: Math.max(box.y1, q.y1) } : q;
+    if (c) { sum = sum.map((v, n) => v + c[n] * a); wsum += a; }
+  });
+  const tone = wsum ? sum.map((v) => v / wsum) : null, spots = box ? [[(box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2], [(box.x0 + box.x1) / 2, box.y1 - 4]] : [];
+  const bg = spots.map(([sx, sy]) => behind(sx, sy)).filter(Boolean);
+  const walks = []; const keys = ((m.track && m.track.move) || []).slice().sort((a, b) => a.t - b.t);
+  for (let n = 1; n < keys.length; n++) if (keys[n].walk) {
+    const x0 = keys[n - 1].x === undefined ? home.x : keys[n - 1].x, x1 = keys[n].x === undefined ? home.x : keys[n].x;
+    if (x0 !== x1 && keys[n].t > keys[n - 1].t) walks.push({ from: keys[n - 1].t, to: keys[n].t, steps: B2M.walkSteps(ch, Math.abs(x1 - x0), keys[n].t - keys[n - 1].t, m.scale || 1) });
+  }
+  out[m.id] = { x, y, flip, half: ((ch.proportions.width || ch.proportions.height * 0.6) * (m.scale || 1)) / 2, tone, bg, walks, lum: tone ? lumOf(tone) : null, bgLum: bg.map(lumOf) };
 });
 console.log(JSON.stringify(out));
 """
 
 
 def _walk_scene(scene: dict) -> dict:
-    """Where each cast member stands every 0.1 s and which way it faces, worked out by the same rig that renders it."""
+    """Where each cast member stands every 0.1 s, which way it faces, its tone and the tone behind it, and its walks, all
+    worked out by the same rig and stage that render the film."""
     import tempfile
     node = shutil.which("node")
     if not node:
@@ -152,6 +189,10 @@ def _walk_scene(scene: dict) -> dict:
     if done.returncode != 0:
         raise SystemExit("character_project: could not trace the cast through the scene:\n" + done.stderr[-600:])
     return json.loads(done.stdout)
+
+
+def _hex(rgb: list[float]) -> str:
+    return "#" + "".join(f"{max(0, min(255, round(v))):02x}" for v in rgb)
 
 
 def screen_problems(scene: dict) -> tuple[list[str], list[str]]:
@@ -173,6 +214,21 @@ def screen_problems(scene: dict) -> tuple[list[str], list[str]]:
                     errors.append(f"scene.cast[{scene['cast'].index(m)}] ({m['id']}, {m['character']}) is fully outside the frame to the {side} from {run * step:.1f} s to {(i - 1) * step:.1f} s "
                                   f"(x = {p['x'][run]:.0f}, the frame is 0 to {width}). Positions in a move track are absolute screen pixels; fix x or the move keys, or set allowOffscreen: true if this is meant")
                 run = None
+    height, ground = scene["height"], scene["ground"]
+    for n, m in enumerate(scene["cast"]):
+        p = paths[m["id"]]
+        feet = max(p["y"])
+        if feet > height:
+            errors.append(f"scene.cast[{n}] ({m['id']}, {m['character']}): its feet are at y = {feet:.0f}, below the bottom of the frame ({height}). y is the y of the feet on screen; leave it out to stand on the ground top ({ground})")
+        elif feet > ground + 0.5 * (height - ground):
+            warnings.append(f"{m['id']}: its feet are at y = {feet:.0f}, deep inside the ground band (the ground top is {ground}); leave y out to stand on the ground top")
+        for w in p["walks"]:
+            if w["steps"] > 12:
+                warnings.append(f"{m['id']} walks {w['from']:.1f} s to {w['to']:.1f} s fast enough to need {w['steps']:.0f} drawings a second, which looks like a run: allow more time or a shorter distance")
+        if p["lum"] is not None and p["bgLum"]:
+            ratio = min((max(p["lum"], b) + 0.05) / (min(p["lum"], b) + 0.05) for b in p["bgLum"])
+            if ratio < 1.6:
+                warnings.append(f"{m['id']} ({m['character']}) is hard to see: its tone {_hex(p['tone'])} is close to the background {_hex(p['bg'][0])} behind it (contrast {ratio:.1f}:1, aim for 1.6 or more); change the palette or the skin")
     speakers = [m for m in scene["cast"] if isinstance(m.get("track"), dict) and m["track"].get("visemes")]
     for a in speakers:
         i = min(len(paths[a["id"]]["x"]) - 1, int(a["track"]["visemes"][0]["t"] / step) + 3)

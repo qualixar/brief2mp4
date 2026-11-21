@@ -6,7 +6,7 @@
     { "fill": "hill2", "pts": [[0, 760], [340, 700], [760, 750], [1180, 690], [1560, 745], [1920, 705]] }
   ],
   "set": [
-    { "type": "circle", "c": [1560, 250], "r": 90, "fill": "sun", "layer": "back" },
+    { "type": "circle", "c": [1560, 250], "r": 90, "fill": "sun", "layer": "back", "role": "light" },
     { "type": "poly", "pts": [[1130, 852], [1172, 892], [1130, 934], [1088, 892]], "smooth": false, "fill": "kite" },
     { "type": "poly", "pts": [[1130, 852], [1172, 892], [1130, 892]], "smooth": false, "fill": "kite2", "role": "detail" },
     { "type": "ellipse", "c": [420, 915], "r": [48, 22], "fill": "stone" }
@@ -19,8 +19,8 @@
           { "t": 0, "pose": "idle" }, { "t": 3.0, "pose": "idle" }, { "t": 3.3, "pose": "point", "ease": "out" }, { "t": 6.0, "pose": "point" },
           { "t": 6.5, "pose": "surprised", "ease": "out" }, { "t": 9.9, "pose": "surprised" }, { "t": 10.5, "pose": "sad", "ease": "inOut" }, { "t": 14, "pose": "sad" }
         ],
-        "move": [{ "t": 0, "x": -200 }, { "t": 3.0, "x": 560, "ease": "linear" }],
-        "layers": [{ "cycle": "walk", "from": 0, "to": 3.0, "steps": 8 }, { "cycle": "talk", "from": 3.4, "to": 5.9 }],
+        "move": [{ "t": 0, "x": -200 }, { "t": 3.0, "x": 560, "walk": true }],
+        "layers": [{ "cycle": "talk", "from": 3.4, "to": 5.9 }],
         "visemesFrom": { "words": "words.json", "from": 3.3, "to": 6.0, "lang": "en" }
       }
     },

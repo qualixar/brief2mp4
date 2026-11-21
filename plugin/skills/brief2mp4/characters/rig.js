@@ -9,13 +9,13 @@
  *
  * A track is a list of keys { t, pose, ease } or an object:
  *   { keys: [{ t, pose, ease }],            the ease shapes the move INTO that key (linear, in, out, inOut, sine, backOut, hold)
- *     move: [{ t, x, y, facing, ease }],     where it stands: absolute scene positions (x across, y of the feet); facing "left" or "right"
+ *     move: [{ t, x, y, facing, walk, ease }], where it stands: absolute scene positions (x across, y of the feet); facing "left" or "right"; walk: true = walk to here
  *                                             (flip -1 or 1 is the older spelling); a key without x or y keeps opts.home
  *     layers: [{ cycle, from, to, steps }],  walk, run, wave, laugh, breath, talk; steps = new drawings per second
  *     visemes: [{ t, v }],                   the lip-sync track from scripts/lipsync.py
  *     blink: true, props: ["prop_kite"], fx: { speedLines: [[t0, t1]] },
  *     view: 'front' }                         a close-up head drawing that faces the camera (parts with a 'front' variant)
- * opts.home = { x, y, flip } is where the character stands when a move key does not say (the scene's cast x and y).
+ * opts.scale is the character's size in the scene (for walk keys). opts.home = { x, y, flip } is where the character stands when a move key does not say (the scene's cast x and y).
  * opts.steps quantises time (a handmade skin holds each drawing for 1/steps of a second); leave it out for smooth motion.
  * Cycles hold their drawings at the layer's steps per second; opts.smooth: true (for a smooth skin) blends between them instead.
  */
@@ -193,19 +193,43 @@
   // facing "left" or "right" (flip -1 or 1 is the older spelling) turns it; the facing of the latest key holds.
   const facingOf = (m, fallback) => (m.facing === 'left' ? -1 : m.facing === 'right' ? 1 : m.flip === undefined ? fallback : m.flip);
 
+  // A move key with walk: true means "walk to here from the key before": the walk cycle plays between the two keys at
+  // the speed that plants the feet (see walkSteps), the move is a steady glide, and unless a key says facing the
+  // character turns to face the way it walks.
   function sampleMove(moves, ts, home) {
     const h = Object.assign({ x: null, y: null, flip: 1 }, home);
     if (!moves || !moves.length) return { x: h.x, y: h.y, flip: h.flip };
     const keys = moves.slice().sort((p, q) => p.t - q.t);
     let i = -1;
     for (let n = 0; n < keys.length; n++) if (keys[n].t <= ts + EPS) i = n;
-    const val = (m) => ({ x: m.x === undefined ? h.x : m.x, y: m.y === undefined ? h.y : m.y, flip: facingOf(m, h.flip) });
+    const xOf = (m) => (m.x === undefined ? h.x : m.x);
+    const val = (m, next) => {
+      const heading = next && next.walk && m.facing === undefined && m.flip === undefined && xOf(next) !== null && xOf(m) !== null && xOf(next) !== xOf(m) ? Math.sign(xOf(next) - xOf(m)) : null;
+      return { x: xOf(m), y: m.y === undefined ? h.y : m.y, flip: heading || facingOf(m, h.flip) };
+    };
     const mix = (u, v, k) => (u === null ? v : v === null ? u : lerp(u, v, k));
-    if (i < 0) return val(keys[0]);
-    const a = val(keys[i]);
+    if (i < 0) return val(keys[0], keys[1]);
+    const a = val(keys[i], keys[i + 1]);
     if (i === keys.length - 1) return a;
-    const k = ease(keys[i + 1].ease, (ts - keys[i].t) / (keys[i + 1].t - keys[i].t)), b = val(keys[i + 1]);
+    const k = ease(keys[i + 1].walk ? 'linear' : keys[i + 1].ease, (ts - keys[i].t) / (keys[i + 1].t - keys[i].t)), b = val(keys[i + 1], keys[i + 2]);
     return { x: mix(a.x, b.x, k), y: mix(a.y, b.y, k), flip: a.flip };
+  }
+
+  // Drawings a second the walk cycle needs so that a character `scale` times its drawn size, covering `distance` pixels
+  // in `seconds`, does not slide its feet: four leg lengths times the sine of the swing is the ground one stride covers.
+  function walkSteps(character, distance, seconds, scale) {
+    const def = B.CYCLES.walk;
+    return ((distance / seconds) * def.frames) / (4 * character.proportions.legLength * Math.sin(B.rad(def.amp)) * (scale || 1));
+  }
+
+  function walkLayers(character, moves, scale, home) {
+    const keys = (moves || []).slice().sort((p, q) => p.t - q.t), out = [];
+    for (let n = 1; n < keys.length; n++) {
+      const a = keys[n - 1], b = keys[n], x0 = a.x === undefined ? (home && home.x) : a.x, x1 = b.x === undefined ? (home && home.x) : b.x;
+      if (!b.walk || b.t <= a.t || x0 === null || x0 === undefined || x1 === null || x1 === undefined || x0 === x1) continue;
+      out.push({ cycle: 'walk', from: a.t, to: b.t, steps: walkSteps(character, Math.abs(x1 - x0), b.t - a.t, scale), fade: Math.min(0.1, (b.t - a.t) / 4) });
+    }
+    return out;
   }
 
   function visibleProps(list, ts) {
@@ -230,7 +254,8 @@
     const viseme = inSpeech ? visemeAt(vis, ts) : heldMouth(track, base, ts);
     const acc = {};
     Object.keys(base).forEach((j) => { if (!SPECIAL.has(j)) addDelta(acc, j, asDelta(base[j]), 1); });
-    const layers = track.breath === false ? track.layers || [] : [{ cycle: 'breath' }].concat(track.layers || []);
+    const own = (track.layers || []).concat(walkLayers(character, track.move, o.scale, o.home));
+    const layers = track.breath === false ? own : [{ cycle: 'breath' }].concat(own);
     const cycles = applyLayers(character, Object.assign({}, track, { layers }), ts, o, acc, viseme !== 'rest');
     const blink = blinkAmount(character, track, ts);
     const legLength = (character.proportions && character.proportions.legLength) || 0;
@@ -256,6 +281,6 @@
     return (4 * character.proportions.legLength * Math.sin(B.rad(def.amp)) * (steps || def.steps)) / def.frames;
   }
 
-  Object.assign(B, { pose, visemeAt, hash, ease, quantise, strideSpeed, EASES: Object.keys(EASE) });
+  Object.assign(B, { pose, visemeAt, hash, ease, quantise, strideSpeed, walkSteps, EASES: Object.keys(EASE) });
   if (typeof module !== 'undefined' && module.exports) module.exports = B;
 })(globalThis);

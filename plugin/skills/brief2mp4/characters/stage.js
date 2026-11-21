@@ -11,9 +11,9 @@
  *   hills: [{ pts: [[x, y], ...], fill: "hill1" }],   // optional silhouettes behind the cast
  *   set:   [{ type: "circle", c: [x, y], r: 90, fill: "sun", layer: "back" }],   // optional shapes (same records as a character part);
  *                                                     // layer "back" draws behind the hills, the default "front" on the ground
- *   cast:  [{ id, character, x, y, scale, facing, track }],   // x, y: where it stands (y defaults to the ground); track as in rig.js, visemes included;
+ *   cast:  [{ id, character, x, y, scale, facing, track }],   // x, y: where its feet are (y defaults to the ground top, so feet are never hidden); track as in rig.js, visemes included;
  *                                                       // a move key's x and y are absolute and replace x and y while it plays
- *   captions: [{ from, to, text }] }
+ *   captions: [{ from, to, text }] }              // at the bottom, or at the top when a character stands there
  */
 (function (g) {
   'use strict';
@@ -52,11 +52,28 @@
     return c ? c.text : '';
   }
 
-  function defaultCaption(scene, text) {
+  // Where a character is on screen: the box round everything it draws (rods and speed lines are not part of it).
+  function boxOf(items) {
+    let b = null;
+    items.forEach((it) => {
+      if (it.kind !== 'path' || it.part === 'fx' || it.part === 'rod' || !it.d) return;
+      const q = B.pathBounds(B.mapPoints(it.d, (x, y) => [it.m[0] * x + it.m[2] * y + it.m[4], it.m[1] * x + it.m[3] * y + it.m[5]]));
+      b = b ? { x0: Math.min(b.x0, q.x0), y0: Math.min(b.y0, q.y0), x1: Math.max(b.x1, q.x1), y1: Math.max(b.y1, q.y1) } : q;
+    });
+    return b;
+  }
+
+  const overlaps = (r, b) => b && r.x0 < b.x1 && r.x1 > b.x0 && r.y0 < b.y1 && r.y1 > b.y0;
+
+  // The caption goes at the bottom of the frame, or at the top when it would cover a character.
+  function defaultCaption(scene, text, boxes) {
     if (!text) return [];
-    const W = scene.width, H = scene.height, w = Math.min(W - 160, 80 + text.length * 25);
-    return [{ kind: 'path', part: 'caption', m: IDENT, d: B.rectPath((W - w) / 2, H - 150, w, 84, 18), fill: 'rgba(20,16,28,0.72)', stroke: null },
-      { kind: 'text', part: 'caption', m: IDENT, x: W / 2, y: H - 92, text, align: 'center', font: '700 40px "Helvetica Neue", Arial, sans-serif', fill: '#ffffff' }];
+    const W = scene.width, H = scene.height, w = Math.min(W - 160, 80 + text.length * 25), x = (W - w) / 2;
+    const bottom = { x0: x, x1: x + w, y0: H - 150, y1: H - 66 }, top = { x0: x, x1: x + w, y0: 54, y1: 138 };
+    const hit = (r) => boxes.filter((b) => overlaps(r, b)).length;
+    const r = hit(bottom) > 0 && hit(top) < hit(bottom) ? top : bottom;
+    return [{ kind: 'path', part: 'caption', m: IDENT, d: B.rectPath(r.x0, r.y0, w, 84, 18), fill: 'rgba(20,16,28,0.72)', stroke: null },
+      { kind: 'text', part: 'caption', m: IDENT, x: W / 2, y: r.y0 + 58, text, align: 'center', font: '700 40px "Helvetica Neue", Arial, sans-serif', fill: '#ffffff' }];
   }
 
   function createStage(scene, cast) {
@@ -65,15 +82,16 @@
     const opts = { steps: skin.steps, smooth: !skin.steps };
     function items(t) {
       const ts = B.quantise(t, skin.steps), frame = skin.steps ? Math.round(ts * skin.steps) : 0;
-      const out = backdrop(scene, skin, frame);
-      const order = scene.cast.slice().sort((a, b) => (a.y === undefined ? scene.ground : a.y) - (b.y === undefined ? scene.ground : b.y));
+      const out = backdrop(scene, skin, frame), text = captionAt(scene, t);
+      const boxes = [], order = scene.cast.slice().sort((a, b) => (a.y === undefined ? scene.ground : a.y) - (b.y === undefined ? scene.ground : b.y));
       order.forEach((c) => {
-        const ch = cast[c.character], home = homeOf(c, scene), posed = B.pose(ch, c.track, t, Object.assign({ home }, opts));
-        out.push(...B.layout(ch, skin, posed, { x: home.x, y: home.y, scale: c.scale || 1 }));
+        const ch = cast[c.character], home = homeOf(c, scene), posed = B.pose(ch, c.track, t, Object.assign({ home, scale: c.scale || 1 }, opts));
+        const drawn = B.layout(ch, skin, posed, { x: home.x, y: home.y, scale: c.scale || 1 });
+        out.push(...drawn);
+        if (text) boxes.push(boxOf(drawn));
       });
-      const text = captionAt(scene, t);
       const over = skin.foreground ? skin.foreground({ W: scene.width, H: scene.height, caption: text, t, scene }) : [];
-      return out.concat(over, skin.captions ? [] : defaultCaption(scene, text));
+      return out.concat(over, skin.captions ? [] : defaultCaption(scene, text, boxes));
     }
     function draw(g2, t) {
       g2.setTransform(1, 0, 0, 1, 0, 0);
