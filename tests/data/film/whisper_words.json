@@ -1,0 +1,75 @@
+{
+ "_note": "recorded from whisper.cpp (whisper-cli -oj -ml 1 -sow) on a 4.4 s spoken sentence; offsets are milliseconds",
+ "transcription": [
+  {
+   "offsets": {
+    "from": 0,
+    "to": 0
+   },
+   "text": ""
+  },
+  {
+   "offsets": {
+    "from": 0,
+    "to": 590
+   },
+   "text": " 99%"
+  },
+  {
+   "offsets": {
+    "from": 590,
+    "to": 760
+   },
+   "text": " of"
+  },
+  {
+   "offsets": {
+    "from": 760,
+    "to": 2130
+   },
+   "text": " intercontinental"
+  },
+  {
+   "offsets": {
+    "from": 2130,
+    "to": 2470
+   },
+   "text": " data"
+  },
+  {
+   "offsets": {
+    "from": 2470,
+    "to": 2810
+   },
+   "text": " does"
+  },
+  {
+   "offsets": {
+    "from": 2810,
+    "to": 3060
+   },
+   "text": " not"
+  },
+  {
+   "offsets": {
+    "from": 3060,
+    "to": 3670
+   },
+   "text": " fly,"
+  },
+  {
+   "offsets": {
+    "from": 3670,
+    "to": 3720
+   },
+   "text": " it"
+  },
+  {
+   "offsets": {
+    "from": 3720,
+    "to": 4180
+   },
+   "text": " swims."
+  }
+ ]
+}
