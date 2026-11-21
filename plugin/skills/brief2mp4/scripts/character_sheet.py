@@ -27,8 +27,8 @@ HYPERFRAMES = "hyperframes@0.8.216"
 
 
 def skin_ids() -> list[str]:
-    text = (cp.KIT / "skins.js").read_text(encoding="utf-8")
-    return re.findall(r"^  SKINS\['([a-z-]+)'\]", text, re.M)
+    text = "".join((cp.KIT / name).read_text(encoding="utf-8") for name in ("skins.js", "skins-extra.js"))
+    return re.findall(r"^  SKINS\['([a-z-]+)'\] = \{", text, re.M)
 
 
 def build_page(project: Path, sheets: list[tuple[str, str]]) -> None:
@@ -36,9 +36,7 @@ def build_page(project: Path, sheets: list[tuple[str, str]]) -> None:
     html = (cp.KIT / "sheet.html").read_text(encoding="utf-8")
     html = html.replace("__DURATION__", str(len(sheets))).replace("__SHEETS__", json.dumps([{"character": c, "skin": s} for c, s in sheets]))
     (project / "index.html").write_text(html, encoding="utf-8", newline="\n")
-    for name, body in (("hyperframes.json", '{"$schema":"https://hyperframes.heygen.com/schema/hyperframes.json","registry":"https://raw.githubusercontent.com/heygen-com/hyperframes/main/registry","paths":{"blocks":"compositions","components":"compositions/components","assets":"assets"}}'),
-                       ("meta.json", '{"id":"character-sheet","name":"character-sheet"}')):
-        (project / name).write_text(body + "\n", encoding="utf-8", newline="\n")
+    cp.write_hf_files(project, "character-sheet")
 
 
 def snapshot(project: Path, count: int) -> list[Path]:

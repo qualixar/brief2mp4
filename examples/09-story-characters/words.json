@@ -1,0 +1,12 @@
+[
+  { "id": "w0", "text": "Hey", "start": 3.45, "end": 3.70 },
+  { "id": "w1", "text": "crow,", "start": 3.78, "end": 4.12 },
+  { "id": "w2", "text": "that", "start": 4.45, "end": 4.68 },
+  { "id": "w3", "text": "is", "start": 4.72, "end": 4.88 },
+  { "id": "w4", "text": "my", "start": 4.92, "end": 5.14 },
+  { "id": "w5", "text": "kite!", "start": 5.20, "end": 5.78 },
+  { "id": "w6", "text": "Finders", "start": 7.20, "end": 7.76 },
+  { "id": "w7", "text": "keepers,", "start": 7.82, "end": 8.42 },
+  { "id": "w8", "text": "little", "start": 8.90, "end": 9.28 },
+  { "id": "w9", "text": "one.", "start": 9.34, "end": 9.78 }
+]
