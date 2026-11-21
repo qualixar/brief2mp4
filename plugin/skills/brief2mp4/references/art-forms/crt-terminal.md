@@ -50,10 +50,10 @@ This is the look from `art-forms/looks-screen.js`, which `tests/art_forms/check_
 ```js
   'crt-terminal': { kind: '2d', fps: 24, draw(g, t, W, H) {
     // an amber phosphor terminal: text typed one character at a time, a block cursor, scanlines, glow, a slow rolling bar, and a screen that bulges at the middle
-    const f = frameOf(t, 24), sc = new OffscreenCanvas(W, H), c = sc.getContext('2d'), AMB = '#ffb000', script = ['BRIEF2MP4 TERMINAL', '', '> route brief.md', 'art form: crt terminal', 'cadence: smooth, full frame rate', '', '> render --fps 24', 'frames 0001 .. 0096 ok', 'checking delivery ... pass', '', '> done'], typed = Math.floor(t * 36);
+    const f = frameOf(t, 24), sc = new OffscreenCanvas(W, H), c = sc.getContext('2d'), AMB = '#ffb000', script = ['> route brief.md', 'art form: crt terminal', 'cadence: smooth, full frame rate', '', '> render --fps 24', 'frames 0001 .. 0096 ok', 'checking delivery ... pass', '', '> done'], typed = Math.floor(t < 0.25 ? t * 66 : 16 + (t - 0.25) * 36);   // the first prompt is typed by 0.25 s
     c.fillStyle = '#0a0600'; c.fillRect(0, 0, W, H); c.font = '700 26px "Courier New", Courier, monospace'; c.textBaseline = 'top'; c.shadowColor = AMB; c.shadowBlur = 14; c.fillStyle = AMB;
-    let left = typed, cur = null; for (let i = 0; i < script.length && !cur; i++) { const line = script[i], n = clamp(left, 0, line.length); c.fillText(line.slice(0, n), 70, 56 + i * 38); if (left <= line.length) cur = [i, n]; left -= line.length + 2; }
-    if (cur && Math.floor(t * 2) % 2 === 0) c.fillRect(70 + cur[1] * 15.6, 56 + cur[0] * 38, 14, 26);   // a blinking block cursor at the end of what has been typed
+    c.fillText('BRIEF2MP4 TERMINAL', 70, 56); let left = typed, cur = null; for (let i = 0; i < script.length && !cur; i++) { const line = script[i], n = clamp(left, 0, line.length); c.fillText(line.slice(0, n), 70, 56 + (i + 2) * 38); if (left <= line.length) cur = [i, n]; left -= line.length + 2; }
+    if (cur && Math.floor(t * 2) % 2 === 0) c.fillRect(70 + cur[1] * 15.6, 56 + (cur[0] + 2) * 38, 14, 26);   // a blinking block cursor at the end of what has been typed
     c.shadowBlur = 0; scanlines(c, W, H, 0.22, 3); const bar = ((t * 0.18) % 1.3) * (H + 120) - 120; const bg2 = c.createLinearGradient(0, bar, 0, bar + 120); bg2.addColorStop(0, 'rgba(255,176,0,0)'); bg2.addColorStop(0.5, 'rgba(255,176,0,.1)'); bg2.addColorStop(1, 'rgba(255,176,0,0)'); c.fillStyle = bg2; c.fillRect(0, bar, W, 120);
     g.fillStyle = '#050403'; g.fillRect(0, 0, W, H); const flick = 0.94 + 0.06 * hash(f, 3); g.globalAlpha = flick;
     for (let y = 0; y < H; y += 3) { const k = ((y - H / 2) / (H / 2)) ** 2, sw = W * (1 - 0.07 * k), dh = 3; g.drawImage(sc, 0, y, W, dh, (W - sw) / 2, y, sw, dh); }

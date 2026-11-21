@@ -57,19 +57,21 @@ export const LOOKS = {
     const haze = g.createLinearGradient(0, 330, 0, 420); haze.addColorStop(0, 'rgba(160,70,210,0)'); haze.addColorStop(1, 'rgba(160,70,210,.28)'); g.fillStyle = haze; g.fillRect(0, 330, W, 90); vignette(g, W, H, 0.5);
   } },
   ascii: { kind: '2d', fps: 12, draw(g, t, W, H) {
-    // a sunrise over a wavy sea and a headland, drawn only from monospaced characters picked by brightness; the waves, the glitter and the birds move
-    const ts = held(t, 12), cols = 120, rows = 45, RAMP = ' .,:;-=+*#%@'; g.fillStyle = '#0b0705'; g.fillRect(0, 0, W, H); g.font = mono;
-    const cw = g.measureText('M').width, sx = W / (cols * cw), lum = (u, v) => {
-      const dx = (u - 0.62) * 1.78, dy = v - (0.4 - 0.02 * Math.sin(ts)), d = Math.hypot(dx, dy); let L = 0.02 + 0.34 * Math.max(0, 0.66 - v) ** 1.5 + 0.75 * Math.exp(-d * 4.5);
-      if (d < 0.14) L = 1; const ridge = 0.5 - 0.09 * vnoise(u * 7, 0, 3) - 0.05 * Math.abs(Math.sin(u * 8)); if (u < 0.38 && v > ridge && v < 0.64) L = 0.05 + 0.08 * Math.sin(u * 60);
-      if (v >= 0.64) { const k = v - 0.64; L = 0.06 + 0.2 * Math.max(0, Math.sin(u * 46 + ts * 3.2 + k * 70)) ** 2; if (Math.abs(u - 0.62) < 0.05 + k * 0.5) L += 0.85 * Math.max(0, Math.sin(k * 120 + ts * 5) * 0.5 + 0.5) ** 2 * (1 - k * 2); }
-      return clamp(L);
+    // a sunrise over a sea and a headland, drawn only from big monospaced characters picked by brightness from " .:-=+*#%@", in a colour per region: a violet-to-orange sky, a golden sun, a brown headland, a blue sea with glitter
+    const ts = held(t, 12), cols = 96, rows = 34, RAMP = ' .:-=+*#%@'; g.fillStyle = '#080508'; g.fillRect(0, 0, W, H); g.font = '17px "Courier New", Courier, monospace'; g.textBaseline = 'top';
+    const cw = g.measureText('M').width, sx = W / (cols * cw), rh = H / rows;
+    const PAL = { sky: ['#5a4a9a', '#8a5aa8', '#c86aa0', '#ff8f6a', '#ffd9a0'], sun: ['#ffb347', '#ffc65a', '#ffd97a', '#fff0a8', '#ffffff'], land: ['#6a4a2a', '#8a5e34', '#a8743c', '#c88a48', '#e0a45a'], sea: ['#2a5fd0', '#3f86e0', '#6aa8ff', '#a8d0ff', '#e6f4ff'] };
+    const cell = (u, v) => {
+      const dx = (u - 0.64) * 1.78, dy = v - (0.4 - 0.015 * Math.sin(ts)), d = Math.hypot(dx, dy), ridge = 0.52 - 0.1 * vnoise(u * 6, 0, 3) - 0.05 * Math.abs(Math.sin(u * 7));
+      if (v >= 0.64) { const k = v - 0.64; let L = 0.14 + 0.28 * Math.max(0, Math.sin(u * 40 + ts * 3.2 + k * 60)) ** 1.5; if (Math.abs(u - 0.64) < 0.05 + k * 0.45) L += 0.6 * Math.max(0, Math.sin(k * 110 + ts * 5)) ** 2 * (1 - k * 2.2); return [clamp(L), 'sea']; }
+      if (d < 0.19) return [clamp(0.62 + 0.38 * (1 - d / 0.19)), 'sun'];
+      if (u < 0.4 && v > ridge) return [0.46 + 0.3 * vnoise(u * 40, v * 40, 5), 'land'];
+      return [clamp(0.04 + 0.3 * Math.max(0, 0.64 - v) ** 1.4 + 0.65 * Math.exp(-d * 5) + (v > 0.18 && v < 0.28 && Math.sin(u * 20 + ts * 0.5 + v * 30) > 0.8 ? 0.22 : 0)), 'sky'];
     };
-    const rowsTxt = [[], [], [], []]; for (let r = 0; r < rows; r++) { const lines = ['', '', '', '']; for (let c = 0; c < cols; c++) { const L = lum(c / cols, r / rows), ch = RAMP[Math.floor(L * 11.99)], b = L > 0.85 ? 3 : L > 0.55 ? 2 : L > 0.3 ? 1 : 0; for (let k = 0; k < 4; k++) lines[k] += k === b ? ch : ' '; } rowsTxt[r] = lines; }
-    g.save(); g.scale(sx, 1); g.textBaseline = 'top'; const cols4 = ['#a8661a', '#e8962a', '#ffc15a', '#fff6dc'], rh = H / rows;
-    for (let r = 0; r < rows; r++) for (let k = 0; k < 4; k++) { if (!rowsTxt[r][k].trim()) continue; g.fillStyle = cols4[k]; g.fillText(rowsTxt[r][k], 0, r * rh); }
-    for (let i = 0; i < 4; i++) { const bx = (ts * 9 + i * 31) % cols, by = 6 + i * 3 + Math.round(Math.sin(ts * 2 + i)); g.fillStyle = '#ffb347'; g.fillText(Math.floor(ts * 4 + i) % 2 ? 'v' : '^', bx * cw, by * rh); }
-    g.restore(); scanlines(g, W, H, 0.12, 4);
+    g.save(); g.scale(sx, 1);
+    for (let r = 0; r < rows; r++) { const rowsTxt = {}; for (let c = 0; c < cols; c++) { const [L, cls] = cell(c / cols, r / rows), ch = RAMP[Math.floor(L * 9.99)]; if (ch === ' ') continue; const b = Math.min(4, Math.floor(L * 5)), key = cls + b; (rowsTxt[key] = rowsTxt[key] || { cls, b, s: Array(cols).fill(' ') }).s[c] = ch; } for (const k of Object.keys(rowsTxt)) { const o = rowsTxt[k]; g.fillStyle = PAL[o.cls][o.b]; g.fillText(o.s.join(''), 0, r * rh); } }
+    for (let i = 0; i < 4; i++) { const bx = (ts * 7 + i * 24) % cols, by = 5 + i * 2 + Math.round(Math.sin(ts * 2 + i)); g.fillStyle = '#ffe9c0'; g.fillText(Math.floor(ts * 4 + i) % 2 ? 'v' : '^', bx * cw, by * rh); }
+    g.restore(); scanlines(g, W, H, 0.08, 4);
   } },
   'dither-1bit': { kind: '2d', fps: 12, draw(g, t, W, H) {
     // two colours only, ink and paper: a gradient sky and a bouncing ball turned into pure dots by an ordered dither, inside a window with a striped title bar, like an early desktop computer
@@ -86,10 +88,10 @@ export const LOOKS = {
   } },
   'crt-terminal': { kind: '2d', fps: 24, draw(g, t, W, H) {
     // an amber phosphor terminal: text typed one character at a time, a block cursor, scanlines, glow, a slow rolling bar, and a screen that bulges at the middle
-    const f = frameOf(t, 24), sc = new OffscreenCanvas(W, H), c = sc.getContext('2d'), AMB = '#ffb000', script = ['BRIEF2MP4 TERMINAL', '', '> route brief.md', 'art form: crt terminal', 'cadence: smooth, full frame rate', '', '> render --fps 24', 'frames 0001 .. 0096 ok', 'checking delivery ... pass', '', '> done'], typed = Math.floor(t * 36);
+    const f = frameOf(t, 24), sc = new OffscreenCanvas(W, H), c = sc.getContext('2d'), AMB = '#ffb000', script = ['> route brief.md', 'art form: crt terminal', 'cadence: smooth, full frame rate', '', '> render --fps 24', 'frames 0001 .. 0096 ok', 'checking delivery ... pass', '', '> done'], typed = Math.floor(t < 0.25 ? t * 66 : 16 + (t - 0.25) * 36);   // the first prompt is typed by 0.25 s
     c.fillStyle = '#0a0600'; c.fillRect(0, 0, W, H); c.font = '700 26px "Courier New", Courier, monospace'; c.textBaseline = 'top'; c.shadowColor = AMB; c.shadowBlur = 14; c.fillStyle = AMB;
-    let left = typed, cur = null; for (let i = 0; i < script.length && !cur; i++) { const line = script[i], n = clamp(left, 0, line.length); c.fillText(line.slice(0, n), 70, 56 + i * 38); if (left <= line.length) cur = [i, n]; left -= line.length + 2; }
-    if (cur && Math.floor(t * 2) % 2 === 0) c.fillRect(70 + cur[1] * 15.6, 56 + cur[0] * 38, 14, 26);   // a blinking block cursor at the end of what has been typed
+    c.fillText('BRIEF2MP4 TERMINAL', 70, 56); let left = typed, cur = null; for (let i = 0; i < script.length && !cur; i++) { const line = script[i], n = clamp(left, 0, line.length); c.fillText(line.slice(0, n), 70, 56 + (i + 2) * 38); if (left <= line.length) cur = [i, n]; left -= line.length + 2; }
+    if (cur && Math.floor(t * 2) % 2 === 0) c.fillRect(70 + cur[1] * 15.6, 56 + (cur[0] + 2) * 38, 14, 26);   // a blinking block cursor at the end of what has been typed
     c.shadowBlur = 0; scanlines(c, W, H, 0.22, 3); const bar = ((t * 0.18) % 1.3) * (H + 120) - 120; const bg2 = c.createLinearGradient(0, bar, 0, bar + 120); bg2.addColorStop(0, 'rgba(255,176,0,0)'); bg2.addColorStop(0.5, 'rgba(255,176,0,.1)'); bg2.addColorStop(1, 'rgba(255,176,0,0)'); c.fillStyle = bg2; c.fillRect(0, bar, W, 120);
     g.fillStyle = '#050403'; g.fillRect(0, 0, W, H); const flick = 0.94 + 0.06 * hash(f, 3); g.globalAlpha = flick;
     for (let y = 0; y < H; y += 3) { const k = ((y - H / 2) / (H / 2)) ** 2, sw = W * (1 - 0.07 * k), dh = 3; g.drawImage(sc, 0, y, W, dh, (W - sw) / 2, y, sw, dh); }
@@ -168,8 +170,19 @@ export const LOOKS = {
     const lamp = g.createLinearGradient(0, 100, 0, 400); lamp.addColorStop(0, 'rgba(255,255,255,.7)'); lamp.addColorStop(1, 'rgba(255,255,255,.1)'); g.fillStyle = lamp; g.beginPath(); g.moveTo(752, 110); g.lineTo(792, 110); g.lineTo(940, 410); g.lineTo(610, 410); g.closePath(); g.fill();
     g.fillStyle = gray(200); g.fillRect(768, 118, 8, 296); g.fillStyle = '#050505'; g.beginPath(); g.moveTo(742, 112); g.lineTo(800, 112); g.lineTo(784, 94); g.lineTo(758, 94); g.fill(); ell(g, 772, 120, 14, 8, gray(255));
     const wg = g.createRadialGradient(772, 170, 20, 772, 170, 300); wg.addColorStop(0, 'rgba(255,255,255,.5)'); wg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = wg; g.fillRect(480, 0, 480, 410);
-    const px = 640; g.save(); g.translate(px, 410); g.scale(1.25, 1.25); g.translate(-px, -410); g.fillStyle = '#050505'; g.beginPath(); g.moveTo(px - 46, 410); g.lineTo(px - 38, 214); g.lineTo(px - 18, 184); g.lineTo(px + 18, 184); g.lineTo(px + 38, 214); g.lineTo(px + 46, 410); g.fill(); ell(g, px, 160, 18, 22, gray(70)); g.beginPath(); g.ellipse(px, 142, 44, 9, 0, 0, TAU); g.fill(); g.fillRect(px - 24, 114, 48, 30); g.strokeStyle = gray(210); g.lineWidth = 2; g.beginPath(); g.moveTo(px + 38, 214); g.lineTo(px + 46, 410); g.moveTo(px + 20, 118); g.lineTo(px + 24, 140); g.stroke();
-    g.fillStyle = gray(255); g.beginPath(); g.arc(px + 22, 168, 2.4, 0, TAU); g.fill(); g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 2; g.beginPath(); for (let i = 0; i < 14; i++) { const y = 162 - i * 12; g.lineTo(px + 24 + Math.sin(t * 2 + i * 0.6) * (4 + i * 1.2), y); } g.stroke(); g.restore();
+    g.save(); g.translate(640, 410); g.scale(1.3, 1.3); const K = '#040404', rim = gray(215), blk = (pts) => { path(g, pts); g.fillStyle = K; g.fill(); }, edge = (pts, w = 2, col = rim) => { path(g, pts, false); g.strokeStyle = col; g.lineWidth = w; g.stroke(); };
+    blk([[-22, -84], [-4, -84], [-6, 0], [-28, 0]]); blk([[4, -84], [22, -84], [28, 0], [6, 0]]); ell(g, -20, 0, 16, 5, K); ell(g, 20, 0, 16, 5, K);   // trousers and shoes
+    g.strokeStyle = K; g.lineCap = 'round'; g.lineWidth = 17; path(g, [[-48, -212], [-62, -158], [-58, -108]], false); g.stroke(); ell(g, -58, -100, 9, 9, K);   // the hanging arm
+    blk([[-50, -214], [-36, -232], [36, -232], [50, -214], [58, -130], [64, -78], [0, -70], [-64, -78], [-58, -130]]);   // the trench coat
+    blk([[-36, -232], [-24, -256], [-6, -230]]); blk([[36, -232], [24, -256], [6, -230]]);   // the collar, turned up
+    g.fillStyle = gray(70); g.fillRect(-58, -136, 116, 11); g.fillStyle = gray(160); g.fillRect(-7, -138, 14, 15); g.strokeStyle = gray(70); g.lineWidth = 2; path(g, [[-34, -232], [0, -176], [34, -232]], false); g.stroke(); path(g, [[0, -176], [0, -138]], false); g.stroke(); path(g, [[-56, -126], [-62, -78]], false); g.stroke();   // belt, buckle, lapels
+    g.strokeStyle = K; g.lineWidth = 15; path(g, [[44, -212], [68, -176], [28, -246]], false); g.stroke(); ell(g, 25, -248, 8, 8, K);   // the arm raised to the mouth
+    ell(g, 0, -252, 16, 21, gray(46)); ell(g, 7, -252, 6, 18, gray(120));   // the face, mostly in shadow, with a sliver of light on the cheek
+    blk([[-27, -270], [-24, -298], [-6, -304], [0, -297], [6, -304], [24, -298], [27, -270]]); g.fillStyle = gray(80); g.fillRect(-26, -280, 52, 7); ell(g, 0, -270, 53, 9, K);   // a fedora: pinched crown, band and a wide brim
+    g.strokeStyle = gray(235); g.lineWidth = 2.4; path(g, [[4, -244], [19, -247]], false); g.stroke(); ell(g, 21, -247, 2.6, 2.6, '#fff');   // the cigarette and its ember
+    edge([[50, -214], [58, -130], [64, -78]]); edge([[36, -232], [24, -256]]); edge([[53, -270], [40, -268]], 2); edge([[24, -298], [27, -272]], 1.6);
+    g.restore();
+    g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; g.beginPath(); for (let i = 0; i < 16; i++) g.lineTo(669 + Math.sin(t * 2 + i * 0.55) * (3 + i * 1.5), 90 - i * 11); g.stroke();   // a curl of smoke
     g.save(); g.globalCompositeOperation = 'lighter'; const drift = (t * 7) % 52; g.fillStyle = 'rgba(235,235,235,.3)'; for (let i = -2; i < 14; i++) { const y = i * 52 + drift; g.beginPath(); g.moveTo(0, y); g.lineTo(540, y + 96); g.lineTo(540, y + 126); g.lineTo(0, y + 30); g.closePath(); g.fill(); } g.restore();
     for (let i = 0; i < 220; i++) { const x = (hash(i, 1) * W + t * 40) % W, y = (hash(i, 2) * H + t * 1000 * (0.7 + hash(i, 3) * 0.5)) % H, inCone = y > 110 && Math.abs(x - 772) < (y - 110) * 0.55 + 20; g.strokeStyle = `rgba(255,255,255,${inCone ? 0.7 : 0.14})`; g.lineWidth = 1.2; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 6, y + 28); g.stroke(); }
     for (let i = 0; i < 6; i++) { const r = ((t * 1.4 + hash(i, 5)) % 1); g.strokeStyle = `rgba(255,255,255,${0.5 * (1 - r)})`; g.lineWidth = 1.4; g.beginPath(); g.ellipse(680 + hash(i, 6) * 220, 430 + hash(i, 7) * 80, r * 30, r * 7, 0, 0, TAU); g.stroke(); }

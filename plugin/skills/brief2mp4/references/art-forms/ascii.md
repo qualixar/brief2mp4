@@ -48,19 +48,21 @@ This is the look from `art-forms/looks-screen.js`, which `tests/art_forms/check_
 
 ```js
   ascii: { kind: '2d', fps: 12, draw(g, t, W, H) {
-    // a sunrise over a wavy sea and a headland, drawn only from monospaced characters picked by brightness; the waves, the glitter and the birds move
-    const ts = held(t, 12), cols = 120, rows = 45, RAMP = ' .,:;-=+*#%@'; g.fillStyle = '#0b0705'; g.fillRect(0, 0, W, H); g.font = mono;
-    const cw = g.measureText('M').width, sx = W / (cols * cw), lum = (u, v) => {
-      const dx = (u - 0.62) * 1.78, dy = v - (0.4 - 0.02 * Math.sin(ts)), d = Math.hypot(dx, dy); let L = 0.02 + 0.34 * Math.max(0, 0.66 - v) ** 1.5 + 0.75 * Math.exp(-d * 4.5);
-      if (d < 0.14) L = 1; const ridge = 0.5 - 0.09 * vnoise(u * 7, 0, 3) - 0.05 * Math.abs(Math.sin(u * 8)); if (u < 0.38 && v > ridge && v < 0.64) L = 0.05 + 0.08 * Math.sin(u * 60);
-      if (v >= 0.64) { const k = v - 0.64; L = 0.06 + 0.2 * Math.max(0, Math.sin(u * 46 + ts * 3.2 + k * 70)) ** 2; if (Math.abs(u - 0.62) < 0.05 + k * 0.5) L += 0.85 * Math.max(0, Math.sin(k * 120 + ts * 5) * 0.5 + 0.5) ** 2 * (1 - k * 2); }
-      return clamp(L);
+    // a sunrise over a sea and a headland, drawn only from big monospaced characters picked by brightness from " .:-=+*#%@", in a colour per region: a violet-to-orange sky, a golden sun, a brown headland, a blue sea with glitter
+    const ts = held(t, 12), cols = 96, rows = 34, RAMP = ' .:-=+*#%@'; g.fillStyle = '#080508'; g.fillRect(0, 0, W, H); g.font = '17px "Courier New", Courier, monospace'; g.textBaseline = 'top';
+    const cw = g.measureText('M').width, sx = W / (cols * cw), rh = H / rows;
+    const PAL = { sky: ['#5a4a9a', '#8a5aa8', '#c86aa0', '#ff8f6a', '#ffd9a0'], sun: ['#ffb347', '#ffc65a', '#ffd97a', '#fff0a8', '#ffffff'], land: ['#6a4a2a', '#8a5e34', '#a8743c', '#c88a48', '#e0a45a'], sea: ['#2a5fd0', '#3f86e0', '#6aa8ff', '#a8d0ff', '#e6f4ff'] };
+    const cell = (u, v) => {
+      const dx = (u - 0.64) * 1.78, dy = v - (0.4 - 0.015 * Math.sin(ts)), d = Math.hypot(dx, dy), ridge = 0.52 - 0.1 * vnoise(u * 6, 0, 3) - 0.05 * Math.abs(Math.sin(u * 7));
+      if (v >= 0.64) { const k = v - 0.64; let L = 0.14 + 0.28 * Math.max(0, Math.sin(u * 40 + ts * 3.2 + k * 60)) ** 1.5; if (Math.abs(u - 0.64) < 0.05 + k * 0.45) L += 0.6 * Math.max(0, Math.sin(k * 110 + ts * 5)) ** 2 * (1 - k * 2.2); return [clamp(L), 'sea']; }
+      if (d < 0.19) return [clamp(0.62 + 0.38 * (1 - d / 0.19)), 'sun'];
+      if (u < 0.4 && v > ridge) return [0.46 + 0.3 * vnoise(u * 40, v * 40, 5), 'land'];
+      return [clamp(0.04 + 0.3 * Math.max(0, 0.64 - v) ** 1.4 + 0.65 * Math.exp(-d * 5) + (v > 0.18 && v < 0.28 && Math.sin(u * 20 + ts * 0.5 + v * 30) > 0.8 ? 0.22 : 0)), 'sky'];
     };
-    const rowsTxt = [[], [], [], []]; for (let r = 0; r < rows; r++) { const lines = ['', '', '', '']; for (let c = 0; c < cols; c++) { const L = lum(c / cols, r / rows), ch = RAMP[Math.floor(L * 11.99)], b = L > 0.85 ? 3 : L > 0.55 ? 2 : L > 0.3 ? 1 : 0; for (let k = 0; k < 4; k++) lines[k] += k === b ? ch : ' '; } rowsTxt[r] = lines; }
-    g.save(); g.scale(sx, 1); g.textBaseline = 'top'; const cols4 = ['#a8661a', '#e8962a', '#ffc15a', '#fff6dc'], rh = H / rows;
-    for (let r = 0; r < rows; r++) for (let k = 0; k < 4; k++) { if (!rowsTxt[r][k].trim()) continue; g.fillStyle = cols4[k]; g.fillText(rowsTxt[r][k], 0, r * rh); }
-    for (let i = 0; i < 4; i++) { const bx = (ts * 9 + i * 31) % cols, by = 6 + i * 3 + Math.round(Math.sin(ts * 2 + i)); g.fillStyle = '#ffb347'; g.fillText(Math.floor(ts * 4 + i) % 2 ? 'v' : '^', bx * cw, by * rh); }
-    g.restore(); scanlines(g, W, H, 0.12, 4);
+    g.save(); g.scale(sx, 1);
+    for (let r = 0; r < rows; r++) { const rowsTxt = {}; for (let c = 0; c < cols; c++) { const [L, cls] = cell(c / cols, r / rows), ch = RAMP[Math.floor(L * 9.99)]; if (ch === ' ') continue; const b = Math.min(4, Math.floor(L * 5)), key = cls + b; (rowsTxt[key] = rowsTxt[key] || { cls, b, s: Array(cols).fill(' ') }).s[c] = ch; } for (const k of Object.keys(rowsTxt)) { const o = rowsTxt[k]; g.fillStyle = PAL[o.cls][o.b]; g.fillText(o.s.join(''), 0, r * rh); } }
+    for (let i = 0; i < 4; i++) { const bx = (ts * 7 + i * 24) % cols, by = 5 + i * 2 + Math.round(Math.sin(ts * 2 + i)); g.fillStyle = '#ffe9c0'; g.fillText(Math.floor(ts * 4 + i) % 2 ? 'v' : '^', bx * cw, by * rh); }
+    g.restore(); scanlines(g, W, H, 0.08, 4);
   } }
 ```
 
