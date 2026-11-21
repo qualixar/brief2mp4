@@ -1,4 +1,4 @@
-# Art forms: 39 looks for animated video, and how to build each
+# Art forms: 48 looks for animated video, and how to build each
 
 Read this when a brief names a look ("claymation", "paper cut-out", "anime", "like a blueprint") or describes a feeling that a look would carry. It is the index. Each art form has its own page in `references/art-forms/` with its visual rules, timing, build recipe, assets, sound, pitfalls, sources and a tested demo. `scripts/art_route.py BRIEF.md` proposes one from a brief and says why.
 
@@ -71,6 +71,20 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [Blueprint and technical drawing](art-forms/blueprint.md) | White lines on blue: a grid, an object drawn in outline, centre lines, dimensions and a title block. | smooth, full frame rate | HyperFrames (SVG, canvas) |
 | [Neon sign](art-forms/neon-sign.md) | Glass tubes bent into letters and lit: a bright core, a coloured glow, a dark wall, tubes that light one by one and sometimes flicker. | steps 24 times a second | HyperFrames (canvas, SVG) |
 
+## Folk and print traditions
+
+| Art form | What it is | Cadence | Usual tool |
+|---|---|---|---|
+| [Madhubani (Mithila)](art-forms/madhubani.md) | Double black outlines round bright flat fills, with every gap packed with hatching, dots or small motifs: fish, peacocks and lotuses inside a decorated border, with no empty space. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Warli](art-forms/warli.md) | White figures drawn in simple shapes on a terracotta wall: a circle for a head, two triangles joined at their tips for a body, stick arms and legs, a ring of people dancing hand in hand round a tarpa player, trees, huts and a sun. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Pattachitra](art-forms/pattachitra.md) | Bold black outlines and flat colour on a prepared ground: a thick ornamental border, an almond eye in profile, scale and fin patterns, and flowers and tendrils packed round the subject. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Gond](art-forms/gond.md) | Animals and trees drawn in thin black outline and filled with bands of dots and dashes in bright colours, each band following the shape, on a light ground. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Indian miniature (Mughal and Rajput)](art-forms/indian-miniature.md) | A small, richly detailed court painting in jewel tones: a flat, stacked space with no deep perspective, a gold border with a floral margin, fine ornament on every surface, and figures in profile. | steps 8 times a second | HyperFrames (canvas or SVG) |
+| [Engraving and banknote hatching](art-forms/engraving.md) | Fine lines cut like a burin: hatching that follows the form and swells in the shadow, cross-hatching where it is darkest, a vignette of waves, and a woven guilloche frame, in one or two inks on cream paper. | smooth, full frame rate | HyperFrames (canvas) |
+| [Silkscreen poster](art-forms/silkscreen.md) | A poster printed in a few flat inks that overprint, each a little out of register, with coarse halftone dots for tone: flat shapes, big blocks, and colours that mix where they overlap. | steps 8 times a second | HyperFrames (canvas) |
+| [Art deco](art-forms/art-deco.md) | Gold lines, sunbursts and stepped, symmetric geometry on a deep ground: fans and arcs, a tower in steps, zigzag borders and small stars, in gold on navy and burgundy. | smooth, full frame rate | HyperFrames (canvas or SVG) |
+| [Stained glass](art-forms/stained-glass.md) | Coloured panes held by thick dark lead lines in an arched window: a rose at the top, a diamond lattice below, and light glowing through each pane. | smooth, full frame rate | HyperFrames (canvas) |
+
 ## Choosing one from a brief
 
 | The brief is about | Try | Why |
@@ -118,5 +132,5 @@ Each was cloned outside this repository and its licence file was read first. No 
 
 ## The demos
 
-The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (39 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
+The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (48 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
 These pages are generated from `references/art-forms.json` and those demo files by `scripts/build_art_forms.py`.

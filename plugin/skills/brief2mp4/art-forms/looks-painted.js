@@ -1,29 +1,29 @@
-// brief2mp4 art forms: looks-painted.js, batch 1 (painting and drawing). MIT. Same rules as looks.js:
+// brief2mp4 art forms: looks-painted.js, batch 1 (painting and drawing). MIT. Its helpers (rgba, mix, poly, spline, at, bounds, tooth, speckle, flatShape, ...) are exported for the later looks files. Same rules as looks.js:
 // every look is a pure function of time, nothing is read from a clock, and all roughness comes from hash().
 // The helpers at the top are shared by the nine looks; the nine looks are registered in LOOKS below.
 import { TAU, clamp, lerp, prog, easeOut, easeInOut, hash, frameOf, held, jit, grain, blob, cut, strokePart, circlePts, fill, bg, paper, FONT } from './looks.js';
 
-const rgba = (c, a = 1, j = 0) => `rgba(${clamp(c[0] + j, 0, 255) | 0},${clamp(c[1] + j, 0, 255) | 0},${clamp(c[2] + j, 0, 255) | 0},${a})`;
-const mix = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
-const poly = (pts) => { const p = new Path2D(); pts.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y))); p.closePath(); return p; };
-const outside = (W, H, shape) => { const p = new Path2D(); p.rect(0, 0, W, H); p.addPath(shape); return p; };   // clip it with 'evenodd' to keep everything but the shape
-const ellipsePath = (x, y, rx, ry, rot = 0) => { const p = new Path2D(); p.ellipse(x, y, rx, ry, rot, 0, TAU); return p; };
+export const rgba = (c, a = 1, j = 0) => `rgba(${clamp(c[0] + j, 0, 255) | 0},${clamp(c[1] + j, 0, 255) | 0},${clamp(c[2] + j, 0, 255) | 0},${a})`;
+export const mix = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+export const poly = (pts) => { const p = new Path2D(); pts.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y))); p.closePath(); return p; };
+export const outside = (W, H, shape) => { const p = new Path2D(); p.rect(0, 0, W, H); p.addPath(shape); return p; };   // clip it with 'evenodd' to keep everything but the shape
+export const ellipsePath = (x, y, rx, ry, rot = 0) => { const p = new Path2D(); p.ellipse(x, y, rx, ry, rot, 0, TAU); return p; };
 // paper tooth: coarse specks keyed by (x, y) with no row or column pattern; scale 2 makes the grains two pixels wide
 const teeth = new Map();
-function tooth(w, h, seed, strength, tint, scale = 1) {
+export function tooth(w, h, seed, strength, tint, scale = 1) {
   const key = `${w}x${h}:${seed}:${strength}:${tint}:${scale}`; if (teeth.has(key)) return teeth.get(key);
   const sw = Math.ceil(w / scale), sh = Math.ceil(h / scale), c = new OffscreenCanvas(sw, sh), im = c.getContext('2d').createImageData(sw, sh);
   for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) { const i = (y * sw + x) * 4; im.data[i] = tint[0]; im.data[i + 1] = tint[1]; im.data[i + 2] = tint[2]; im.data[i + 3] = (hash(x, y, seed) * 0.6 + hash(x >> 1, y >> 1, seed + 1) * 0.4) * strength; }
   c.getContext('2d').putImageData(im, 0, 0); teeth.set(key, c); return c;
 }
-const speckle = (g, W, H, seed, strength, tint, scale = 1) => { g.save(); g.imageSmoothingEnabled = false; g.drawImage(tooth(W, H, seed, strength, tint, scale), 0, 0, W, H); g.restore(); };
+export const speckle = (g, W, H, seed, strength, tint, scale = 1) => { g.save(); g.imageSmoothingEnabled = false; g.drawImage(tooth(W, H, seed, strength, tint, scale), 0, 0, W, H); g.restore(); };
 // smooth value noise in 0..1 from a position: a wandering field for colour and direction
-function vnoise(x, y, seed = 0) {
+export function vnoise(x, y, seed = 0) {
   const xi = Math.floor(x), yi = Math.floor(y), u = (x - xi) ** 2 * (3 - 2 * (x - xi)), v = (y - yi) ** 2 * (3 - 2 * (y - yi));
   return lerp(lerp(hash(xi, yi, seed), hash(xi + 1, yi, seed), u), lerp(hash(xi, yi + 1, seed), hash(xi + 1, yi + 1, seed), u), v);
 }
 // a Catmull-Rom spline through the points, as a dense polyline: a smooth line that passes through every point
-function spline(pts, per = 8) {
+export function spline(pts, per = 8) {
   const out = [];
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
@@ -31,8 +31,8 @@ function spline(pts, per = 8) {
   }
   out.push(pts[pts.length - 1]); return out;
 }
-const at = (pts, k) => { const u = clamp(k) * (pts.length - 1), i = Math.min(Math.floor(u), pts.length - 2); return [lerp(pts[i][0], pts[i + 1][0], u - i), lerp(pts[i][1], pts[i + 1][1], u - i), Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0])]; };
-const bounds = (pts) => [Math.min(...pts.map((p) => p[0])), Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[1]))];
+export const at = (pts, k) => { const u = clamp(k) * (pts.length - 1), i = Math.min(Math.floor(u), pts.length - 2); return [lerp(pts[i][0], pts[i + 1][0], u - i), lerp(pts[i][1], pts[i + 1][1], u - i), Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0])]; };
+export const bounds = (pts) => [Math.min(...pts.map((p) => p[0])), Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[1]))];
 // a row of soft, uneven dabs along a line: charcoal, pastel, rubbed graphite. k (0..1) is how much of the line is laid
 function dabs(g, x0, y0, x1, y1, w, a, seed, k = 1, col = [24, 23, 26]) {
   if (k <= 0) return;
@@ -86,7 +86,7 @@ function oilAngle(x, y, W, H) {
   return Math.atan2(w * Math.sin(tangent) + (1 - w) * Math.sin(flat), w * Math.cos(tangent) + (1 - w) * Math.cos(flat));
 }
 // a flat opaque shape with a hand-cut edge and faint brush streaks inside; path() builds it, bb is its bounding box
-function flatShape(g, path, col, seed, bb) {
+export function flatShape(g, path, col, seed, bb) {
   path(); fill(g, col); g.save(); g.clip(); g.lineCap = 'round';
   for (let j = 0; j < 26; j++) {
     const y = lerp(bb[1], bb[3], hash(j, seed)), x = lerp(bb[0] - 40, bb[2], hash(j, seed, 1));

@@ -5,7 +5,8 @@
   "craft": "Craft and handmade",
   "drawn": "Drawn and painted",
   "geometry": "Geometry, pixels and 3D",
-  "type": "Type, data and retro"
+  "type": "Type, data and retro",
+  "folk": "Folk and print traditions"
  },
  "forms": [
   {
@@ -1975,6 +1976,474 @@
    ],
    "looks": [
     "sand-art"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "madhubani",
+   "name": "Madhubani (Mithila)",
+   "aliases": [
+    "mithila art",
+    "mithila painting",
+    "madhubani art"
+   ],
+   "family": "folk",
+   "what": "Double black outlines round bright flat fills, with every gap packed with hatching, dots or small motifs: fish, peacocks and lotuses inside a decorated border, with no empty space. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself, and a film should credit the tradition and, where it can, commission or license work from the artists.",
+   "origin": "Madhubani art, also called Mithila art, is a style of painting practised in the Mithila region of Nepal and Bihar. It was traditionally created by women of various communities on freshly plastered mud walls and floors of huts, and is now also done on cloth, handmade paper and canvas, with natural dyes and pigments.",
+   "rules": [
+    "Double black outlines: a bold line with a thin one inside it",
+    "Bright, flat colour: red, yellow, green and indigo, with black line work",
+    "Every gap is filled with hatching, dots, flowers, leaves or geometric marks: no empty space",
+    "Motifs from nature: fish, peacocks, lotus, the sun and moon, plants",
+    "A decorated border of triangles and flowers, drawn as part of the painting"
+   ],
+   "timing": "Elements are drawn on in order over about 4 seconds: border, ground motifs, then the large figures. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "Build each figure as a smooth closed spline (`closed()` in `looks-folk.js`) and draw it with `folkShape()`: the outline draws round, the fill comes in, a pattern fills it, then an inner line follows",
+    "Patterns clipped to the shape: parallel lines, dot grids and scale arcs (`lines()`, `dots()`, `scales()`)",
+    "Fill the ground first with a grid of small motifs, each chosen by a hash of its cell, so the gaps are never blank",
+    "Draw the border as a loop of triangles with a flower in each corner"
+   ],
+   "assets": "All in code. Real work is done on handmade paper or cloth: a scanned paper texture helps if the user has one.",
+   "sound": "Soft folk percussion or a flute drone, a gentle brush sound as each figure draws on. Practice note.",
+   "pitfalls": [
+    "Empty space: the form is defined by filling it",
+    "Single thin outlines and gradients",
+    "Presenting a machine-made picture as authentic Madhubani art"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "madhubani",
+    "mithila",
+    "fish and peacock",
+    "no empty space",
+    "folk painting"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Madhubani_art"
+   ],
+   "looks": [
+    "madhubani"
+   ],
+   "thin": "Wikipedia marks its line that no space is left empty, with the gaps filled by flowers, animals, birds and geometric designs, as needing a citation; confirm it against a museum or scholarly source before quoting it.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "warli",
+   "name": "Warli",
+   "aliases": [
+    "warli art",
+    "warli painting"
+   ],
+   "family": "folk",
+   "what": "White figures drawn in simple shapes on a terracotta wall: a circle for a head, two triangles joined at their tips for a body, stick arms and legs, a ring of people dancing hand in hand round a tarpa player, trees, huts and a sun. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself, and a film should credit the tradition and, where it can, commission or license work from the artists.",
+   "origin": "Warli painting is tribal art made mostly by the Warli people of the North Sahyadri Range in Maharashtra, India, usually on the mud walls of village huts, in a white pigment of rice flour and water with a gum binder. Its basic shapes are the circle, triangle and square; people and animals are drawn as two inverse triangles joined at their tips, and the tarpa dance, in which men and women entwine hands and circle the tarpa player, is a central subject.",
+   "rules": [
+    "White (rice-paste) lines and fills only, on a red-brown mud ground",
+    "Figures of a circle head and two triangles that meet at their tips, with stick limbs",
+    "A ring or spiral dance, hands joined, round a central player",
+    "Trees as a trunk with paired branches; a sun as a circle with strokes",
+    "Borders of repeating diamonds; huts as a square with a triangle roof"
+   ],
+   "timing": "Figures appear one at a time over about 3 seconds and the spiral turns slowly while they step between two poses. The picture steps about 8 times a second, and the poses at 4.",
+   "fps": 8,
+   "build": [
+    "Ground: base colour plus a dozen big soft radial gradients for daubed mud, then a fine speckle",
+    "A figure is two filled triangles, a disc and stroked limbs (`warliFigure()` in `looks-folk.js`), turned so the head points outward",
+    "Place figures along a spiral and add a slow rotation of the whole spiral from stepped time",
+    "Trees: a trunk and branches as paired strokes that shorten toward the top, a dot at each tip"
+   ],
+   "assets": "All in code. A scan of a mud-plastered wall makes a stronger ground if the user has one.",
+   "sound": "Drum and tarpa-like reed drone, claps on the pose changes. Practice note.",
+   "pitfalls": [
+    "Colour: the tradition is white on brown or red-brown",
+    "Rounded, realistic bodies",
+    "Presenting a machine-made picture as authentic Warli art"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "warli",
+    "tarpa",
+    "tribal art",
+    "rice paste",
+    "mud wall"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Warli_painting"
+   ],
+   "looks": [
+    "warli"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "pattachitra",
+   "name": "Pattachitra",
+   "aliases": [
+    "patachitra",
+    "pattachitra painting",
+    "odisha scroll painting"
+   ],
+   "family": "folk",
+   "what": "Bold black outlines and flat colour on a prepared ground: a thick ornamental border, an almond eye in profile, scale and fin patterns, and flowers and tendrils packed round the subject. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself, and a film should credit the tradition and, where it can, commission or license work from the artists.",
+   "origin": "Patachitra or Pattachitra is a traditional cloth-based scroll painting of the eastern Indian states of Odisha and West Bengal; the name comes from the Sanskrit patta, cloth, and chitra, picture. The Odisha tradition originated at Puri, is painted in natural colours on cloth coated with chalk and gum, and has bold, clean lines with no landscape or perspective.",
+   "rules": [
+    "A thick, ornamental border in red, yellow and black, with dots and zigzags",
+    "Bold, clean outlines and flat colour",
+    "Eyes in profile, drawn as an almond with a dark pupil",
+    "Dense floral fill: rosettes, leaves and spiral tendrils",
+    "Patterns inside the shapes: scales, fan lines, bands"
+   ],
+   "timing": "The ground motifs fill in over about 3 seconds, the main figure draws on over about 1.5 seconds. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "Draw the border as flat bands with dots and zigzags (`strokeRect`, dot loops)",
+    "Fill the ground with rosettes (`rosette()`) and spiral tendrils (`curl()`) on an offset grid",
+    "The figure is a closed spline drawn with `folkShape()`, a heavy 8 px outline and a scale pattern",
+    "An almond eye: a closed four-point spline with a dark disc inside"
+   ],
+   "assets": "All in code. A scan of cloth or tea-stained paper helps if the user has one.",
+   "sound": "Drone and temple-bell texture, a rhythmic percussion under the border. Practice note.",
+   "pitfalls": [
+    "Thin outlines, gradients and perspective: the tradition is flat",
+    "Drawing deity faces from memory: the demo uses a fish for that reason",
+    "Presenting a machine-made picture as authentic Pattachitra"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "pattachitra",
+    "patachitra",
+    "odisha",
+    "puri",
+    "scroll painting"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Pattachitra"
+   ],
+   "looks": [
+    "pattachitra"
+   ],
+   "thin": "The fish in the demo is a decorative study of the border, outline, eye and fill rules; the tradition itself mostly depicts Hindu deities and stories, which Wikipedia describes.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "gond",
+   "name": "Gond",
+   "aliases": [
+    "gond painting",
+    "gond art",
+    "gondi art",
+    "jangarh kalam"
+   ],
+   "family": "folk",
+   "what": "Animals and trees drawn in thin black outline and filled with bands of dots and dashes in bright colours, each band following the shape, on a light ground. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself, and a film should credit the tradition and, where it can, commission or license work from the artists.",
+   "origin": "The Gond, or Gondi, people are an ethnolinguistic group spread across central and eastern India, including Madhya Pradesh, Maharashtra and Chhattisgarh. The artist Jangarh Singh Shyam, born into a Pardhan Gond family in Patangarh, Mandla district, Madhya Pradesh, is credited with starting the school called Jangarh Kalam; he used lines of coloured dots, inspired by Gond tattoos, with bands of dots, dense cross-hatching and comb-lines, and painted animals such as tigers and deer.",
+   "rules": [
+    "Thin black outlines round animals, birds and trees",
+    "Inside every shape: rows of dots, dashes, and dots and dashes, each row in its own bright colour",
+    "The rows follow the long axis of the shape",
+    "A light or bright ground, often with a dotted ground and border",
+    "Animals and trees shown as decorated cut-outs, with no shading"
+   ],
+   "timing": "Parts draw on one after another over about 3 seconds, outline first, then the bands fill. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "Draw each part with `folkShape()` and a pale tint fill",
+    "Bands: rows along the shape's axis with a gentle wave, alternating dots, ticks and dot-and-tick, cycling six colours (`gondBands()` in `looks-folk.js`)",
+    "Add a dot grid over the ground and a dotted border",
+    "Keep the outline thin so the dots and dashes carry the colour"
+   ],
+   "assets": "All in code.",
+   "sound": "Drums and a stringed drone, a rhythmic tapping as each band fills. Practice note.",
+   "pitfalls": [
+    "Solid fills and gradients: the pattern is the colour",
+    "Dots all the same size and colour",
+    "Presenting a machine-made picture as authentic Gond art"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "gond",
+    "gondi",
+    "pardhan",
+    "dots and dashes",
+    "jangarh"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Gond_people",
+    "https://en.wikipedia.org/wiki/Jangarh_Singh_Shyam"
+   ],
+   "looks": [
+    "gond"
+   ],
+   "thin": "Wikipedia has no standalone Gond painting article, so the sources are the Gond people article and the article on Jangarh Singh Shyam, the artist most closely tied to the modern style. Confirm the wider tradition against a museum source before making claims in a film.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "indian-miniature",
+   "name": "Indian miniature (Mughal and Rajput)",
+   "aliases": [
+    "mughal painting",
+    "rajput painting",
+    "mughal miniature",
+    "pahari painting"
+   ],
+   "family": "folk",
+   "what": "A small, richly detailed court painting in jewel tones: a flat, stacked space with no deep perspective, a gold border with a floral margin, fine ornament on every surface, and figures in profile. It is a living tradition with working artists; the demo here is a code study of its visual rules, not the craft itself, and a film should credit the tradition and, where it can, commission or license work from the artists.",
+   "origin": "Mughal painting is a style of miniature painting, used for book illustrations and album pages, that developed at the Mughal court between the 16th and 19th centuries; its portraits are normally in profile. Rajput painting is the painting of the regional Hindu courts during the Mughal era, from about the end of the 16th to the middle of the 19th century, and its conservative idioms keep bright colour, flatness and abstract form.",
+   "rules": [
+    "Flat, stacked space: sky, palace, terrace and garden as bands, no deep perspective",
+    "Jewel tones: ruby, emerald, lapis, saffron and gold",
+    "A gold border with a floral margin, drawn as part of the painting",
+    "Figures in profile, small and seated, with turbans and robes",
+    "Fine ornament: domes, arches, flower beds, water channels"
+   ],
+   "timing": "The border, the sky and the palace draw in over about 2 seconds, then the garden, water and figures. Birds drift and the fountain rises. The picture steps about 8 times a second.",
+   "fps": 8,
+   "build": [
+    "Paint bands from back to front, each a flat fill with a thin dark line",
+    "Border: a ruby frame between gold lines with a row of small flowers (`rosette()`)",
+    "Domes: half-ellipses with ribs, a finial and a small disc",
+    "Figures: a robe polygon, a profile head with a nose notch, a turban ellipse and one arm to a cup",
+    "Animate only small things: birds, the fountain, the cloud ribbons"
+   ],
+   "assets": "All in code. For real pages use public-domain scans from museum collections and say so in REPORT.md.",
+   "sound": "Sitar or santoor, a quiet fountain, birdsong. Practice note.",
+   "pitfalls": [
+    "Deep one-point perspective and cast shadows",
+    "Photorealistic faces",
+    "Presenting a machine-made picture as authentic Mughal or Rajput work"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "miniature painting",
+    "mughal",
+    "rajput",
+    "pahari",
+    "court painting"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Mughal_painting",
+    "https://en.wikipedia.org/wiki/Rajput_painting"
+   ],
+   "looks": [
+    "indian-miniature"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "engraving",
+   "name": "Engraving and banknote hatching",
+   "aliases": [
+    "banknote engraving",
+    "copperplate engraving",
+    "line engraving"
+   ],
+   "family": "folk",
+   "what": "Fine lines cut like a burin: hatching that follows the form and swells in the shadow, cross-hatching where it is darkest, a vignette of waves, and a woven guilloche frame, in one or two inks on cream paper.",
+   "origin": "Engraving is the practice of incising a design on a hard surface with a burin; the grooves can make an intaglio plate for printing. In traditional engraving, which is a purely linear medium, half-tones are made by many thin parallel lines, hatching, and two crossing sets of them are cross-hatching. Guilloché is a precise, repetitive pattern engraved by engine turning, and modern banknotes are almost always engraved.",
+   "rules": [
+    "Tone from line only: thin lines in the light, thick lines in the shadow",
+    "Lines follow the form: curved round a sphere, not straight across it",
+    "Cross-hatching only in the deepest shade",
+    "A guilloche frame of interwoven waves and rosettes",
+    "One or two inks: a dark brown-black and a burgundy on cream paper"
+   ],
+   "timing": "Lines are cut one after another from top to bottom over about 3 seconds, then the cross-hatching and frame. Full frame rate: an engraved line should not step.",
+   "fps": null,
+   "build": [
+    "Sphere: sample points with latitude, longitude and a tilt, and a brightness from a light direction (`spherePoint()` in `looks-folk.js`)",
+    "Stroke each short segment with a width of about `0.35 + 3.3 * (1 - brightness) ** 1.7`",
+    "Cross-hatch: a second family of lines drawn only where brightness is under 0.4",
+    "Guilloche: six sine waves in different phases across each side, and a rose curve at each corner",
+    "Background vignette: horizontal wavy lines whose width grows toward the edge, clipped to an ellipse"
+   ],
+   "assets": "All in code.",
+   "sound": "A fine scratch under the line work, a quiet low tone. Practice note.",
+   "pitfalls": [
+    "Lines of one width: the swelling is the engraving",
+    "Smooth gradients",
+    "Straight hatching that ignores the form"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "engraving",
+    "engraved",
+    "banknote",
+    "guilloche",
+    "copperplate"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Engraving",
+    "https://en.wikipedia.org/wiki/Guilloch%C3%A9"
+   ],
+   "looks": [
+    "engraving"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "silkscreen",
+   "name": "Silkscreen poster",
+   "aliases": [
+    "silkscreen",
+    "screen print",
+    "screen printing",
+    "serigraph"
+   ],
+   "family": "folk",
+   "what": "A poster printed in a few flat inks that overprint, each a little out of register, with coarse halftone dots for tone: flat shapes, big blocks, and colours that mix where they overlap.",
+   "origin": "Screen printing, also silkscreening or serigraphy, transfers ink through a mesh onto a surface except where a stencil blocks it; traditionally the mesh was silk. It is widely used for posters and other graphics.",
+   "rules": [
+    "Two to four flat inks, never more",
+    "Inks overprint with multiply, so overlaps make new colours",
+    "Each ink is a little off register, differently on each drawing",
+    "Halftone dots at an angle for gradients and glows",
+    "Bold flat shapes and block bars where type would go",
+    "Paper grain showing through"
+   ],
+   "timing": "Each ink prints in turn, sliding into register over about 0.7 seconds, one every second. The picture steps about 8 times a second and each step re-seeds the misregistration.",
+   "fps": 8,
+   "build": [
+    "One draw function per ink, drawn with `globalCompositeOperation = 'multiply'` (`inkLayer()` in `looks-folk.js`)",
+    "Offset each layer by a few pixels plus a seeded jitter keyed to `frameOf(t, 8)`",
+    "Halftone: a rotated grid of dots whose radius is `pitch * 0.72 * sqrt(value)` (`halftone()`)",
+    "Slide each layer in from off-register and settle it at its offset"
+   ],
+   "assets": "All in code.",
+   "sound": "A press clunk and a squeegee sweep as each ink lands, an upbeat drum loop. Practice note.",
+   "pitfalls": [
+    "Perfect register and soft gradients: that reads as digital",
+    "Too many colours",
+    "Transparency that does not multiply"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "silkscreen",
+    "screen print",
+    "serigraph",
+    "halftone",
+    "misregistration"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Screen_printing"
+   ],
+   "looks": [
+    "silkscreen"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "art-deco",
+   "name": "Art deco",
+   "aliases": [
+    "art déco",
+    "jazz age deco"
+   ],
+   "family": "folk",
+   "what": "Gold lines, sunbursts and stepped, symmetric geometry on a deep ground: fans and arcs, a tower in steps, zigzag borders and small stars, in gold on navy and burgundy.",
+   "origin": "Art Deco first appeared in Paris in the 1910s, just before the First World War, and flourished internationally in the 1920s and early 1930s; the name came into use after the 1925 Paris exhibition of decorative and industrial arts. It has its origin in the bold geometric forms of the Vienna Secession and Cubism, and in New York the Empire State and Chrysler Buildings are monuments to the style.",
+   "rules": [
+    "Strict symmetry about a vertical axis",
+    "Gold or light-gold lines on a deep ground: black, navy, burgundy or emerald",
+    "Sunburst rays, fans and concentric arcs",
+    "Stepped shapes: towers and frames in steps",
+    "Zigzag borders, chevrons and small star sparkles"
+   ],
+   "timing": "Rays and arcs grow out from the centre over about 3 seconds, then the tower rises in steps. Smooth, full frame rate, with a slow twinkle.",
+   "fps": null,
+   "build": [
+    "Sunburst: wedges that alternate fill and ground, each edge a gold line drawn to a growing radius",
+    "Arcs: `ctx.arc` from pi to a growing angle at several radii",
+    "Tower: nested rectangles of falling width, each rising in turn",
+    "Mirror the side decoration with `ctx.scale(-1, 1)` so it is exactly symmetric",
+    "Sparkles: eight-point stars whose size follows a sine of time"
+   ],
+   "assets": "All in code.",
+   "sound": "Brass and muted trumpet, a swing bed. Practice note.",
+   "pitfalls": [
+    "Asymmetry",
+    "Soft gradients and rounded shapes",
+    "Using teal or mint: this skill leaves them out"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "art deco",
+    "gatsby",
+    "sunburst",
+    "roaring twenties",
+    "gold geometric"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Art_Deco"
+   ],
+   "looks": [
+    "art-deco"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "stained-glass",
+   "name": "Stained glass",
+   "aliases": [
+    "stained glass window",
+    "leaded glass",
+    "church window"
+   ],
+   "family": "folk",
+   "what": "Coloured panes held by thick dark lead lines in an arched window: a rose at the top, a diamond lattice below, and light glowing through each pane.",
+   "origin": "Stained glass is glass coloured by adding metallic salts during its manufacture, arranged into windows of small pieces held together, traditionally, by strips of lead called cames. In Western Europe, together with illuminated manuscripts, such windows are a major form of medieval visual art that has survived.",
+   "rules": [
+    "Thick, dark, even lead lines round every pane",
+    "Saturated, jewel-coloured panes: ruby, cobalt, emerald, amber, violet",
+    "Each pane glows brighter at its centre, as light passes through",
+    "A pointed or round arch, with a rose and a lattice",
+    "A dark stone wall round it, so the glass is the light source"
+   ],
+   "timing": "The panes light up from the centre outward over about 2 seconds, then a soft beam of sun crosses the glass slowly. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Build each pane as a polygon; fill dark, then fill with its colour as it is lit, plus a radial glow with `lighter`",
+    "Rose: annular sectors in three rings (`ring()` in the demo); lattice: a grid of diamonds clipped to the arch",
+    "Stroke every pane with a 6 px dark line, `lineJoin = 'round'`",
+    "The beam: a linear gradient band drawn with `lighter`, its position a function of time",
+    "Wall: dark base colour and a block pattern"
+   ],
+   "assets": "All in code.",
+   "sound": "A choir pad, a long reverb, footsteps in a stone room. Practice note.",
+   "pitfalls": [
+    "Thin lead lines: they are part of the picture",
+    "Flat panes with no glow",
+    "Washed-out pastel colours: keep them saturated"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "stained glass",
+    "lead lines",
+    "rose window",
+    "cathedral window",
+    "leaded"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Stained_glass"
+   ],
+   "looks": [
+    "stained-glass"
    ],
    "thin": "",
    "checked": "2026-11-21"
