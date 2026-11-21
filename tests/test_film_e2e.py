@@ -56,6 +56,13 @@ asset: assets/archive/ship2.png
 say: That is how the internet crosses an ocean.
 screen: HOW IT CROSSES
 source: https://example.org/summary
+beat: 4
+
+## L05
+say: Ships lay each new cable by hand.
+screen: A LONG WIRE
+source: https://example.org/ships
+beat: 4
 """
 
 
@@ -98,7 +105,7 @@ def test_every_stage_up_to_the_mix_runs_offline_and_writes_its_file(tmp_path, of
         assert (root / name).is_file(), name
     assert (root / "audio" / "mix.wav").is_file() and (root / "project_acts" / "A1" / "index.html").is_file() and (root / "project_acts" / "A2" / "index.html").is_file()
     sb = load_json(root / "STORYBOARD.json")
-    assert sb["retimed"] and 17.0 <= sb["duration"] <= 23.0 and len(sb["acts"]) == 2 and sb["beats"][0]["line_starts"]["L01"] == pytest.approx(0.3, abs=0.01)
+    assert sb["retimed"] and 19.0 <= sb["duration"] <= 22.0 and len(sb["acts"]) == 2 and sb["beats"][0]["line_starts"]["L01"] == pytest.approx(0.3, abs=0.01)
     story = (root / "STORY.md").read_text(encoding="utf-8")
     assert "takeaway: nearly all intercontinental" in story and "0-5 s" in story
     mix = load_json(root / "audio" / "mix_report.json")
