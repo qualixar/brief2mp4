@@ -101,7 +101,7 @@ A cycle is a short loop of drawings added to the pose while a `layers` entry is 
 | `laugh` | 4 | 8 | the shoulders and head shake |
 | `breath` | 8 | 4 | a slow rise and fall of the chest; always on unless the track sets breath: false |
 | `talk` |  |  | a layer with no drawings of its own: head nods and small arm gestures while the mouth speaks, 7 beats a second (rate) |
-| `blink` |  |  | not a layer: every character blinks every 2.5 to 5.7 s, from a seeded hash; the track sets blink: false to stop it |
+| `blink` |  |  | not a layer: every character blinks every 2.5 to 5.5 s, from a seeded hash; the track sets blink: false to stop it |
 <!-- END generated: cycles -->
 
 ### Mouth shapes
@@ -191,7 +191,7 @@ python3 scripts/lipsync.py words.json --from 3.3 --to 6 --out kid.json   # one s
 python3 scripts/lipsync.py --wav voice.wav                           # no timestamps: open, half-open, closed from loudness
 ```
 
-Put the result in a track as `visemes`, or let a scene do it (`visemesFrom`, below). Words become shapes by letter rules with a small exceptions table, spread over the word's time in proportion to how long each sound takes. The mouth closes in any pause longer than 150 ms, no shape is held for less than one frame at `--fps`, and every key sits on the frame grid. `--lang hi` reads romanised Hindi (aa, ee, oo, kh, bh); it is a best-effort mapping, approximate by nature, and meant for a mouth that looks right, not a phonetic transcript. The picture follows the voice: never stretch the audio to fit the mouth.
+Put the result in a track as `visemes`, or let a scene do it (`visemesFrom`, below). Words become shapes by letter rules with a small exceptions table, spread over the word's time in proportion to how long each sound takes. The mouth closes in any pause longer than 150 ms, no shape is held for less than one frame at `--fps`, and every key sits on the frame grid. `--lang hi` reads romanised Hindi (aa, ee, oo, kh, bh), and Devanagari is read letter by letter in any `--lang` (vowel signs to `AI`, `E`, `O` or `U`, प ब भ म to `MBP`, फ व to `FV`, ल to `L`, the rest to `etc`; the inherent a is dropped at the end of a word). Both are a best-effort mapping, approximate by nature, and meant for a mouth that looks right, not a phonetic transcript. Accented Latin letters are folded (café reads as cafe). A word with no letters the rules know is named on stderr and left out; if no word gives a shape the command exits with an error and suggests `--wav`. Words that overlap, as speech-to-text often gives them, are cut at the next word's start, and the words may come in any order. The picture follows the voice: never stretch the audio to fit the mouth.
 
 **No recording yet?** `scripts/standin_voice.py` turns a words file into a WAV so you can preview the timing, the captions and the loudness:
 
@@ -213,6 +213,8 @@ bash scripts/finish.sh --in raw.mp4 --out final.mp4 --seconds 14 --audio voice.w
 ```
 
 `character_project.py` checks the scene against `schema/scene.schema.json` first. Every problem names the field and says what is allowed (`scene.cast[1].track.keys[2].pose: 'wavee' is not allowed. Allowed: idle, wave, ...`), and nothing is built until they are fixed. It also stops with an error when a cast member is fully outside the frame for more than half a second (naming the character and the times; set `allowOffscreen: true` on the cast entry if that is meant), and warns when two speakers face away from each other. `python3 characters/validate_scene.py scene.json` runs the first check alone.
+
+**Your own characters.** A character file of your own (SVG-style shapes or PNG part images, see "Bring your own art") joins a scene with `--character-file`, once for each file: `python3 scripts/character_project.py --scene scene.json --character-file hero.json --character-file villain.json --out project/`. Each file is validated (a picture must be a real PNG or WebP inside the file's folder) and its pictures are inlined, then the scene's `cast[].character` can be the file's `id`. An id that is already in the starter cast is refused.
 
 Here is a complete scene with every field. The `//` notes are for reading; real JSON has no comments. It is valid as written, apart from the words file, which must sit next to the scene.
 
@@ -277,11 +279,13 @@ Here is a complete scene with every field. The `//` notes are for reading; real 
       "track": [ { "t": 0, "pose": "idle" }, { "t": 5, "pose": "laugh" } ]     // a bare list of keys is a track too
     }
   ],
-  "captions": [                                // on screen from `from` to `to`; at the bottom, or the top when a character stands there; motion-comic shows them in its caption box
+  "captions": [                                // on screen from `from` to `to`; wrapped to the frame and scaled with it, at the bottom of the safe zone or the top when a character stands there; captions that overlap in time are stacked; motion-comic shows them in its caption box
     { "from": 3.45, "to": 5.95, "text": "Hey crow, that is my kite!" }
   ]
 }
 ```
+
+Captions are sized for the short side of the frame (40 px at 1080) and wrapped to fit; on a 9:16 frame they stay inside the platform's vertical safe zone. `character_project.py` warns when one needs more than two lines.
 
 Set shapes take the fields of their type: `circle` (`c`, `r`), `ellipse` (`c`, `r` as `[rx, ry]`, `rot`), `rect` (`x`, `y`, `w`, `h`, `r`), `poly` (`pts`, `smooth`, `closed`), `path` (`d`), `capsule` (`a`, `b`, `ra`, `rb`). All of them take `fill` and `stroke` (palette keys or `null`), `sw` (stroke width), `role` (`base`, `detail`, `hole`, `line`, `light`), `layer` and `shade` (`false` stops the cel skin's two-tone). A `hole` is drawn in the paper colour. In the shadow-puppet skin the backdrop uses the skin's own screen tones (the palette colours are ignored there), set shapes are black leather, and `light` ones stay light.
 
@@ -355,6 +359,6 @@ A part can show a PNG or WebP picture instead of vector shapes. That way art fro
 5. **Mouth shapes as separate images.** Draw nine, one per shape: `rest`, `AI`, `E`, `O`, `U`, `MBP`, `FV`, `L`, `etc`. Use `"mouth": { "kind": "images", "images": { "rest": { ... }, "AI": { ... } } }`; `rest` is required and stands in for any missing shape.
 6. **Set parents and order.** `parent` links each part to the one it hangs from; `z` is the draw order (far limbs lowest, the head and near arm above the torso).
 
-`src` is a path relative to the character file, or a `data:image/png;base64,` URI. `scripts/character_project.py` inlines pictures as data URIs when it builds a page, so a render needs no file. Run `validate.py` on the file: it checks that every picture exists, is a PNG or WebP, and that an image mouth has `rest`. Then render a sheet with `character_sheet.py --file`.
+`src` is a path relative to the character file, or a `data:image/png;base64,` URI. `scripts/character_project.py` inlines pictures as data URIs when it builds a page, so a render needs no file. Run `validate.py` on the file: it checks that every picture exists, is a PNG or WebP, and that an image mouth has `rest`. Then render a sheet with `character_sheet.py --file`, and put the character in a scene with `character_project.py --character-file`.
 
 `image-demo/make_tin_bot.py` is a complete example: it draws every part and every mouth with the Python standard library and writes `tin-bot.json`. Run it, open the sheet, and swap its pictures for yours. Skins style vector shapes; a picture is drawn as it is, with a drop shadow in the paper skin. For a flat silhouette or an ink outline, prepare the picture that way.

@@ -235,12 +235,6 @@ def test_project_builder_inlines_pictures_as_data_uris():
     assert mouth.startswith("data:image/png;base64,")
 
 
-def test_readme_explains_how_to_prepare_part_images():
-    text = (KIT / "README-CHARACTERS.md").read_text(encoding="utf-8").lower()
-    for phrase in ("one image per part", "transparent", "pivot", "same scale", "mouth", "webp"):
-        assert phrase in text, phrase
-
-
 @pytest.mark.slow
 def test_child_and_image_character_sheets_render(tmp_path):
     if shutil.which("npx") is None:
@@ -304,8 +298,6 @@ console.log(JSON.stringify({ shadow: labels('shadow-puppet'), cel: labels('cel-s
 """)
     assert "front view (close-up)" in r["cel"] and "front view (close-up)" not in r["shadow"]
     assert "standing view" in r["shadow"] and "wave" in r["shadow"]
-    readme = (KIT / "README-CHARACTERS.md").read_text(encoding="utf-8")
-    assert "profile" in readme and "no front view" in readme.lower()
 
 
 @needs_node

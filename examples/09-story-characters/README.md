@@ -28,4 +28,4 @@ done
 
 ## Make your own version
 
-Change the cast (`"character": "adult"` or `"tomato"`), the words (record a line, run `npx hyperframes transcribe`, point `visemesFrom` at the new file) or the skin. To use your own art, rig it as part images (`characters/README-CHARACTERS.md`, "Bring your own art") and give the scene its `character` id.
+Change the cast (`"character": "adult"` or `"tomato"`), the words (record a line, run `npx hyperframes transcribe`, point `visemesFrom` at the new file) or the skin. To use your own art, rig it as part images (`characters/README-CHARACTERS.md`, "Bring your own art"), pass the file with `--character-file hero.json` and give the scene its `character` id.

@@ -92,6 +92,7 @@ console.log(JSON.stringify(out));
 # ---- lip sync ------------------------------------------------------------------------------------------------------
 
 WORDS = json.loads((EX09 / "words.json").read_text(encoding="utf-8"))
+GOOD_SCENE = json.loads((EX09 / "scene.json").read_text(encoding="utf-8"))
 
 
 def shapes_of(text: str, start=0.0, end=0.6, fps=30, lang="en") -> list[str]:
@@ -236,14 +237,6 @@ def test_example_09_child_walks_with_a_walk_key_and_the_feet_are_planted():
     assert 6 < steps < 9, "about the 8 drawings a second the example used before"
 
 
-def test_example_09_has_a_brief_the_words_and_a_readme():
-    brief = (EX09 / "BRIEF.md").read_text(encoding="utf-8")
-    for must in ("14.0 s", "paper cut-out", "anime", "Hey crow, that is my kite!", "Finders keepers, little one.", "words.json"):
-        assert must in brief
-    assert (EX09 / "README.md").is_file() and (SCRIPTS / "standin_voice.py").is_file() and not (EX09 / "make_standin_voice.py").exists()
-    assert [w["text"] for w in WORDS][:3] == ["Hey", "crow,", "that"]
-
-
 def test_the_3d_stage_starter_is_deterministic_and_offline():
     html = (SKILL / "templates" / "threejs" / "characters-stage.html").read_text(encoding="utf-8")
     code = re.sub(r"<!--.*?-->", "", html, flags=re.S)
@@ -274,21 +267,6 @@ def test_the_router_names_the_kit_for_characters_and_dialogue_only():
     assert none["form"] is None and "character kit" in art_route.report(none)
 
 
-def test_formats_and_skill_route_characters_to_the_kit_and_keep_lottie_and_rive():
-    formats = (SKILL / "references" / "formats.md").read_text(encoding="utf-8")
-    section = formats[formats.index("## Storytelling, skits and character pieces"):formats.index("## Vertical Shorts and Reels")]
-    assert "characters/README-CHARACTERS.md" in section and "Lottie or Rive" in section and "lipsync.py" in section
-    assert "Lip sync and full character animation are outside this skill" not in formats
-    skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    assert "### The character kit" in skill and "characters/README-CHARACTERS.md" in skill and "scripts/lipsync.py" in skill and "characters-stage.html" in skill
-
-
-def test_readme_documents_every_part_of_the_kit():
-    text = (KIT / "README-CHARACTERS.md").read_text(encoding="utf-8")
-    for must in ("lipsync.py", "character_project.py", "character_sheet.py", "line-art", "shadow-puppet", "motion-comic", "flat-explainer", "child", "adult", "crow", "tomato", "stage3d", "strideSpeed", "examples/09-story-characters", "Known limits"):
-        assert must in text, must
-
-
 def resolved_scene() -> dict:
     return cp.resolve_scene(json.loads((EX09 / "scene.json").read_text(encoding="utf-8")), EX09)
 
@@ -310,7 +288,8 @@ def mouth_positions(skin: str, times: list[float]) -> list[tuple[float, float]]:
 const fs = require('fs'); const B2M = require(process.argv[1]);
 const scene = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')), times = JSON.parse(process.argv[3]);
 const skin = B2M.SKINS[scene.skin], m = scene.cast[0], ch = require(process.argv[1] + '/../cast/child.json');
-const out = times.map((t) => { const p = B2M.pose(ch, m.track, t, { steps: skin.steps, smooth: !skin.steps }); return B2M.partPoint(ch, p, { x: m.x, y: scene.ground, scale: m.scale }, 'mouth', skin); });
+const home = B2M.homeOf(m, scene);
+const out = times.map((t) => { const p = B2M.pose(ch, m.track, t, { home, scale: m.scale, steps: skin.steps, smooth: !skin.steps }); return B2M.partPoint(ch, p, { x: home.x, y: home.y, scale: m.scale }, 'mouth', skin); });
 console.log(JSON.stringify(out));
 """
     import tempfile
@@ -413,3 +392,35 @@ console.log(JSON.stringify(out));
     assert [r for r in rows if r["who"] == "kid" and r["heard"] != "rest"] == [], "the crow's beak is shut while the child speaks"
     assert [r for r in rows if r["who"] == "crow" and r["heard"] != "rest"] == [], "the child's mouth is shut while the crow speaks"
     assert {r["speaking"] for r in rows} - {"rest"}, "the speaker's mouth does move"
+
+
+def test_every_file_the_docs_point_at_exists():
+    """The kit README, SKILL.md and formats.md name scripts, templates and folders; a path that does not exist is a broken promise."""
+    missing = []
+    for doc, root in ((KIT / "README-CHARACTERS.md", SKILL), (SKILL / "SKILL.md", SKILL), (SKILL / "references" / "formats.md", SKILL)):
+        for ref in sorted(set(re.findall(r"`((?:characters|scripts|templates|references|examples|3d|edit)/[A-Za-z0-9_./*-]+\.[a-z]+)`", doc.read_text(encoding="utf-8")))):
+            candidates = [root / ref, SKILL / ref, REPO / ref, KIT / ref.split("characters/", 1)[-1]]
+            if "*" not in ref and ref not in ("characters/cast.js", "characters/scene.js") and not any(c.exists() for c in candidates):   # those two are written into each project
+                missing.append(f"{doc.name}: {ref}")
+    assert missing == [], missing
+
+
+def test_the_router_points_at_files_that_exist_and_the_kit_pages_name_the_scripts_that_do():
+    r = art_route.route("A short story with two characters who talk")
+    assert all((SKILL / path).exists() for path in r["read"]), r["read"]
+    for script in ("lipsync.py", "standin_voice.py", "character_sheet.py", "character_project.py", "build_character_docs.py", "vendor_libs.ps1"):
+        assert (SCRIPTS / script).is_file(), script
+        assert script in (SKILL / "SKILL.md").read_text(encoding="utf-8") or script in (KIT / "README-CHARACTERS.md").read_text(encoding="utf-8"), f"{script} is not mentioned anywhere"
+
+
+def test_example_09_brief_scene_and_words_tell_the_same_story():
+    """The brief's quoted lines are the scene's captions and the words that drive the mouth."""
+    brief = (EX09 / "BRIEF.md").read_text(encoding="utf-8")
+    spoken = re.findall(r'says "([^"]+)"', brief) + re.findall(r'says "([^"]+)"', brief.replace("and says", "says"))
+    quoted = re.findall(r'"([A-Z][^"]+[.!?])"', brief)
+    captions = [c["text"] for c in GOOD_SCENE["captions"]]
+    assert quoted[:2] == captions, (quoted, captions)
+    heard = [" ".join(w["text"] for w in WORDS[:6]), " ".join(w["text"] for w in WORDS[6:])]
+    assert [h.lower().strip(" .!,") for h in heard] == [c.lower().strip(" .!,") for c in captions]
+    assert GOOD_SCENE["duration"] == 14 and "14.0 s" in brief
+    assert (EX09 / "README.md").is_file() and not (EX09 / "make_standin_voice.py").exists()

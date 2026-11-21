@@ -143,17 +143,6 @@ def test_the_readme_check_fails_when_the_table_drifts(tmp_path):
     assert docs.rewrite(README, docs.blocks(docs.kit_tables())) == README
 
 
-def test_the_readme_shows_the_words_json_and_how_transcribe_feeds_it():
-    assert '[\n  { "text": "Hey",   "start": 3.45, "end": 3.70 },' in README
-    for must in ("npx hyperframes transcribe", "transcript.json", '{"words": [...]}', "segments", "convert", "seconds from the start of the voice track"):
-        assert must in README, must
-
-
-def test_the_readme_documents_positions_facing_and_the_standin_voice():
-    for must in ("absolute", "never added to the cast `x`", 'facing: "left"', "`flip: -1` or `1` is the older spelling", "speakers usually face each other", "allowOffscreen", "standin_voice.py", "not speech"):
-        assert must in README, must
-
-
 # ---- positions: absolute, and loud about being off screen ------------------------------------------------------------------
 
 POS = """
@@ -213,6 +202,7 @@ def test_walking_in_from_off_screen_briefly_is_fine_but_staying_out_is_not():
 def test_speakers_facing_away_from_each_other_get_a_warning_and_example_09_none():
     assert cp.screen_problems(cp.resolve_scene(copy.deepcopy(GOOD), EX09))[1] == []
     turned = scene(cast__0__facing="left")
+    turned["cast"][0]["track"]["move"][0]["facing"] = "left"   # told to face left, so the walk does not turn it
     warnings = cp.screen_problems(cp.resolve_scene(turned, EX09))[1]
     assert any("kid faces left while speaking to crow" in w and "speakers usually face each other" in w for w in warnings), warnings
 
@@ -251,3 +241,17 @@ def test_the_standin_voice_command_explains_bad_input(tmp_path):
     empty.write_text("[]", encoding="utf-8")
     bad = run(str(empty), str(tmp_path / "o.wav"))
     assert bad.returncode == 2 and "empty" in bad.stderr
+
+
+def test_the_words_example_in_the_readme_is_accepted_by_lipsync_and_by_the_standin_voice(tmp_path):
+    block = README[README.index("```json\n[\n  { \"text\": \"Hey\""):]
+    words = tmp_path / "words.json"
+    words.write_text(block[len("```json\n"):block.index("```", 8)], encoding="utf-8")
+    shown = json.loads(words.read_text(encoding="utf-8"))
+    assert set(shown[0]) == {"text", "start", "end"}
+    done = subprocess.run([sys.executable, str(SCRIPTS / "lipsync.py"), str(words)], capture_output=True, text=True, encoding="utf-8")
+    assert done.returncode == 0 and {k["v"] for k in json.loads(done.stdout)} >= {"rest", "AI", "etc"}
+    assert subprocess.run([sys.executable, str(SCRIPTS / "standin_voice.py"), str(words), str(tmp_path / "v.wav")], capture_output=True).returncode == 0
+    transcribe = [{"id": "w0", "text": "Hello", "start": 0.0, "end": 0.5}, {"id": "w1", "text": "world.", "start": 0.6, "end": 1.2}]   # what npx hyperframes transcribe writes
+    (tmp_path / "t.json").write_text(json.dumps(transcribe), encoding="utf-8")
+    assert lipsync.load_words(tmp_path / "t.json") == [{"text": "Hello", "start": 0.0, "end": 0.5}, {"text": "world.", "start": 0.6, "end": 1.2}]

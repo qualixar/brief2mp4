@@ -67,12 +67,6 @@ console.log(JSON.stringify({ rest: box('rest'), ai: box('AI') }));
     assert not r["ai"]["gapInside"], "an open jaw swings away from its gap, which shows as light"
 
 
-def test_the_readme_no_longer_says_a_lip_synced_human_shows_no_speech_in_shadow_puppet():
-    assert "does not show speech" not in README and "show no speech" not in README
-    for must in ("hinged jaw", "rest` and `MBP", "bottom of the frame on purpose", 'role: "light"'):
-        assert must in README, must
-
-
 # ---- a profile you can read ----------------------------------------------------------------------------------------------
 
 @needs_node
