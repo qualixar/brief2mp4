@@ -39,11 +39,11 @@ class FetchError(Exception):
     pass
 
 
-def http_get(url, retries, backoff, timeout=60):
-    """GET a URL and return (body bytes, content type). Retries 429/5xx and network errors."""
+def http_get(url, retries, backoff, timeout=60, agent=None):
+    """GET a URL and return (body bytes, content type). Retries 429/5xx and network errors. `agent` overrides the User-Agent."""
     last = ""
     for attempt in range(retries + 1):
-        req = urllib.request.Request(url, headers={"User-Agent": AGENT, "Accept": "*/*"})
+        req = urllib.request.Request(url, headers={"User-Agent": agent or AGENT, "Accept": "*/*"})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return resp.read(), resp.headers.get("Content-Type", "")
