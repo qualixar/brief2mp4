@@ -50,7 +50,7 @@ A **track** is what one character does. It is a list of keys, or an object with 
 
 ```js
 { keys:   [{ t: 0, pose: "idle" }, { t: 1.2, pose: "wave", ease: "out", mouth: "AI" }],   // which pose, from when
-  move:   [{ t: 0, x: 300, facing: "right" }, { t: 4, x: 900 }],     // where it stands: absolute pixels
+  move:   [{ t: 0, x: 300, facing: "right" }, { t: 4, x: 900, walk: true }],     // where it stands: absolute pixels; walk: true walks there
   layers: [{ cycle: "walk", from: 0, to: 4, steps: 8 }, { cycle: "talk", from: 4, to: 9 }],
   visemes: [{ t: 4.1, v: "AI" }, { t: 4.3, v: "rest" }],            // the lip-sync track (scripts/lipsync.py)
   props: ["prop_kite"], view: "front", fx: { speedLines: [[2, 3]] } }
@@ -58,7 +58,7 @@ A **track** is what one character does. It is a list of keys, or an object with 
 
 Times are seconds. Between two keys the rig eases from one pose to the next; the ease on a key shapes the move **into** that key. Outside the first and last key it holds the nearest pose.
 
-**Where a character stands.** `move` keys hold **absolute** positions in scene pixels: `x` is across the frame from the left edge (the middle of a 1920-wide frame is 960) and `y`, if you give one, is the y of its feet on screen. Between keys the character glides, so a walk is two keys and a `walk` layer. A key that leaves out `x` or `y` keeps the character's home position, the `x` and `y` of its cast entry; with no `move` at all it simply stands at home. `move` positions are never added to the cast `x`.
+**Where a character stands.** `move` keys hold **absolute** positions in scene pixels: `x` is across the frame from the left edge (the middle of a 1920-wide frame is 960) and `y`, if you give one, is the y of its feet on screen. Without a `y` a character stands on the ground top (`ground`), so its feet are never hidden in the ground band; a `y` below the bottom of the frame is an error. Between keys the character glides. To walk, put `"walk": true` on the key the character walks **to**: the walk cycle then plays between the two keys at the speed that matches the distance, so the feet never slide, the glide is steady (the key's `ease` is ignored) and the character turns to face the way it walks unless a key says `facing`. You never need to work out a speed. (A walk that needs more than 12 drawings a second looks like a run; `character_project.py` warns and you give it more time or less distance.) A key that leaves out `x` or `y` keeps the character's home position, the `x` and `y` of its cast entry; with no `move` at all it simply stands at home. `move` positions are never added to the cast `x`.
 
 **Which way it faces.** `facing: "left"` or `"right"` on a move key turns the character from that key on (`flip: -1` or `1` is the older spelling and still works); `facing` on the cast entry sets the way it faces before any key. Characters are drawn facing right. In a conversation, **speakers usually face each other**: the one on the left faces right and the one on the right faces left. A character that answers with its back turned reads as a mistake; `character_project.py` warns when it sees it.
 
@@ -144,7 +144,7 @@ A skin is a style map plus hooks: `shape(ctx)` turns one shape into drawing prim
 |---|---|
 | `line-art` | Strokes only, one weight, the line boils 10 times a second; the ground's colour inside a shape only hides lines behind it |
 | `paper-cutout` | Flat fills, a thin lighter cut edge, paper grain, a tight shadow under each layer, edges that wobble on every held drawing |
-| `shadow-puppet` | A flat black leather profile: one silhouette per part, props and the chef hat included, with at most an eye hole cut out. No brows, mouth, pupils or patterns, and no front view (a `view: "front"` track is drawn in profile and the sheet leaves the front cell out). Visible rods from the torso and hands, a warm backlight on the stage |
+| `shadow-puppet` | A flat black leather profile: one silhouette per part, props and the chef hat included, with a readable edge (nose, lips and chin, the moustache, a flared hem, cuffs, fingers) and at most an eye hole cut out. No brows, painted mouth, pupils or patterns, and no front view (a `view: "front"` track is drawn in profile and the sheet leaves the front cell out). The mouth is a **hinged jaw** cut as its own leather piece: it swings open with the mouth shape (shut for `rest` and `MBP`, widest for `AI` and `O`) and uncovers a gap of light, so lip sync shows in this skin too. Rods run from the torso and hands to the **bottom of the frame on purpose**: that is how a puppet is held. The stage uses the screen's own tones: a glowing backlight, mid-tone hills, a mid-brown ground, black scenery, and set shapes with `role: "light"` (sun, moon, lamp, fire) stay light, so nothing black vanishes into the ground and the sun is not a hole |
 | `cel-shaded` | The anime redesign: parts with an `anime` variant are redrawn (large eyes with two highlights, hair with a shine band, a tick for a nose), hard shadow shapes (`role: "cel"`) in a tinted tone, an ink outline sized to each shape, speed lines on a jump, a run, or `fx.speedLines`. How spiky the hair is comes from the character file: `"spikes": 0.35` (0 calm to 1 spiky, default 0.6) blends the two outlines of any hair shape that has a `calm` set of points |
 | `motion-comic` | Flat colour with a bold ink line, halftone dots for shadow, a panel border and a yellow caption box that carries the spoken line |
 | `flat-explainer` | Clean flat vector: fills only, smooth motion, no outline and no shadow |
@@ -234,7 +234,7 @@ Here is a complete scene with every field. The `//` notes are for reading; real 
     { "fill": "hill2", "pts": [[0, 760], [760, 750], [1560, 745], [1920, 705]] }
   ],
   "set": [                                     // extra shapes: the sun, a rock, a kite. Same records as a character's shapes
-    { "type": "circle", "c": [1560, 250], "r": 90, "fill": "sun", "layer": "back" },        // layer "back" draws behind the hills; "front" (default) on the ground, behind the cast
+    { "type": "circle", "c": [1560, 250], "r": 90, "fill": "sun", "layer": "back", "role": "light" },   // layer "back" draws behind the hills; "front" (default) on the ground, behind the cast. role "light" (sun, moon, lamp, fire) stays light in shadow-puppet
     { "type": "ellipse", "c": [420, 915], "r": [48, 22], "fill": "kite", "rot": 0 },        // r: [rx, ry]; rot in degrees
     { "type": "rect", "x": 100, "y": 880, "w": 60, "h": 40, "r": 6, "fill": "kite" },       // x, y: top-left; r: corner radius
     { "type": "poly", "pts": [[1130, 852], [1172, 892], [1130, 934], [1088, 892]], "smooth": false, "closed": true, "fill": "kite", "role": "base", "shade": true },
@@ -256,7 +256,7 @@ Here is a complete scene with every field. The `//` notes are for reading; real 
         ],
         "move": [                              // absolute pixel positions; a missing x or y keeps the cast x or y
           { "t": 0, "x": -200, "facing": "right" },
-          { "t": 3.0, "x": 560, "ease": "linear" }
+          { "t": 3.0, "x": 560, "walk": true, "ease": "linear" }   // walk: true walks here from the key before, feet planted
         ],
         "layers": [                            // cycles added to the pose between from and to
           { "cycle": "walk", "from": 0, "to": 3, "steps": 8, "fade": 0.1, "amp": 1, "smooth": false },
@@ -277,13 +277,13 @@ Here is a complete scene with every field. The `//` notes are for reading; real 
       "track": [ { "t": 0, "pose": "idle" }, { "t": 5, "pose": "laugh" } ]     // a bare list of keys is a track too
     }
   ],
-  "captions": [                                // on screen from `from` to `to`; motion-comic shows them in its caption box
+  "captions": [                                // on screen from `from` to `to`; at the bottom, or the top when a character stands there; motion-comic shows them in its caption box
     { "from": 3.45, "to": 5.95, "text": "Hey crow, that is my kite!" }
   ]
 }
 ```
 
-Set shapes take the fields of their type: `circle` (`c`, `r`), `ellipse` (`c`, `r` as `[rx, ry]`, `rot`), `rect` (`x`, `y`, `w`, `h`, `r`), `poly` (`pts`, `smooth`, `closed`), `path` (`d`), `capsule` (`a`, `b`, `ra`, `rb`). All of them take `fill` and `stroke` (palette keys or `null`), `sw` (stroke width), `role` (`base`, `detail`, `hole`, `line`), `layer` and `shade` (`false` stops the cel skin's two-tone). A `hole` is drawn in the paper colour.
+Set shapes take the fields of their type: `circle` (`c`, `r`), `ellipse` (`c`, `r` as `[rx, ry]`, `rot`), `rect` (`x`, `y`, `w`, `h`, `r`), `poly` (`pts`, `smooth`, `closed`), `path` (`d`), `capsule` (`a`, `b`, `ra`, `rb`). All of them take `fill` and `stroke` (palette keys or `null`), `sw` (stroke width), `role` (`base`, `detail`, `hole`, `line`, `light`), `layer` and `shade` (`false` stops the cel skin's two-tone). A `hole` is drawn in the paper colour. In the shadow-puppet skin the backdrop uses the skin's own screen tones (the palette colours are ignored there), set shapes are black leather, and `light` ones stay light.
 
 `examples/09-story-characters/` is a working scene: a 14-second story with a walk, a point, two spoken lines, a laugh and a wave, built once and rendered as paper cut-out and as anime.
 
@@ -295,6 +295,46 @@ python3 scripts/character_project.py --stage3d --cast child,crow --seconds 6 --o
 
 `templates/threejs/characters-stage.html` puts each character on its own canvas, uses that canvas as the texture of a plane that faces the camera, and stands the planes in a Three.js set: a ground, four trees, a rock, a hut, a sun and a camera that moves. The frame is deterministic like the 2D stage. Edit the `ACTORS` list for who stands where and what they do.
 
+## Recipes
+
+Each recipe is a track you can paste into a cast entry (they are checked against the scene schema by a test). Positions are absolute pixels; the ground is at `y: 900` and the frame is 1920 wide.
+
+### Recipe: walk in and stop
+
+```json
+{ "keys": [{ "t": 0, "pose": "idle" }, { "t": 3, "pose": "point", "ease": "out" }],
+  "move": [{ "t": 0, "x": -150 }, { "t": 3, "x": 560, "walk": true }] }
+```
+
+It starts off the left edge, walks to x = 560 with its feet planted, faces right because it walks right, and points as it stops. A character may be off screen for up to half a second.
+
+### Recipe: land on a perch
+
+```json
+{ "keys": [{ "t": 0, "pose": "idle" }, { "t": 0.3, "pose": "jump", "ease": "out" }, { "t": 1.1, "pose": "idle", "ease": "in" }],
+  "move": [{ "t": 0, "x": 1300, "y": 900 }, { "t": 0.3, "x": 1300, "y": 900 }, { "t": 1.1, "x": 1380, "y": 700, "ease": "out" }] }
+```
+
+`y` is the y of the feet, so a perch whose top is at y = 700 is where the feet end up. Draw the perch as a `set` shape with its top at 700. The jump pose lifts the body while the move rises; the idle pose at the end is the landing.
+
+### Recipe: jump off and leave
+
+```json
+{ "keys": [{ "t": 0, "pose": "idle" }, { "t": 0.2, "pose": "jump", "ease": "out" }, { "t": 0.9, "pose": "idle", "ease": "in" }],
+  "move": [{ "t": 0, "x": 1380, "y": 700 }, { "t": 0.9, "x": 1450, "y": 900, "ease": "in" }, { "t": 3.4, "x": 2300, "y": 900, "walk": true }] }
+```
+
+It drops to the ground and walks out to the right. A character that stays outside the frame for more than half a second is an error, so end the scene within half a second of the exit, or set `allowOffscreen: true` on the cast entry.
+
+### Recipe: turn to face
+
+```json
+{ "keys": [{ "t": 0, "pose": "idle" }, { "t": 2, "pose": "surprised", "ease": "out" }, { "t": 3, "pose": "idle" }],
+  "move": [{ "t": 0, "facing": "right" }, { "t": 2, "facing": "left" }] }
+```
+
+A key's `facing` holds until the next key, and a key with no `x` or `y` keeps the character where it stands. Turn when the other speaker starts, so the two face each other.
+
 ## Known limits
 
 - The cast is in a side view; a character that turns to face the camera mid-scene uses the front drawing for a close-up only (`view: "front"`), not a continuous turn.
@@ -302,7 +342,7 @@ python3 scripts/character_project.py --stage3d --cast child,crow --seconds 6 --o
 - Lip sync is letter rules, not a speech model: it is right for the mouth and wrong for pronunciation, and Hindi is approximate.
 - The walk and run are side-view cycles; stairs, slopes and turning on the spot are not built in.
 - A crow's beak and a robot's picture mouth open by amount, so some shapes (`rest` and `MBP`) look alike there.
-- Shadow puppets are jointless in the tradition; here they keep the rig's joints. The skin makes the look, not the movement. Their silhouettes show a mouth only where the shape itself moves (the crow's jaw), so a lip-synced human or tomato does not show speech in that skin.
+- Shadow puppets are jointless in the tradition; here they keep the rig's joints. The skin makes the look, not the movement.
 
 ## Bring your own art: image parts
 

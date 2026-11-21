@@ -225,15 +225,15 @@ def test_example_09_scene_resolves_its_lip_sync_from_the_committed_words(monkeyp
     assert (tmp_path / "p" / "hyperframes.json").is_file()
 
 
-def test_example_09_child_walks_without_sliding_feet():
+def test_example_09_child_walks_with_a_walk_key_and_the_feet_are_planted():
     scene = json.loads((EX09 / "scene.json").read_text(encoding="utf-8"))
     kid = scene["cast"][0]
     a, b = kid["track"]["move"]
-    speed = (b["x"] - a["x"]) / (b["t"] - a["t"])
-    code = "const B2M = require(process.argv[1]); const c = require(process.argv[2]); console.log(B2M.strideSpeed(c, 'walk', 8) * " + str(kid["scale"]) + ")"
-    planted = float(subprocess.run([NODE, "-e", code, str(KIT / "index.js"), str(KIT / "cast" / "child.json")], capture_output=True, text=True, encoding="utf-8").stdout)
-    assert abs(speed - planted) / planted < 0.15, f"scene speed {speed:.0f} px/s vs planted-feet speed {planted:.0f}"
-    assert kid["track"]["layers"][0]["steps"] == 8
+    assert b.get("walk") is True and not any(layer["cycle"] == "walk" for layer in kid["track"].get("layers", []))
+    code = "const B2M = require(process.argv[1]); const c = require(process.argv[2]); const s = B2M.walkSteps(c, %d, %s, %s); console.log(JSON.stringify([s, B2M.strideSpeed(c, 'walk', s) * %s]))" % (b["x"] - a["x"], b["t"] - a["t"], kid["scale"], kid["scale"])
+    steps, planted = json.loads(subprocess.run([NODE, "-e", code, str(KIT / "index.js"), str(KIT / "cast" / "child.json")], capture_output=True, text=True, encoding="utf-8").stdout)
+    assert abs(planted - (b["x"] - a["x"]) / (b["t"] - a["t"])) < 0.5, "the walk speed is the planted-feet speed"
+    assert 6 < steps < 9, "about the 8 drawings a second the example used before"
 
 
 def test_example_09_has_a_brief_the_words_and_a_readme():

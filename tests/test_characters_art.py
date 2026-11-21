@@ -276,7 +276,7 @@ for (const name of ['child', 'adult', 'crow', 'tomato']) {
   out[name] = {
     colours: Array.from(fills).length, frontIsProfile: JSON.stringify(front) === JSON.stringify(side),
     features: paths.filter((i) => /^(brow|pupil)/.test(i.part) || (i.part === 'mouth' && i.fill !== undefined && ch.parts.find((p) => p.id === 'mouth').mouth.kind === 'lips')).length,
-    holes: Array.from(new Set(paths.filter((i) => i.fill === '#f4b862').map((i) => i.part))),
+    holes: Array.from(new Set(paths.filter((i) => i.fill === '#f7c470').map((i) => i.part))),
     propItems: paths.filter((i) => props.includes(i.part) && i.fill).map((i) => i.fill),
     hat: paths.filter((i) => name === 'tomato' && i.part === 'head').map((i) => i.fill),
     strokes: paths.filter((i) => i.fill && i.stroke).length,
@@ -286,7 +286,7 @@ console.log(JSON.stringify(out));
 """)
     for name, o in r.items():
         assert o["colours"] <= 2 and o["frontIsProfile"] and o["features"] == 0 and o["strokes"] == 0, name
-        assert set(o["holes"]) <= {"eyeN", "eyeF"}, f"{name}: only an eye hole may be cut out, found {o['holes']}"
+        assert set(o["holes"]) <= {"eyeN", "eyeF", "jawGap"}, f"{name}: only an eye hole and the jaw gap may be cut out, found {o['holes']}"
         assert all(f == "#150b06" for f in o["propItems"]), f"{name}: props are silhouettes too"
     assert set(r["tomato"]["hat"]) == {"#150b06"}, "the chef hat is leather like the rest"
     assert r["child"]["holes"] and r["crow"]["holes"], "the optional eye hole is there"
