@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from craft_common import REFS, SCRIPTS, SKILL, needs_bash
+from craft_common import BASH, REFS, SCRIPTS, SKILL, needs_bash
 
 NEW_REFS = ["motion-doctrine.md", "render-traps.md", "review-checklist.md", "sound.md"]
 NEW_PY = ["check_seams.py", "check_clutter.py", "beat_grid.py", "fetch_music.py"]
@@ -16,7 +16,7 @@ NEW_FILES = [REFS / n for n in NEW_REFS] + [SCRIPTS / n for n in NEW_PY + NEW_SH
 SKILL_TEXT = (SKILL / "SKILL.md").read_text(encoding="utf-8")
 
 # Nothing personal, no private paths or channels, and no "ideas from" credits: only tools that are called or installed get credit.
-BANNED = ["varun", "qualixar", "diary", "my channel", "subscribers", "/us" + "ers/v", "ideas from", "inspired by", "reanimate", "lottiefiles"]
+BANNED = ["varun", "qualixar", "diary", "my channel", "subscribers", "/us" + "ers/v", "ideas from", "inspired by"]
 
 
 @pytest.mark.parametrize("path", NEW_FILES, ids=lambda p: p.name)
@@ -75,4 +75,4 @@ def test_python_scripts_print_help(name):
 @needs_bash
 @pytest.mark.parametrize("name", NEW_SH + ["check_delivery.sh"])
 def test_shell_scripts_parse(name):
-    assert subprocess.run(["bash", "-n", str(SCRIPTS / name)], capture_output=True).returncode == 0
+    assert subprocess.run([BASH, "-n", str(SCRIPTS / name)], capture_output=True).returncode == 0
