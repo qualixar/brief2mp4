@@ -1,8 +1,8 @@
 /* film.js: one paused GSAP timeline for the archive desk look, built from the beats' data- attributes.
  * Rules it keeps: every state is a function of t (no clock, no random); starting states live in CSS; each beat's exit starts
- * after its entrances end; SVG routes are drawn with pixel lengths (getTotalLength), never pathLength; the camera moves at one
+ * after its entrances end; SVG routes are drawn with pixel lengths (getTotalLength); the camera moves at one
  * constant speed in every beat, so a hard cut joins two moves of the same velocity.
- * Beat attributes: data-start, data-end (seconds), data-kind (archive | map | counter | title), data-fx, data-fy (focus 0-1),
+ * Beat attributes: data-t0, data-t1 (seconds; not HyperFrames' own data-start, which would let its runtime hide the beat), data-kind (archive | map | counter | title), data-fx, data-fy (focus 0-1),
  * data-s0 (start scale), data-rate (scale per second), data-vx, data-vy (px per second), data-dip-in, data-dip-out (seconds),
  * data-count-from, data-count-to, data-count-at, data-count-end (counter, seconds from the beat start). */
 (function () {
@@ -83,30 +83,26 @@
   function texts(beat, t0, dur) {
     var stamp = beat.querySelector(".stamp"), cap = beat.querySelector(".caption"), credit = beat.querySelector(".credit");
     if (stamp) tl.fromTo(splitChars(stamp), { opacity: 0 }, { opacity: 1, duration: 0.04, stagger: 0.035, ease: "none", immediateRender: false }, t0 + 0.15);
-    if (cap) tl.fromTo(splitWords(cap), { yPercent: 115 }, { yPercent: 0, duration: 0.55, stagger: 0.05, ease: "power3.out", immediateRender: false }, t0 + 0.35);
+    if (cap) tl.fromTo(splitWords(cap), { yPercent: 115, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.55, stagger: 0.05, ease: "power3.out", immediateRender: false }, t0 + 0.35);
     var led = beat.querySelector(".ledger");
     if (led) tl.fromTo(led, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", immediateRender: false }, t0 + 0.3);
     if (credit) tl.fromTo(credit, { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.out", immediateRender: false }, t0 + 0.9);
   }
 
   Array.prototype.forEach.call(document.querySelectorAll(".beat"), function (beat, i, all) {
-    var t0 = num(beat, "start", 0), t1 = num(beat, "end", 0), dur = t1 - t0;
+    var t0 = num(beat, "t0", 0), t1 = num(beat, "t1", 0), dur = t1 - t0;
     var dipIn = num(beat, "dip-in", 0), dipOut = num(beat, "dip-out", 0);
     camera(beat, t0, dur); texts(beat, t0, dur); counter(beat, t0);
     if (beat.querySelector(".mm-route, .mm-dot, .mm-hl")) mapMotion(beat, t0, dur);
-    if (i > 0) {
-      if (dipIn) tl.fromTo(beat, { autoAlpha: 0 }, { autoAlpha: 1, duration: dipIn, ease: "power1.out", immediateRender: false }, t0);
-      else tl.set(beat, { autoAlpha: 1 }, t0);
-    }
-    if (i < all.length - 1) {
-      if (dipOut) tl.to(beat, { autoAlpha: 0, duration: dipOut, ease: "power1.in" }, t1 - dipOut);
-      else tl.set(beat, { autoAlpha: 0 }, t1);
-    }
+    if (dipIn) tl.fromTo(beat, { autoAlpha: 0 }, { autoAlpha: 1, duration: dipIn, ease: "power1.out", immediateRender: false }, t0);   /* the first beat of an act has no .first class when it dips in */
+    else if (i > 0) tl.set(beat, { autoAlpha: 1 }, t0);
+    if (dipOut) tl.to(beat, { autoAlpha: 0, duration: dipOut, ease: "power1.in" }, t1 - dipOut);   /* also the last beat of an act: the next act fades in from the same dark */
+    else if (i < all.length - 1) tl.set(beat, { autoAlpha: 0 }, t1);
   });
 
   Array.prototype.forEach.call(document.querySelectorAll(".sub"), function (sub) {
-    tl.set(sub, { autoAlpha: 1 }, num(sub, "start", 0));
-    tl.set(sub, { autoAlpha: 0 }, num(sub, "end", 0));
+    tl.set(sub, { autoAlpha: 1 }, num(sub, "t0", 0));
+    tl.set(sub, { autoAlpha: 0 }, num(sub, "t1", 0));
   });
 
   window.__timelines = window.__timelines || {};
