@@ -9,7 +9,7 @@
 #   bash install.sh --with-3d     # also install the optional 3D pack (core components)
 #   bash install.sh --with-3d=core,cad   # pick 3D components: core, cad, blender
 #   bash install.sh --with-edit          # also the optional edit pack (FilmCraft + SoundCraft CLIs)
-#   bash install.sh --with-edit=film,sound,effect,photo,vector   # pick editing apps
+#   bash install.sh --with-edit=film,sound,effect,photo,vector,light   # pick editing apps
 #   Windows PowerShell: use install.ps1 instead.
 #
 # Claude Code reads skills from ~/.claude/skills (or $CLAUDE_CONFIG_DIR/skills).

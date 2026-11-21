@@ -3,6 +3,7 @@
 //   node tests/art_forms/check_looks.mjs                 check all, print PASS or FAIL per look
 //   node tests/art_forms/check_looks.mjs --sheet out.jpg  also write a contact sheet (one frame per look)
 //   node tests/art_forms/check_looks.mjs --frames dir      also write one PNG per look
+//   node tests/art_forms/check_looks.mjs --sheet out.jpg --cols 10 --tile 240   a wider sheet: 10 columns of 240 px tiles
 //   node tests/art_forms/check_looks.mjs risograph felt   only these
 // For each look, in headless Chrome: draw t = 0.4, 1.5 and 2.3 s; the three pictures must differ (it animates) and
 // must not be blank; then draw 1.5 s again, which must match the first 1.5 s pixel for pixel (it is a pure function
@@ -21,7 +22,8 @@ const DEPS = process.env.BRIEF2MP4_DEPS || path.join(os.homedir(), '.cache', 'br
 const PW = '1.65.1';
 const args = process.argv.slice(2), si = args.indexOf('--sheet'), sheet = si >= 0 ? args[si + 1] : null;
 const fi = args.indexOf('--frames'), framesDir = fi >= 0 ? args[fi + 1] : null;   // --frames <dir>: one PNG per look, at 2.2 s
-const only = args.filter((a, i) => !a.startsWith('--') && !(si >= 0 && i === si + 1) && !(fi >= 0 && i === fi + 1));
+const ci = args.indexOf('--cols'), ti = args.indexOf('--tile'), SHEET_COLS = ci >= 0 ? Number(args[ci + 1]) : 6, SHEET_TILE = ti >= 0 ? Number(args[ti + 1]) : 320;
+const only = args.filter((a, i) => !a.startsWith('--') && !(si >= 0 && i === si + 1) && !(fi >= 0 && i === fi + 1) && !(ci >= 0 && i === ci + 1) && !(ti >= 0 && i === ti + 1));
 if (framesDir) fs.mkdirSync(framesDir, { recursive: true });
 
 async function playwright() {
@@ -80,7 +82,7 @@ for (const id of ids) {
   await page.close();
 }
 if (sheet && thumbs.length) {
-  const cols = 6, tw = 320, th = 180, lab = 26, gap = 10, rows = Math.ceil(thumbs.length / cols);
+  const cols = SHEET_COLS, tw = SHEET_TILE, th = Math.round(SHEET_TILE * 9 / 16), lab = 26, gap = 10, rows = Math.ceil(thumbs.length / cols);
   const page = await ctx.newPage();
   const jpg = await page.evaluate(async ({ thumbs, cols, tw, th, lab, gap, rows }) => {
     const c = new OffscreenCanvas(cols * (tw + gap) + gap, rows * (th + lab + gap) + gap), g = c.getContext('2d'); g.fillStyle = '#16130f'; g.fillRect(0, 0, c.width, c.height);

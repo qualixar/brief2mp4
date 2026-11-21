@@ -1,4 +1,4 @@
-# Art forms: 58 looks for animated video, and how to build each
+# Art forms: 82 looks for animated video, and how to build each
 
 Read this when a brief names a look ("claymation", "paper cut-out", "anime", "like a blueprint") or describes a feeling that a look would carry. It is the index. Each art form has its own page in `references/art-forms/` with its visual rules, timing, build recipe, assets, sound, pitfalls, sources and a tested demo. `scripts/art_route.py BRIEF.md` proposes one from a brief and says why.
 
@@ -68,6 +68,11 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [Voxel](art-forms/voxel.md) | Everything built from cubes of one size on a grid, like a three-dimensional pixel picture. | steps 12 times a second | Three.js inside HyperFrames |
 | [Pixel art](art-forms/pixel-art.md) | A tiny picture placed pixel by pixel and scaled up with hard edges: a few colours, no blur, sprites that step. | steps 8 times a second | HyperFrames (canvas) |
 | [3D product render](art-forms/product-render.md) | A studio shot of an object: a seamless backdrop, soft key, fill and rim lights, controlled reflections, a slow turn. | smooth, full frame rate | Three.js, the 3D pack, or Blender |
+| [Stylised 3D cartoon](art-forms/stylised-3d.md) | A soft, rounded 3D cartoon character or prop with a big readable face: smooth forms, a soft key light, a cool rim light and warm light that seems to pass through the skin. | smooth, full frame rate | Three.js inside HyperFrames, or Blender |
+| [Toon 3D (cel-shaded, comic-book)](art-forms/toon-3d.md) | 3D forms cut into two or three flat shading bands, with a thick ink outline on every silhouette and a printed, painterly comic-book feel. | smooth, full frame rate | Three.js inside HyperFrames, or Blender (Freestyle) |
+| [Point cloud and lidar scan](art-forms/point-cloud.md) | An object or scene made of thousands of glowing points on black, in blue and gold, turning slowly, with points that fade and shrink as they recede. | smooth, full frame rate | Three.js inside HyperFrames |
+| [Tilt-shift miniature diorama](art-forms/diorama.md) | A tiny town seen from a high camera: saturated toy colours, little cars looping round the roads, and a blur that grows toward the top and bottom of the frame, so that it looks like a model. | smooth, full frame rate | Three.js inside HyperFrames, or Blender |
+| [Parallax 2.5D](art-forms/parallax-2-5d.md) | Four to six flat painted layers moving at different speeds as the camera pans: a sky, far mountains, hills, a row of trees, a field and grass in front, so that a flat scene feels deep. | smooth, full frame rate | HyperFrames (canvas or Three.js) |
 
 ## Type, data and retro
 
@@ -79,6 +84,9 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [VHS and glitch](art-forms/vhs-glitch.md) | The damage of old tape and broken data: colour that bleeds sideways, scan lines, a band of noise at the bottom, sudden torn slices. | steps 30 times a second | HyperFrames (canvas) or Three.js post-processing |
 | [Blueprint and technical drawing](art-forms/blueprint.md) | White lines on blue: a grid, an object drawn in outline, centre lines, dimensions and a title block. | smooth, full frame rate | HyperFrames (SVG, canvas) |
 | [Neon sign](art-forms/neon-sign.md) | Glass tubes bent into letters and lit: a bright core, a coloured glow, a dark wall, tubes that light one by one and sometimes flicker. | steps 24 times a second | HyperFrames (canvas, SVG) |
+| [Maths diagram](art-forms/math-diagram.md) | A chalk-on-navy maths explainer: an equation builds term by term, each term in its own colour with its own curve on the plot, then the sum curve draws on and a tangent line slides along it with its slope read out. | smooth, full frame rate | HyperFrames (canvas), or Manim for real maths |
+| [Sticker explainer](art-forms/sticker-explainer.md) | Die-cut stickers with a thick white border and a drop shadow pop onto a desk with a bounce: icons and bold word stickers, each tilted a little and swaying. | smooth, full frame rate | HyperFrames (canvas or SVG) |
+| [Memphis design](art-forms/memphis.md) | Scattered, playful confetti in the manner of 1980s Memphis design: squiggles and zigzags, triangles, circles and half-circles in red, yellow, blue and pink, black-and-white checks, stripes and dots. | steps 12 times a second | HyperFrames (canvas or SVG) |
 
 ## Folk and print traditions
 
@@ -94,6 +102,32 @@ A `setInterval` that re-rolls a filter, the usual web recipe for line boil, brea
 | [Art deco](art-forms/art-deco.md) | Gold lines, sunbursts and stepped, symmetric geometry on a deep ground: fans and arcs, a tower in steps, zigzag borders and small stars, in gold on navy and burgundy. | smooth, full frame rate | HyperFrames (canvas or SVG) |
 | [Stained glass](art-forms/stained-glass.md) | Coloured panes held by thick dark lead lines in an arched window: a rose at the top, a diamond lattice below, and light glowing through each pane. | smooth, full frame rate | HyperFrames (canvas) |
 | [Ukiyo-e woodblock](art-forms/ukiyo-e.md) | A Japanese woodblock print: flat areas of colour, fine ink outlines, a great curling wave of deep blue with claw-like fingers of foam, a pale banded sky, a small distant mountain and a red seal. | steps 8 times a second | HyperFrames (canvas or SVG) |
+
+## Screens and cinema
+
+| Art form | What it is | Cadence | Usual tool |
+|---|---|---|---|
+| [Synthwave and outrun](art-forms/synthwave.md) | A neon night in magenta and cyan on deep purple: a striped sun sinking behind wireframe mountains, and a glowing grid floor that streams toward the horizon. | smooth, full frame rate | HyperFrames (canvas or Three.js) |
+| [Cyberpunk night city](art-forms/cyberpunk.md) | A rainy night street in purple and amber: towers hung with flickering neon signs, a wet road that mirrors them, rain and ripples, and a lone figure under an umbrella. | steps 12 times a second | HyperFrames (canvas or Three.js) |
+| [ASCII art](art-forms/ascii.md) | A scene drawn only from monospaced text characters chosen by brightness: a sunrise over a sea and a headland, with waves, glitter and birds that move. | steps 12 times a second | HyperFrames (canvas) |
+| [1-bit dither](art-forms/dither-1bit.md) | Two colours only, ink and paper: gradients and shaded forms turned into patterns of pure dots, in a window with a striped title bar, like an early desktop computer. | steps 12 times a second | HyperFrames (canvas), or a Three.js post-process |
+| [CRT terminal](art-forms/crt-terminal.md) | An amber phosphor terminal: text typed one character at a time, a block cursor, scanlines, glow, a slow rolling bar, and a screen that bulges at the middle. | steps 24 times a second | HyperFrames (canvas) |
+| [Hologram HUD](art-forms/hologram-hud.md) | A cyan and blue wireframe turning in the dark, with readouts, bars, a dial, corner brackets, a scan band and a flicker with an occasional slipped strip. | steps 24 times a second | HyperFrames (canvas or Three.js) |
+| [Thermal camera](art-forms/thermal.md) | A false-colour heat map through black, purple, red, orange, yellow and white: a hot head and hands, a warm mug, a cold window, a crosshair, a temperature readout and a colour scale. | steps 12 times a second | HyperFrames (canvas) |
+| [Silent film](art-forms/silent-film.md) | Black and white at about 18 frames a second: grain, scratches, a wandering gate, flicker, an iris that opens and closes on a street scene, and an intertitle card with a framed title. | steps 18 times a second | HyperFrames (canvas), or ffmpeg filters on real footage |
+| [Newsreel](art-forms/newsreel.md) | Sepia footage of the 1940s: a train racing past telegraph poles, a slanted headline banner, and a damaged print with scratches, hairs, dust, a burn flash and a jolt of the frame. | steps 18 times a second | HyperFrames (canvas), or ffmpeg filters on real footage |
+| [Film noir](art-forms/film-noir.md) | High-contrast black and white: a wall striped by light through venetian blinds, a man in a fedora and trench coat under a street lamp, rain slanting through the lamp's cone, and a wet pavement. | smooth, full frame rate | HyperFrames (canvas), or Blender for a lit 3D scene |
+| [Archive documentary: pan and zoom over stills](art-forms/archive-documentary.md) | A slow pan and zoom over still photographs laid on a desk, each with a white border and a shadow, with a lower-third caption and date that slide in for each picture, over film grain. | smooth, full frame rate | HyperFrames (canvas or CSS transforms) |
+
+## Abstract and generative
+
+| Art form | What it is | Cadence | Usual tool |
+|---|---|---|---|
+| [Particles](art-forms/particles.md) | Thousands of small glowing particles drift in from all over the frame and settle into a word, hold it, then burst apart and reform. | smooth, full frame rate | HyperFrames (canvas) or Three.js |
+| [Liquid metaball (blobs that merge)](art-forms/liquid-metaball.md) | Glossy liquid blobs that drift, merge and split: a smooth colour gradient from warm to violet, a bright rim, and a soft highlight on each blob. | smooth, full frame rate | HyperFrames (canvas or WebGL shader) |
+| [Flow-field generative](art-forms/flow-field.md) | Thousands of short strokes follow a drifting noise field and gather into an orb of swirling lines, in warm and violet inks on a dark ground. | smooth, full frame rate | HyperFrames (canvas) |
+| [Psychedelic](art-forms/psychedelic.md) | A 1960s concert-poster look: concentric rings warped by slow waves in a cycling run of warm, saturated colours, with black ink lines over rays that turn behind them. | smooth, full frame rate | HyperFrames (canvas or WebGL shader) |
+| [Bauhaus geometric](art-forms/bauhaus.md) | A poster of primary-colour circles, squares and triangles with black bars on a grid of cream and black lines, where every piece jumps from cell to cell in clean steps. | steps 12 times a second | HyperFrames (canvas or SVG) |
 
 ## Choosing one from a brief
 
@@ -142,5 +176,5 @@ Each was cloned outside this repository and its licence file was read first. No 
 
 ## The demos
 
-The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (58 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
+The files listed in `art-forms/looks-files.json` (`looks.js` and one file per later batch) hold one small demo per look (82 in all), and `art-forms/gallery.html` plays them. `tests/art_forms/check_looks.mjs` checks every one in a real browser.
 These pages are generated from `references/art-forms.json` and those demo files by `scripts/build_art_forms.py`.

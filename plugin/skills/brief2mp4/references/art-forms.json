@@ -6,7 +6,9 @@
   "drawn": "Drawn and painted",
   "geometry": "Geometry, pixels and 3D",
   "type": "Type, data and retro",
-  "folk": "Folk and print traditions"
+  "folk": "Folk and print traditions",
+  "screen": "Screens and cinema",
+  "abstract": "Abstract and generative"
  },
  "forms": [
   {
@@ -2970,6 +2972,1252 @@
     "string-puppet"
    ],
    "thin": "Wikipedia describes the Kathputli as worked by a single string over the puppeteer; the demo uses a Western-style control bar, with strings to the head, hands and feet, so that the strings are easy to read. Check a real rig before a film shows one.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "stylised-3d",
+   "name": "Stylised 3D cartoon",
+   "aliases": [
+    "soft 3d cartoon",
+    "3d cartoon character",
+    "rounded 3d character"
+   ],
+   "family": "geometry",
+   "what": "A soft, rounded 3D cartoon character or prop with a big readable face: smooth forms, a soft key light, a cool rim light and warm light that seems to pass through the skin. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Three-point lighting is a standard method in film, photography and 3D graphics: the key light is the principal illuminator, usually 30 to 45 degrees to one side of the camera and elevated about as much. Subsurface scattering is light travelling into a translucent surface and out again at another point; without it a material can look like plastic or metal.",
+   "rules": [
+    "Smooth, rounded forms with no hard edges: spheres, capsules and soft boxes",
+    "A big, readable face: large eyes with a gradient and two highlights, clear brows, a wide mouth",
+    "A soft key light from the upper left, a cool rim light on the far edge, and a soft specular highlight",
+    "A warm glow at the shadow edge, as light bleeds through the skin",
+    "A shallow-depth background of blurred lights and a soft contact shadow"
+   ],
+   "timing": "Smooth, full frame rate: a slow breath, a bounce, a blink every three seconds and a wave. The squash and stretch are small and soft.",
+   "fps": null,
+   "build": [
+    "Three.js: `MeshPhysicalMaterial` with `sheen`, a low `clearcoat`, and `transmission` or a warm emissive rim for the subsurface look",
+    "Lights: a `DirectionalLight` key at about 40 degrees, a cool back `DirectionalLight` for the rim, a `HemisphereLight` fill, and `ACESFilmicToneMapping`",
+    "Add `OutputPass` and a gentle `UnrealBloomPass`; soft `PCFSoftShadowMap` shadows",
+    "Add a shallow depth of field with `BokehPass`",
+    "In the 2D demo: `ball()` builds each form from an offset radial gradient, a warm inner gradient, a rim arc and a soft highlight"
+   ],
+   "assets": "All in code here. For a real character, model it in Blender and export a glTF.",
+   "sound": "Soft foley, a light orchestral bed and a spring on each bounce. Practice note.",
+   "pitfalls": [
+    "Hard black outlines: they turn it into toon 3D",
+    "Plastic highlights and no warm bleed at the shadow edge",
+    "A small face: the face must be readable at a glance",
+    "Copying a recognisable studio character"
+   ],
+   "route": "Three.js inside HyperFrames, or Blender",
+   "blender": "",
+   "keywords": [
+    "pixar",
+    "stylised 3d",
+    "3d cartoon",
+    "soft 3d",
+    "3d character"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Subsurface_scattering",
+    "https://en.wikipedia.org/wiki/Three-point_lighting"
+   ],
+   "looks": [
+    "stylised-3d"
+   ],
+   "thin": "The two sources cover the lighting and shading ideas; the face and softness rules are a practice summary.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "toon-3d",
+   "name": "Toon 3D (cel-shaded, comic-book)",
+   "aliases": [
+    "cel shaded 3d",
+    "comic book 3d",
+    "toon shaded 3d",
+    "painterly 3d"
+   ],
+   "family": "geometry",
+   "what": "3D forms cut into two or three flat shading bands, with a thick ink outline on every silhouette and a printed, painterly comic-book feel. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Cel shading, or toon shading, is a type of non-photorealistic rendering that makes 3D graphics look flat and hand-drawn: conventional smooth lighting values are quantised to a few discrete shades, so that shadows and highlights appear as blocks of colour. Black ink outlines can be made by first rendering a slightly larger black copy of the object with its back faces drawn.",
+   "rules": [
+    "Two or three flat bands of colour: a light, a base and a shadow, with hard edges",
+    "A thick ink outline round the silhouette",
+    "The shadow band tinted toward purple or blue, not just darker",
+    "Print texture: halftone dots, hatching lines and paper grain",
+    "A hard highlight spot and a hard-edged ground shadow"
+   ],
+   "timing": "Smooth rotation and bounce at the full frame rate; or stepped on twos for a hand-drawn feel.",
+   "fps": null,
+   "build": [
+    "Three.js: `MeshToonMaterial` with a `gradientMap` of 3 texels (`DataTexture` with `NearestFilter`), so that lighting steps in three bands",
+    "Outlines: `OutlineEffect` from the examples, or draw a back-face copy scaled by 1.03 in black",
+    "Add a `HalftonePass`, or a halftone texture multiplied into the shadow band",
+    "Tint the shadow band in the gradient map toward purple",
+    "In the 2D demo: `turn()` rotates vertices, face normals pick one of three bands (`band3()`), and a thick ink stroke outlines each face"
+   ],
+   "assets": "All in code here.",
+   "sound": "Brush-stroke whooshes and a drum loop. Practice note.",
+   "pitfalls": [
+    "Smooth gradients inside the bands",
+    "Thin or uneven outlines",
+    "More than three bands: it starts to look like normal shading"
+   ],
+   "route": "Three.js inside HyperFrames, or Blender (Freestyle)",
+   "blender": "",
+   "keywords": [
+    "toon 3d",
+    "cel shaded 3d",
+    "cel shaded",
+    "3d like a comic",
+    "comic book 3d",
+    "painterly 3d"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Cel_shading"
+   ],
+   "looks": [
+    "toon-3d"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "point-cloud",
+   "name": "Point cloud and lidar scan",
+   "aliases": [
+    "lidar scan",
+    "point cloud scan",
+    "3d scan"
+   ],
+   "family": "geometry",
+   "what": "An object or scene made of thousands of glowing points on black, in blue and gold, turning slowly, with points that fade and shrink as they recede. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "A point cloud is a discrete set of data points in space; each has X, Y and Z coordinates and may carry colour and other data. Point clouds are produced by 3D scanners or photogrammetry software. Lidar measures distance by timing the return of laser light, and is used to make high-resolution maps.",
+   "rules": [
+    "Only points, no surfaces or lines",
+    "Glowing points on black, in two hues: blue for the ground, gold for the object",
+    "Depth: far points are smaller and dimmer",
+    "Scan structure: rings or lines of points, and a pulse of brighter points sweeping over them",
+    "A slow turn, a high camera, and a faint vignette"
+   ],
+   "timing": "A slow turn at the full frame rate; the cloud builds up over about 1.6 seconds and the scan pulse crosses the ground every 3 to 4 seconds.",
+   "fps": null,
+   "build": [
+    "Three.js: `Points` with a `BufferGeometry`, `PointsMaterial` (`sizeAttenuation: true`, `vertexColors`, `AdditiveBlending`, `depthWrite: false`)",
+    "Size by depth in a custom shader: `gl_PointSize = base / -mvPosition.z`",
+    "Real data: load a PLY or PCD scan with the examples loaders",
+    "Scan pulse: a uniform radius that brightens the points near it",
+    "In the 2D demo: project each point with a turn, a tilt and a perspective factor, and draw it as a tiny square with `lighter` compositing (`plot()`)"
+   ],
+   "assets": "All in code here. Real scans come from a lidar device or a photogrammetry run.",
+   "sound": "A low synth pulse and a soft ping as the scan passes. Practice note.",
+   "pitfalls": [
+    "Joining the points with lines or surfaces",
+    "Opaque, same-sized points: no depth",
+    "Too few points: it reads as sparkle, not as an object"
+   ],
+   "route": "Three.js inside HyperFrames",
+   "blender": "",
+   "keywords": [
+    "point cloud",
+    "lidar",
+    "scan",
+    "photogrammetry",
+    "glowing points"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Point_cloud",
+    "https://en.wikipedia.org/wiki/Lidar"
+   ],
+   "looks": [
+    "point-cloud"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "diorama",
+   "name": "Tilt-shift miniature diorama",
+   "aliases": [
+    "tilt-shift",
+    "miniature town",
+    "miniature diorama",
+    "toy town"
+   ],
+   "family": "geometry",
+   "what": "A tiny town seen from a high camera: saturated toy colours, little cars looping round the roads, and a blur that grows toward the top and bottom of the frame, so that it looks like a model. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Tilt-shift photography uses camera movements that change the orientation or position of the lens relative to the sensor; the term is also used when a shallow depth of field is simulated in post-processing. A diorama is a replica of a scene, typically a three-dimensional model, miniature or full-size.",
+   "rules": [
+    "A high camera looking down at an angle",
+    "A sharp band across the middle, with blur growing toward the top and bottom edges",
+    "Saturated, toy-like colours and simple blocky buildings",
+    "Tiny moving things: cars, boats or people",
+    "Soft, slightly raised contrast and a light vignette"
+   ],
+   "timing": "Smooth: cars loop round the roads at different speeds, and the camera is still.",
+   "fps": null,
+   "build": [
+    "Three.js: an `OrthographicCamera` or a narrow-FOV `PerspectiveCamera` placed high, and `InstancedMesh` buildings",
+    "Tilt-shift: render to a target and blur it with a vertical mask, as in the `HorizontalTiltShiftShader` and `VerticalTiltShiftShader` examples, or use `BokehPass` with a focal band",
+    "Raise saturation and add a soft vignette with an `OutputPass` and a colour-grade pass",
+    "In the 2D demo: draw the town to an off-screen canvas, then draw it again through several clipped bands with increasing `blur()` (`diorama`)"
+   ],
+   "assets": "All in code here.",
+   "sound": "A light ukulele bed and distant traffic noise. Practice note.",
+   "pitfalls": [
+    "Blur across the whole frame, which reads as out of focus",
+    "Muted, realistic colours",
+    "A low camera: the miniature look needs a high angle"
+   ],
+   "route": "Three.js inside HyperFrames, or Blender",
+   "blender": "",
+   "keywords": [
+    "tilt shift",
+    "miniature",
+    "toy town",
+    "diorama",
+    "model city"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tilt%E2%80%93shift_photography",
+    "https://en.wikipedia.org/wiki/Diorama"
+   ],
+   "looks": [
+    "diorama"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "parallax-2-5d",
+   "name": "Parallax 2.5D",
+   "aliases": [
+    "2.5d parallax",
+    "parallax scrolling",
+    "multiplane"
+   ],
+   "family": "geometry",
+   "what": "Four to six flat painted layers moving at different speeds as the camera pans: a sky, far mountains, hills, a row of trees, a field and grass in front, so that a flat scene feels deep. The demo is drawn in 2D, so it renders with no WebGL; the Three.js recipe below is how to build the real thing.",
+   "origin": "Parallax scrolling is a technique where background images move past the camera more slowly than foreground images, creating an illusion of depth in a 2D scene. It grew out of the multiplane camera used in traditional animation since the 1930s, which moved layers of artwork at different speeds and distances.",
+   "rules": [
+    "Layers, each one flat: sky, far mountains, hills, trees, field, foreground",
+    "Each layer moves at its own speed: the nearer, the faster",
+    "Distant layers are hazier and lighter; near layers darker and more saturated",
+    "Layers repeat seamlessly as the camera pans",
+    "A fixed or very slow sky and sun"
+   ],
+   "timing": "A steady pan to the right at about 90 px a second; speeds from 0.02 for the sun to 1.8 for the grass blades. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Three.js: flat `PlaneGeometry` layers with textured `MeshBasicMaterial` at different `z` depths and a `PerspectiveCamera` moving along x, or the same layers with an orthographic camera scaling each layer's x motion",
+    "In the 2D demo: each layer is drawn in screen columns offset by `camera * speed`, wrapping with `Math.floor(offset / width)`, and ridges come from value noise of world x (`ridge()`)",
+    "Add atmospheric haze by mixing far layers toward the sky colour",
+    "Add a slight vertical bob to the camera"
+   ],
+   "assets": "All in code here. For real layers, paint each on a transparent PNG.",
+   "sound": "Wind, birdsong, a gentle acoustic bed. Practice note.",
+   "pitfalls": [
+    "All layers moving at the same speed",
+    "Visible seams where a layer repeats",
+    "Detail in the far layers that competes with the foreground"
+   ],
+   "route": "HyperFrames (canvas or Three.js)",
+   "blender": "",
+   "keywords": [
+    "parallax",
+    "parallax scrolling",
+    "multiplane",
+    "2.5d",
+    "layered pan"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Parallax_scrolling",
+    "https://en.wikipedia.org/wiki/Multiplane_camera"
+   ],
+   "looks": [
+    "parallax-2-5d"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "synthwave",
+   "name": "Synthwave and outrun",
+   "aliases": [
+    "outrun",
+    "retrowave",
+    "synthwave"
+   ],
+   "family": "screen",
+   "what": "A neon night in magenta and cyan on deep purple: a striped sun sinking behind wireframe mountains, and a glowing grid floor that streams toward the horizon.",
+   "origin": "Synthwave, also called retrowave or futuresynth, is an electronic music microgenre based mainly on the music of action, science-fiction and horror film soundtracks of the 1970s and 1980s, and drawing on the decade's art and video games; it developed in the mid-to-late 2000s.",
+   "rules": [
+    "A deep purple sky graded to hot pink at the horizon",
+    "A big sun with horizontal slits, in yellow to orange to magenta",
+    "A neon grid floor: lines that converge to a vanishing point and rows that bunch toward the horizon",
+    "Wireframe mountains outlined in cyan",
+    "Glow on every line, a bright horizon line, and a field of stars"
+   ],
+   "timing": "The grid rows stream toward the camera continuously and the sun's slits creep down; smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Floor rows: `y = horizon + (H - horizon) * ((k + phase) / n) ** 2.3`, with `phase` from time so the rows flow; columns are straight lines from the vanishing point",
+    "Glow: stroke twice with `shadowBlur`, a wide coloured pass and a thin white core (`neon()` in `looks-screen.js`)",
+    "Sun: a clipped disc with a vertical gradient and bars of the sky colour whose thickness grows toward the bottom",
+    "Use magenta and cyan only for lines: no mint"
+   ],
+   "assets": "All in code.",
+   "sound": "A pulsing analogue synth bass, gated reverb drums and an arpeggio. Practice note.",
+   "pitfalls": [
+    "Mint or teal in place of cyan",
+    "A flat, unlit grid with no glow",
+    "Rows that do not bunch toward the horizon"
+   ],
+   "route": "HyperFrames (canvas or Three.js)",
+   "blender": "",
+   "keywords": [
+    "synthwave",
+    "outrun",
+    "retrowave",
+    "neon grid",
+    "sunset grid"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Synthwave"
+   ],
+   "looks": [
+    "synthwave"
+   ],
+   "thin": "The source describes the music genre; the neon grid and striped sun are the visual conventions that go with it, described here as practice.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "cyberpunk",
+   "name": "Cyberpunk night city",
+   "aliases": [
+    "cyberpunk",
+    "neon noir city"
+   ],
+   "family": "screen",
+   "what": "A rainy night street in purple and amber: towers hung with flickering neon signs, a wet road that mirrors them, rain and ripples, and a lone figure under an umbrella.",
+   "origin": "Cyberpunk is a subgenre of science fiction set in a dystopian future, characterised by a focus on \"lowlife and high tech\". William Gibson's 1984 novel Neuromancer helped solidify the genre, and the 1982 film Blade Runner is among its early films.",
+   "rules": [
+    "Night, rain and haze, in purple with amber windows and neon accents",
+    "Neon signs on towers: bars, arrows and rings in magenta, amber and violet, with glow",
+    "A wet road that reflects the lights, softened by a blur",
+    "Rain streaks and ripples on the ground",
+    "Signs that flicker now and then, keyed to the frame number"
+   ],
+   "timing": "Drawn on twos, 12 changes a second: rain falls, signs flicker and ripples spread.",
+   "fps": 12,
+   "build": [
+    "Draw the city to an off-screen canvas, then draw it again flipped below the horizon with `globalAlpha` 0.4 and `blur()` for the reflection",
+    "Signs: a stroked shape with `shadowBlur`, hidden on a few frames from a modulo of `frameOf(t, 12)`",
+    "Rain: slanted short lines with seeded positions and speeds; ripples: ellipses that grow and fade",
+    "Add a haze gradient near the horizon and a vignette"
+   ],
+   "assets": "All in code.",
+   "sound": "A low synth drone, rain, distant traffic and a hum from the signs. Practice note.",
+   "pitfalls": [
+    "Daylight or flat lighting",
+    "A dry road with no reflection",
+    "Teal and orange only: this skill leaves teal out; keep to purple, amber and magenta"
+   ],
+   "route": "HyperFrames (canvas or Three.js)",
+   "blender": "",
+   "keywords": [
+    "cyberpunk",
+    "rainy neon street",
+    "night city",
+    "blade runner",
+    "dystopian city"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Cyberpunk"
+   ],
+   "looks": [
+    "cyberpunk"
+   ],
+   "thin": "Wikipedia describes the genre in fiction; the look rules (rain, wet reflections, signs) are a practice summary of how it is usually pictured.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "ascii",
+   "name": "ASCII art",
+   "aliases": [
+    "ascii",
+    "text art"
+   ],
+   "family": "screen",
+   "what": "A scene drawn only from monospaced text characters chosen by brightness: a sunrise over a sea and a headland, with waves, glitter and birds that move.",
+   "origin": "ASCII art is a graphic design technique of pictures pieced together from the 95 printable characters of the ASCII standard of 1963. Among the oldest examples are works by Kenneth Knowlton from around 1966, and it was invented in large part because early printers lacked graphics ability.",
+   "rules": [
+    "Only characters from one monospaced font: no lines, no shapes",
+    "Brightness maps to a ramp of characters from sparse to dense: space, dot, colon, plus, hash, at-sign",
+    "A tight grid: about 120 columns and 45 rows",
+    "One or two colours on a near-black ground, brighter for denser characters",
+    "Motion comes from the character values changing, not from moving glyphs"
+   ],
+   "timing": "The picture is recomputed 12 times a second; waves and glitter change on each step.",
+   "fps": 12,
+   "build": [
+    "Choose a grid (`cols`, `rows`) and compute a brightness function `lum(u, v, t)` for each cell",
+    "Map brightness to a ramp: `RAMP[Math.floor(L * (RAMP.length - 0.01))]`",
+    "Draw a row as a few strings, one per brightness bucket, with spaces where another bucket has the character, so that monospace alignment holds and a row costs a few `fillText` calls",
+    "Scale horizontally so that the columns fill the frame",
+    "For a real image, sample a downscaled copy of it instead of the function"
+   ],
+   "assets": "All in code. For video, sample frames and map their luminance.",
+   "sound": "A dial-up modem, key clicks, a slow arpeggio. Practice note.",
+   "pitfalls": [
+    "A proportional font: the grid breaks",
+    "Too few columns: the picture does not read",
+    "Too much contrast between neighbouring characters"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "ascii",
+    "text art",
+    "monospace art",
+    "terminal art",
+    "character art"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/ASCII_art"
+   ],
+   "looks": [
+    "ascii"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "dither-1bit",
+   "name": "1-bit dither",
+   "aliases": [
+    "dithering",
+    "bayer dither",
+    "one bit"
+   ],
+   "family": "screen",
+   "what": "Two colours only, ink and paper: gradients and shaded forms turned into patterns of pure dots, in a window with a striped title bar, like an early desktop computer.",
+   "origin": "Ordered dithering applies a preset threshold map tiled across an image to display a continuous image with fewer colours; with the common Bayer map it leaves noticeable crosshatch patterns. A common use of dither is converting a grayscale image to black and white so that the density of black dots approximates the grey level.",
+   "rules": [
+    "Exactly two colours: near-black ink and warm paper white",
+    "Grey is made only from the density of dots, in a regular crosshatch pattern",
+    "Hard, unsmoothed pixels, scaled up by whole numbers",
+    "Title bars with ruled stripes and square widgets",
+    "No anti-aliasing and no half-tones"
+   ],
+   "timing": "Drawn on twos, 12 changes a second.",
+   "fps": 12,
+   "build": [
+    "Render a small buffer (480 by 270), compute a grey `L` for each pixel, and set it to ink or paper by `L > bayer(x, y)` (`bayer()` in `looks-screen.js`)",
+    "Draw the buffer scaled by 2 with `imageSmoothingEnabled = false`",
+    "Draw the window chrome after the dither, in pure ink and paper with square corners",
+    "Real route: a `ShaderPass` that thresholds against an 8 by 8 Bayer matrix"
+   ],
+   "assets": "All in code.",
+   "sound": "A beeper, a floppy-drive whirr, simple square-wave notes. Practice note.",
+   "pitfalls": [
+    "Grey or colour anywhere",
+    "Error-diffusion noise instead of an ordered pattern",
+    "Smooth scaling that blurs the dots"
+   ],
+   "route": "HyperFrames (canvas), or a Three.js post-process",
+   "blender": "",
+   "keywords": [
+    "dither",
+    "dithering",
+    "1-bit",
+    "bayer",
+    "old mac"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Ordered_dithering",
+    "https://en.wikipedia.org/wiki/Dither"
+   ],
+   "looks": [
+    "dither-1bit"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "crt-terminal",
+   "name": "CRT terminal",
+   "aliases": [
+    "amber terminal",
+    "phosphor terminal",
+    "retro terminal"
+   ],
+   "family": "screen",
+   "what": "An amber phosphor terminal: text typed one character at a time, a block cursor, scanlines, glow, a slow rolling bar, and a screen that bulges at the middle.",
+   "origin": "A computer terminal is a device for entering data into, and displaying data from, a computer. Teleprinters were used as early hard-copy terminals and predated computer screens by decades; with inexpensive video displays terminals improved. A cathode-ray tube is the vacuum tube with a fluorescent screen that such displays used.",
+   "rules": [
+    "One phosphor colour on near-black: amber or green",
+    "Text in a monospaced face with a soft glow",
+    "Scanlines: dark lines every few pixels",
+    "A screen that bulges, with darker corners and a reflection",
+    "A blinking block cursor and typed text; a faint flicker and a rolling bar"
+   ],
+   "timing": "Characters type at about 36 a second; the cursor blinks twice a second; the picture flickers each frame at 24 changes a second.",
+   "fps": 24,
+   "build": [
+    "Draw the screen to an off-screen canvas: black, glowing text with `shadowBlur`, scanlines, a rolling band",
+    "Curvature: copy the canvas to the main canvas in 3 px slices, each slightly narrower toward the top and bottom",
+    "Type text by slicing each line to the number of characters typed so far; place the cursor at the end of that slice",
+    "Add a vignette, a faint highlight arc and a rounded bezel mask"
+   ],
+   "assets": "All in code. Use a monospaced font that the system has.",
+   "sound": "Key clicks and a low mains hum. Practice note.",
+   "pitfalls": [
+    "Straight, flat screen edges",
+    "Clean text with no glow",
+    "Colour: one phosphor only"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "crt terminal",
+    "phosphor",
+    "scanlines",
+    "amber monitor",
+    "hacker terminal"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Computer_terminal",
+    "https://en.wikipedia.org/wiki/Cathode-ray_tube"
+   ],
+   "looks": [
+    "crt-terminal"
+   ],
+   "thin": "The sources describe terminals and cathode-ray tubes; scanlines, glow and curvature are practice rules for the look.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "hologram-hud",
+   "name": "Hologram HUD",
+   "aliases": [
+    "hologram",
+    "holographic interface",
+    "hud"
+   ],
+   "family": "screen",
+   "what": "A cyan and blue wireframe turning in the dark, with readouts, bars, a dial, corner brackets, a scan band and a flicker with an occasional slipped strip.",
+   "origin": "A head-up display (HUD) is any transparent display that presents data without requiring users to look away from their usual viewpoints; HUDs were first developed for military aviation and are now used in commercial aircraft, cars and other applications.",
+   "rules": [
+    "A wireframe: latitude and longitude lines, a ring and a satellite",
+    "Cyan and blue light on a near-black navy ground, with glow",
+    "HUD furniture: corner brackets, bars with numbers, a dial with ticks",
+    "A scan band sweeping down the frame and fine scanlines",
+    "Flicker, and now and then a strip that slips sideways"
+   ],
+   "timing": "The wireframe turns slowly; the numbers change about every quarter of a second; the band sweeps in about 4 seconds. Drawn at 24 changes a second.",
+   "fps": 24,
+   "build": [
+    "Project points on a sphere with a turn and a tilt, and draw only the visible half",
+    "Draw each wireframe twice: a blue copy shifted 3 px, then a cyan copy, each with a glow",
+    "Bars and numbers from a hash of `Math.floor(frame / 6)` so that they tick",
+    "Slip: copy a thin strip of the canvas back onto itself offset by 8 px on random frames"
+   ],
+   "assets": "All in code.",
+   "sound": "A soft electronic hum, data chirps and a low pulse. Practice note.",
+   "pitfalls": [
+    "Green or mint instead of cyan and blue",
+    "A solid, shaded model: it should be lines only",
+    "A steady, clean picture with no flicker"
+   ],
+   "route": "HyperFrames (canvas or Three.js)",
+   "blender": "",
+   "keywords": [
+    "hologram",
+    "holographic",
+    "hud",
+    "sci-fi interface",
+    "wireframe hologram"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Head-up_display"
+   ],
+   "looks": [
+    "hologram-hud"
+   ],
+   "thin": "The source describes the real head-up display. The holographic wireframe look is a science-fiction convention, described here as practice.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "thermal",
+   "name": "Thermal camera",
+   "aliases": [
+    "thermal imaging",
+    "infrared camera",
+    "heat camera"
+   ],
+   "family": "screen",
+   "what": "A false-colour heat map through black, purple, red, orange, yellow and white: a hot head and hands, a warm mug, a cold window, a crosshair, a temperature readout and a colour scale.",
+   "origin": "Infrared thermography, also called thermal imaging, is a technique in which a thermal camera detects infrared radiation from the surface of objects. Warm objects stand out against cooler backgrounds, so that variations in temperature can be seen with or without visible light.",
+   "rules": [
+    "One heat value per pixel, shown through a fixed palette: black, purple, red, orange, yellow, white",
+    "Warm objects are bright and soft-edged; cold ones are dark",
+    "A hot head and hands, a warm torso, cooler limbs",
+    "A crosshair with a temperature readout and a colour scale bar",
+    "Sensor noise and fine scanlines"
+   ],
+   "timing": "The figure sways slightly and pulses; the readout changes a few times a second. Drawn at 12 changes a second.",
+   "fps": 12,
+   "build": [
+    "Draw a heat field in greys on a small canvas (240 by 135) with `blur(2px)`; hot shapes have bright greys",
+    "Read it back with `getImageData` and map each grey through a 256-colour palette table",
+    "Scale the result up with smoothing, then draw the HUD in white",
+    "Add a little seeded noise to each pixel"
+   ],
+   "assets": "All in code.",
+   "sound": "A soft beep on each reading and a fan hum. Practice note.",
+   "pitfalls": [
+    "Natural colours: the picture is false colour",
+    "Hard-edged shapes: heat is blurred",
+    "A palette that is not monotonic in brightness"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "thermal",
+    "infrared",
+    "heat signature",
+    "thermography",
+    "flir"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Thermography"
+   ],
+   "looks": [
+    "thermal"
+   ],
+   "thin": "The source describes the technique; the specific palette is the common black-purple-red-yellow-white ramp, described here as practice.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "silent-film",
+   "name": "Silent film",
+   "aliases": [
+    "silent movie",
+    "silent era",
+    "intertitle"
+   ],
+   "family": "screen",
+   "what": "Black and white at about 18 frames a second: grain, scratches, a wandering gate, flicker, an iris that opens and closes on a street scene, and an intertitle card with a framed title.",
+   "origin": "A silent film is a film without synchronised recorded sound, whose plot or key lines are conveyed by intertitles when necessary. The silent era ran from the 1890s to the 1920s in most countries, and films were almost always accompanied by live music from a pianist, an organist or an orchestra.",
+   "rules": [
+    "Black and white only, with a soft vignette",
+    "A slow frame rate: about 18 changes a second",
+    "Gate weave: the frame wanders a few pixels, with now and then a jump",
+    "Flicker, grain, vertical scratches and dust specks",
+    "An iris in and out, and a framed intertitle card in a serif capital face"
+   ],
+   "timing": "The iris opens in 0.6 seconds, the scene plays, the iris closes at about 2.1 seconds, and the intertitle holds. Drawn at 18 changes a second.",
+   "fps": 18,
+   "build": [
+    "Quantise time with `frameOf(t, 18)`; translate the whole frame by a seeded jitter",
+    "Iris: clip to a circle whose radius grows or shrinks with `easeOut` and `easeInOut`",
+    "Film damage keyed to the frame: scratches that last two frames, dust, hairs and flicker (`filmDamage()` in `looks-screen.js`)",
+    "Intertitle: black card, a double white border and a serif title",
+    "Draw only in greys"
+   ],
+   "assets": "All in code. Real footage can be graded with a black-and-white filter and given the same damage.",
+   "sound": "A piano or a small orchestra improvising, a projector whirr. Practice note.",
+   "pitfalls": [
+    "Smooth 24 frames-a-second motion",
+    "A clean, steady picture",
+    "Sound effects: the era was accompanied by music"
+   ],
+   "route": "HyperFrames (canvas), or ffmpeg filters on real footage",
+   "blender": "",
+   "keywords": [
+    "silent film",
+    "silent movie",
+    "intertitle",
+    "1920s film",
+    "film flicker"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Silent_film"
+   ],
+   "looks": [
+    "silent-film"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "newsreel",
+   "name": "Newsreel",
+   "aliases": [
+    "news reel",
+    "1940s newsreel",
+    "vintage newsreel"
+   ],
+   "family": "screen",
+   "what": "Sepia footage of the 1940s: a train racing past telegraph poles, a slanted headline banner, and a damaged print with scratches, hairs, dust, a burn flash and a jolt of the frame.",
+   "origin": "A newsreel is a short documentary film of news stories and items of topical interest, prevalent from the 1910s to the late 1960s and typically shown in cinemas before a feature; by the end of the 1960s television news had supplanted the format.",
+   "rules": [
+    "Sepia: a warm brown to cream palette, with no true black or white",
+    "A slanted, bold headline banner in a heavy condensed face",
+    "A moving subject with strong motion: a train, a parade, a ship",
+    "Film damage: scratches, hairs, dust, burns and frame jumps",
+    "A vignette and heavy grain"
+   ],
+   "timing": "Drawn at 18 changes a second; the train, poles and smoke move at constant speeds, and the damage re-rolls every frame.",
+   "fps": 18,
+   "build": [
+    "Build the palette with one function that maps 0..1 to a mix of dark brown and cream (`sepia()` in `looks-screen.js`)",
+    "Parallax: poles and ties move at different speeds",
+    "Banner: rotate the context by about -0.07 radians and draw a dark bar with cream text",
+    "Burn flash: a radial gradient on a random frame; jolt: a few pixels of vertical shift on a few frames"
+   ],
+   "assets": "All in code.",
+   "sound": "A brass fanfare, a narrator's urgent cadence and a projector clatter. Practice note.",
+   "pitfalls": [
+    "Grey instead of sepia",
+    "A steady, clean picture",
+    "Presenting invented footage as a real archive: this is a style, not a document"
+   ],
+   "route": "HyperFrames (canvas), or ffmpeg filters on real footage",
+   "blender": "",
+   "keywords": [
+    "newsreel",
+    "1940s news",
+    "archive news",
+    "vintage news",
+    "sepia news"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Newsreel"
+   ],
+   "looks": [
+    "newsreel"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "film-noir",
+   "name": "Film noir",
+   "aliases": [
+    "noir",
+    "black and white noir"
+   ],
+   "family": "screen",
+   "what": "High-contrast black and white: a wall striped by light through venetian blinds, a man in a fedora and trench coat under a street lamp, rain slanting through the lamp's cone, and a wet pavement.",
+   "origin": "Film noir is a Hollywood crime drama that emphasises cynical attitudes and motivations; the classic period is the 1940s and 1950s, with a low-key black-and-white visual style whose roots lie in German expressionist cinematography. The French critic Nino Frank first applied the term to Hollywood films in 1946.",
+   "rules": [
+    "Black and white with deep blacks and bright highlights",
+    "Low-key light: most of the frame in shadow",
+    "Venetian-blind stripes of light across walls and people",
+    "A figure in a hat and long coat, lit from the side",
+    "Rain, mist and smoke, lit where a lamp shines"
+   ],
+   "timing": "The blind stripes drift slowly, the rain falls, smoke curls and ripples spread; smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Stripes: parallelograms drawn with `lighter` at low opacity, drifting with time",
+    "A lamp cone: a triangle with a vertical gradient; rain lines brighter inside it",
+    "Silhouette the figure first, then add rim lines on the lit edge",
+    "Add a vignette and fine grain"
+   ],
+   "assets": "All in code.",
+   "sound": "A muted trumpet, a slow saxophone, rain and distant footsteps. Practice note.",
+   "pitfalls": [
+    "Mid-grey lighting: noir needs black",
+    "Colour",
+    "Stripes with no direction or drift"
+   ],
+   "route": "HyperFrames (canvas), or Blender for a lit 3D scene",
+   "blender": "",
+   "keywords": [
+    "film noir",
+    "noir",
+    "venetian blinds",
+    "detective",
+    "trench coat"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Film_noir"
+   ],
+   "looks": [
+    "film-noir"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "archive-documentary",
+   "name": "Archive documentary: pan and zoom over stills",
+   "aliases": [
+    "ken burns",
+    "ken burns effect",
+    "archive documentary",
+    "photo documentary"
+   ],
+   "family": "screen",
+   "what": "A slow pan and zoom over still photographs laid on a desk, each with a white border and a shadow, with a lower-third caption and date that slide in for each picture, over film grain.",
+   "origin": "The Ken Burns effect is a panning and zooming technique used in film and video from still images, named for the American documentarian Ken Burns. It is principally used when film or video material is not available, giving action to stills by slowly zooming in on subjects of interest and panning from one to another.",
+   "rules": [
+    "A slow, eased camera: zoom in on one photograph, then pan to the next",
+    "Photographs with white borders, slight tilts and drop shadows",
+    "A lower-third caption and date that slide in for each picture",
+    "Film grain, a vignette and a dark desk",
+    "Aged photographs: sepia tones and a darkened edge"
+   ],
+   "timing": "The camera moves between keyframes with `easeInOut`; a picture is held for 3 to 4 seconds. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Keyframe the camera as (time, centre x, centre y, zoom) and interpolate with `easeInOut`",
+    "Draw the world with `translate(W / 2, H / 2)`, `scale(zoom)`, `translate(-cx, -cy)`",
+    "Each photograph: a rotated white frame with `shadowBlur`, a clipped picture, and a radial darkening",
+    "Captions slide in from the left with `easeOut` when the camera reaches a new photograph",
+    "Real route: animate the position and scale of image layers in HyperFrames"
+   ],
+   "assets": "Use only photographs the user owns or may reuse; the pictures here are drawn shapes.",
+   "sound": "A piano, a cello, an archive-style narrator and room tone. Practice note.",
+   "pitfalls": [
+    "A fast or jerky camera",
+    "No border, shadow or desk: the stills must look like objects",
+    "Presenting invented pictures as real archive"
+   ],
+   "route": "HyperFrames (canvas or CSS transforms)",
+   "blender": "",
+   "keywords": [
+    "ken burns",
+    "archive",
+    "documentary",
+    "still photographs",
+    "pan and zoom"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Ken_Burns_effect"
+   ],
+   "looks": [
+    "archive-documentary"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "math-diagram",
+   "name": "Maths diagram",
+   "aliases": [
+    "math diagram",
+    "maths explainer",
+    "equation animation"
+   ],
+   "family": "type",
+   "what": "A chalk-on-navy maths explainer: an equation builds term by term, each term in its own colour with its own curve on the plot, then the sum curve draws on and a tangent line slides along it with its slope read out.",
+   "origin": "A tangent line to a curve at a point is the straight line that just touches the curve there; for a curve y = f(x) it passes through (c, f(c)) with slope f'(c), where f' is the derivative. Chalk on a dark board is the classic surface for showing such working.",
+   "rules": [
+    "One colour per term, used in the equation and again for that term's curve",
+    "Axes and a faint grid, a bright sum curve, a gold tangent with a dot at the point of tangency",
+    "Terms appear one at a time, in the order the plot is built",
+    "Few words: the equation, a derivative line and a slope readout",
+    "A navy board with a light chalk dust"
+   ],
+   "timing": "Terms appear at 0.3, 1.2 and 2.1 seconds, the sum curve draws from 2.8 to 4 seconds, and the tangent then slides back and forth. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Map maths coordinates to the screen with two small functions (`X(x)`, `Y(y)`) and draw each curve as a polyline up to a fraction `k` of its length",
+    "Measure each piece of the equation with `measureText` so that the next piece starts where the last ended",
+    "Tangent: `y0 + m (x - x0)` drawn over `x0 +- 2.2`, with `m = f'(x0)` read out in text",
+    "Real route for real maths: Manim (a Python library for mathematical animation) renders the same scene with exact `Axes`, `Tex` and `ValueTracker` objects, then HyperFrames or ffmpeg joins the clip",
+    "Add a speckle of white dust over the board colour"
+   ],
+   "assets": "All in code here. For typeset equations in a real film, use Manim's LaTeX support.",
+   "sound": "Chalk taps as each term lands, a calm piano and a clear voice. Practice note.",
+   "pitfalls": [
+    "Every term in the same colour",
+    "A wall of text or a crowded plot",
+    "A curve that appears all at once, with no build"
+   ],
+   "route": "HyperFrames (canvas), or Manim for real maths",
+   "blender": "",
+   "keywords": [
+    "manim",
+    "equation",
+    "tangent line",
+    "graph plot",
+    "calculus"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Tangent",
+    "https://en.wikipedia.org/wiki/Chalkboard"
+   ],
+   "looks": [
+    "math-diagram"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "sticker-explainer",
+   "name": "Sticker explainer",
+   "aliases": [
+    "sticker style",
+    "die-cut stickers",
+    "sticker animation"
+   ],
+   "family": "type",
+   "what": "Die-cut stickers with a thick white border and a drop shadow pop onto a desk with a bounce: icons and bold word stickers, each tilted a little and swaying.",
+   "origin": "A sticker is a label of plastic, vinyl or another material with a pressure-sensitive adhesive on one side, used for decoration or for function, in many shapes, sizes and colours.",
+   "rules": [
+    "A thick white border follows each shape, with rounded corners: the die-cut line",
+    "A soft drop shadow lifts each sticker off the surface",
+    "Bold, saturated flat colour with a thin darker edge",
+    "Big, heavy word stickers: one word each",
+    "Each tilted a few degrees, and none perfectly aligned"
+   ],
+   "timing": "Each sticker pops in over about half a second with an overshoot, one every 0.3 seconds, then sways slightly. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Describe each silhouette as a `Path2D`; draw it first with a 22 px white stroke and a white fill, with `shadowBlur` for the shadow, then fill the colour on top",
+    "Pop-in: scale by `overshoot(prog(t, start, 0.55))`, with a small rise from below",
+    "Sway: rotate by a sine of time scaled by how long the sticker has been there",
+    "Word stickers: a rounded rectangle with `900` weight text centred in it"
+   ],
+   "assets": "All in code. Real icon sets should be ones the user owns or may reuse.",
+   "sound": "A peel-and-stick pop and a cheerful bouncy bed. Practice note.",
+   "pitfalls": [
+    "A white border of uneven width",
+    "No shadow: the stickers look printed on the page",
+    "Pop-ins with no overshoot",
+    "Too many stickers at once"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "sticker",
+    "die-cut",
+    "sticker pack",
+    "white border sticker",
+    "emoji stickers"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Sticker"
+   ],
+   "looks": [
+    "sticker-explainer"
+   ],
+   "thin": "The source describes stickers as objects; the die-cut explainer look is a practice summary.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "memphis",
+   "name": "Memphis design",
+   "aliases": [
+    "memphis style",
+    "80s memphis",
+    "memphis pattern"
+   ],
+   "family": "type",
+   "what": "Scattered, playful confetti in the manner of 1980s Memphis design: squiggles and zigzags, triangles, circles and half-circles in red, yellow, blue and pink, black-and-white checks, stripes and dots.",
+   "origin": "The Memphis Group, also called Memphis Milano, was an Italian design and architecture group founded by Ettore Sottsass and active from 1980 to 1987. Its postmodern work often used plastic laminate and terrazzo and was characterised by colourful, abstract decoration and asymmetrical shapes; the look became a ubiquitous aesthetic of the mid-1980s to mid-1990s.",
+   "rules": [
+    "Bold primary colours with pink and black: red, yellow, blue and pink",
+    "Confetti shapes: triangles, circles, half-circles, squiggles and zigzags",
+    "Black-and-white patterns: checks, stripes and dots inside shapes",
+    "Thick black outlines and asymmetrical, overlapping placement",
+    "A pale peach or pink ground, with tiny terrazzo flecks"
+   ],
+   "timing": "Shapes pop in over the first 1.6 seconds, then drift and turn slowly. Drawn at 12 changes a second.",
+   "fps": 12,
+   "build": [
+    "Place each shape from a hash of its index: type, size, position, colour and spin",
+    "Patterns: a 4 by 4 checkerboard, a circle clipped to black stripes, a grid of dots",
+    "Squiggle: a sine polyline with a thick round-capped stroke",
+    "Pop-in with `overshoot(prog(...))`; drift with a sine of stepped time"
+   ],
+   "assets": "All in code.",
+   "sound": "A bouncy synth-pop bed with clicks and pops. Practice note.",
+   "pitfalls": [
+    "Gradients and soft shadows",
+    "Neat alignment: Memphis is deliberately off-kilter",
+    "Muted colours",
+    "Copying a specific designer's piece"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "memphis",
+    "squiggle",
+    "terrazzo",
+    "confetti shapes",
+    "postmodern pattern"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Memphis_Group"
+   ],
+   "looks": [
+    "memphis"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "particles",
+   "name": "Particles",
+   "aliases": [
+    "particle system",
+    "particle animation",
+    "particle text"
+   ],
+   "family": "abstract",
+   "what": "Thousands of small glowing particles drift in from all over the frame and settle into a word, hold it, then burst apart and reform.",
+   "origin": "A particle system is a technique in game physics, motion graphics and computer graphics that uses many minute sprites, 3D models or other graphic objects to simulate \"fuzzy\" phenomena that are hard to reproduce with conventional rendering; it was introduced in the 1982 film Star Trek II: The Wrath of Khan for the Genesis effect.",
+   "rules": [
+    "Thousands of tiny points, each simple",
+    "The shape appears only from the points' positions",
+    "Glow: bright, additive points on a near-black ground",
+    "Colour from position: a gradient across the shape",
+    "Staggered motion: each particle starts and arrives at its own time"
+   ],
+   "timing": "Gathering takes 2.2 seconds, the word holds with a gentle shimmer, then bursts apart over 1.6 seconds; the cycle is 6.2 seconds. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Sample a target shape once: draw the word on a hidden canvas and keep the lit pixels every 4 px (`wordPoints()` in `looks-abstract.js`)",
+    "Give each particle a seeded start and a target; interpolate with a per-particle delay and `easeOut`",
+    "Burst: push each outward at a seeded angle with a slight curl",
+    "Draw as small squares with `lighter` compositing",
+    "Real route: Three.js `Points` with a position buffer you tween on the GPU, or a particle layer in HyperFrames"
+   ],
+   "assets": "All in code. Use your own icon or word: no existing logo.",
+   "sound": "A rising shimmer for the gather and a soft boom for the burst. Practice note.",
+   "pitfalls": [
+    "Too few particles: the shape does not read",
+    "All particles moving in lockstep",
+    "Using a real company's logo"
+   ],
+   "route": "HyperFrames (canvas) or Three.js",
+   "blender": "",
+   "keywords": [
+    "particles",
+    "particle",
+    "dust",
+    "sparkle",
+    "dispersing"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Particle_system"
+   ],
+   "looks": [
+    "particles"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "liquid-metaball",
+   "name": "Liquid metaball (blobs that merge)",
+   "aliases": [
+    "metaball",
+    "metaballs",
+    "liquid blobs",
+    "gooey blobs"
+   ],
+   "family": "abstract",
+   "what": "Glossy liquid blobs that drift, merge and split: a smooth colour gradient from warm to violet, a bright rim, and a soft highlight on each blob.",
+   "origin": "Metaballs, also known as blobby objects, are organic-looking n-dimensional isosurfaces characterised by their ability to meld together when in close proximity to create single, contiguous objects.",
+   "rules": [
+    "Round blobs that join with smooth necks and part again",
+    "A glossy surface: a bright highlight, a rim of light, and a darker side",
+    "A smooth colour gradient across the blobs, warm to violet",
+    "A dark, simple ground",
+    "Slow, floating motion on overlapping paths"
+   ],
+   "timing": "Seven blobs drift on sine paths; merges and splits happen as they pass. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Sum a field `F = sum(r^2 / d^2)` over a low-resolution grid (240 by 135) and treat `F > 1` as inside",
+    "Smooth the edge with `clamp((F - 0.92) / 0.16)` and light the surface from the gradient of a saturating copy of `F` (`tanh`)",
+    "Colour: a mix across x and y; add a diffuse term, a specular term (power 40) and an environment rim",
+    "Upscale with smoothing. Real route: a fragment shader doing the same sum per pixel, or `MarchingCubes` in Three.js"
+   ],
+   "assets": "All in code.",
+   "sound": "Soft bubbling and a smooth pad. Practice note.",
+   "pitfalls": [
+    "Hard-edged circles with no merging",
+    "Flat colour: the gloss is the look",
+    "Too many blobs: they turn into one mass"
+   ],
+   "route": "HyperFrames (canvas or WebGL shader)",
+   "blender": "",
+   "keywords": [
+    "metaball",
+    "liquid",
+    "goo",
+    "gooey",
+    "blob"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Metaballs"
+   ],
+   "looks": [
+    "liquid-metaball"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "flow-field",
+   "name": "Flow-field generative",
+   "aliases": [
+    "flow field",
+    "generative art",
+    "noise field"
+   ],
+   "family": "abstract",
+   "what": "Thousands of short strokes follow a drifting noise field and gather into an orb of swirling lines, in warm and violet inks on a dark ground.",
+   "origin": "Perlin noise is a type of gradient noise developed by Ken Perlin in 1983, used for procedurally generating terrain and textures. Generative art is art made in whole or in part with an autonomous system that independently determines features of the artwork.",
+   "rules": [
+    "Many thin, semi-transparent strokes, each following the field",
+    "The field is smooth noise, so neighbouring strokes run together in streams",
+    "A form built from where the strokes start: here a disc, thinning to sparse strokes outside it",
+    "A small palette of warm and violet inks on near-black",
+    "The field drifts slowly, so the form flows"
+   ],
+   "timing": "About 3,400 strokes appear over 3.4 seconds, and the field drifts continuously. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "A field `angle(x, y) = noise(x / 150, y / 150 + time) * 2 pi`, from value noise (`vnoise()` in `looks-painted.js`); real route: Perlin or simplex noise",
+    "Each stroke: a seeded start inside a disc, then 14 steps of 5 px along the angle",
+    "Colour each from a five-ink palette with an opacity that falls toward the edge",
+    "Draw with `lineCap = \"round\"` and a width of 1 to 2.4 px"
+   ],
+   "assets": "All in code.",
+   "sound": "An ambient drone and a slow, evolving pad. Practice note.",
+   "pitfalls": [
+    "Opaque, thick strokes: the form turns to mush",
+    "A noise field with too much high-frequency detail",
+    "Every stroke the same colour and length"
+   ],
+   "route": "HyperFrames (canvas)",
+   "blender": "",
+   "keywords": [
+    "flow field",
+    "perlin",
+    "noise field",
+    "generative",
+    "streamlines"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Perlin_noise",
+    "https://en.wikipedia.org/wiki/Generative_art"
+   ],
+   "looks": [
+    "flow-field"
+   ],
+   "thin": "The demo uses value noise for the field, which is cheaper than Perlin noise and looks similar; the build recipe notes the swap.",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "psychedelic",
+   "name": "Psychedelic",
+   "aliases": [
+    "psychedelia",
+    "60s poster",
+    "acid poster"
+   ],
+   "family": "abstract",
+   "what": "A 1960s concert-poster look: concentric rings warped by slow waves in a cycling run of warm, saturated colours, with black ink lines over rays that turn behind them.",
+   "origin": "Psychedelic art is art, graphics or visual displays related to or inspired by psychedelic experiences; in common use it refers to the art movement of the late 1960s and early 1970s counterculture, with highly distorted or surreal visuals, bright colours and full spectrums.",
+   "rules": [
+    "Concentric rings warped by sine waves: they breathe and ripple",
+    "Saturated, warm, hot colours: orange, yellow, hot pink, violet, red",
+    "Black outline between every band",
+    "Colours that cycle through the rings over time",
+    "Rays or stripes behind the pattern, turning slowly"
+   ],
+   "timing": "The colours cycle at about 2.2 bands a second; the warps drift continuously. Smooth, full frame rate.",
+   "fps": null,
+   "build": [
+    "Each ring is a closed polyline with `r + A sin(5 a + t + k) + B sin(3 a - t + k)` for radius; draw rings from the outside in",
+    "Colour each by a palette index offset by a time shift, cross-faded with the next entry",
+    "Outline each with a 3.4 px near-black stroke",
+    "Back layer: 36 wedges that alternate two colours and rotate slowly",
+    "Keep to warm colours: no teal and no mint"
+   ],
+   "assets": "All in code.",
+   "sound": "A wah-guitar, a Hammond organ and a spinning-tape echo. Practice note.",
+   "pitfalls": [
+    "Cool teal or mint colours",
+    "Thin, polite outlines or no outline",
+    "Static rings: the ripple and the colour cycle are the look"
+   ],
+   "route": "HyperFrames (canvas or WebGL shader)",
+   "blender": "",
+   "keywords": [
+    "psychedelic",
+    "trippy",
+    "60s",
+    "concert poster",
+    "tie-dye"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Psychedelic_art"
+   ],
+   "looks": [
+    "psychedelic"
+   ],
+   "thin": "",
+   "checked": "2026-11-21"
+  },
+  {
+   "id": "bauhaus",
+   "name": "Bauhaus geometric",
+   "aliases": [
+    "bauhaus",
+    "bauhaus style",
+    "geometric poster"
+   ],
+   "family": "abstract",
+   "what": "A poster of primary-colour circles, squares and triangles with black bars on a grid of cream and black lines, where every piece jumps from cell to cell in clean steps.",
+   "origin": "The Staatliches Bauhaus was a German art school, operating from 1919 to 1933, that combined crafts and the fine arts; it was founded by the architect Walter Gropius in Weimar, and became famous for an approach to design that emphasised function and tried to unify individual artistic vision with mass production.",
+   "rules": [
+    "Primary colours only: red, yellow and blue, with black and off-white",
+    "Basic shapes: circle, square, triangle and their halves",
+    "Black bars and a visible grid",
+    "Flat fills, no gradients, no texture beyond paper",
+    "Asymmetric, balanced composition; motion in whole grid steps"
+   ],
+   "timing": "Every piece moves to its next cell about every 0.6 seconds, the move settling in 0.3 seconds. Drawn at 12 changes a second.",
+   "fps": 12,
+   "build": [
+    "Lay out shapes on an 80 px grid; each piece has a short route of cells that it cycles through",
+    "Step with `Math.floor(time * rate)` and ease the move with `easeOut(fraction / 0.3)`",
+    "Draw with `arc`, `fillRect` and `lineTo` fills and thick black outlines",
+    "Add faint grid lines and a light paper speckle"
+   ],
+   "assets": "All in code.",
+   "sound": "A clicking rhythm and a dry, minimal marimba. Practice note.",
+   "pitfalls": [
+    "Gradients and soft shadows",
+    "Curved, ornamental decoration",
+    "Smooth sliding between positions, which loses the stepped feel"
+   ],
+   "route": "HyperFrames (canvas or SVG)",
+   "blender": "",
+   "keywords": [
+    "bauhaus",
+    "geometric",
+    "primary colours",
+    "grid poster",
+    "constructivist"
+   ],
+   "sources": [
+    "https://en.wikipedia.org/wiki/Bauhaus"
+   ],
+   "looks": [
+    "bauhaus"
+   ],
+   "thin": "",
    "checked": "2026-11-21"
   }
  ]

@@ -15,7 +15,7 @@ EDIT = SKILL / "edit"
 RECIPES = EDIT / "recipes"
 SCRIPTS = SKILL / "scripts"
 VERSIONS = json.loads((EDIT / "versions.json").read_text(encoding="utf-8"))
-APPS = ("film", "sound", "effect", "photo", "vector")
+APPS = ("film", "sound", "effect", "photo", "vector", "light")
 PLATFORMS = ("macos-universal", "windows-x64", "windows-arm64", "linux-x86_64", "linux-aarch64")
 
 BASH = None if os.name == "nt" else "bash"

@@ -70,7 +70,7 @@ def test_second_install_is_a_no_op_and_detect_sees_everything(home):
     again = run([BASH, INSTALL, "--components", "film,sound"], {"B2M_EDIT_HOME": str(home)})
     assert again.returncode == 0 and again.stdout.count("already installed") == 2 and "downloading" not in again.stdout
     out = run([BASH, SCRIPTS / "detect_edit.sh"], {"B2M_EDIT_HOME": str(home)})
-    assert out.stdout.strip() == "edit: ready (film,sound,effect,photo,vector)"
+    assert out.stdout.strip() == "edit: ready (film,sound,effect,photo,vector,light)"
 
 
 def test_installed_pack_does_not_depend_on_the_repository(home, tmp_path):
@@ -208,6 +208,41 @@ def test_vector_recipe_exports_a_lower_third_svg(env, tmp_path):
     assert ET.parse(tmp_path / "big.svg").getroot().get("width") == "1920"
 
 
+def _mean_rgb(path: Path) -> list[int]:
+    """The average colour of an image, from ffmpeg scaling it to one pixel."""
+    return list(subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                               capture_output=True, check=True).stdout)
+
+
+def test_light_recipe_grades_a_still_warm_and_leaves_the_original(env, tmp_path):
+    src = tmp_path / "in.png"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "gradients=s=640x360:c0=0x3c6e9e:c1=0xe6e6dc:seed=4,format=rgb24",
+                    "-frames:v", "1", str(src)], check=True)
+    before = src.read_bytes()
+    out = tmp_path / "graded.jpg"
+    recipe(env, "light_grade.sh", "--in", str(src), "--out", str(out))
+    assert src.read_bytes() == before                                        # the original is untouched
+    stream = ffprobe(out, "stream=width,height")["streams"][0]
+    assert (stream["width"], stream["height"]) == (640, 360)
+    r0, _, b0 = _mean_rgb(src)
+    r1, _, b1 = _mean_rgb(out)
+    assert (r1 - b1) - (r0 - b0) >= 4, ((r0, b0), (r1, b1))                  # warmer: red went up against blue
+    strong = tmp_path / "strong.jpg"
+    recipe(env, "light_grade.sh", "--in", str(src), "--amount", "200", "--out", str(strong))
+    r2, _, b2 = _mean_rgb(strong)
+    assert (r2 - b2) > (r1 - b1)                                             # a bigger amount warms more
+
+
+def test_light_recipe_default_input_size_option_and_bad_preset(env, tmp_path):
+    recipe(env, "light_grade.sh", "--out", tmp_path / "d.png")
+    assert ffprobe(tmp_path / "d.png", "stream=width,height")["streams"][0]["width"] == 1280
+    recipe(env, "light_grade.sh", "--size", "320", "--out", tmp_path / "small.jpg")
+    assert ffprobe(tmp_path / "small.jpg", "stream=width,height")["streams"][0]["width"] == 320
+    bad = run([BASH, RECIPES / "light_grade.sh", "--preset", "lc.no-such-preset", "--out", tmp_path / "bad.jpg"], env)
+    assert bad.returncode != 0 and "unknown preset" in bad.stderr and not (tmp_path / "bad.jpg").exists()
+    assert run([BASH, RECIPES / "light_grade.sh", "--amount", "300", "--out", tmp_path / "x.jpg"], env).returncode == 2
+
+
 # ---- what README-EDIT.md tells agents --------------------------------------------------------------------------
 
 def _cli(home: Path, short: str) -> str:
@@ -216,7 +251,8 @@ def _cli(home: Path, short: str) -> str:
 
 def test_command_ids_named_in_recipe_headers_exist_in_the_pinned_cli(home):
     for recipe_name, short in (("film_timeline.sh", "film"), ("sound_mix.sh", "sound"), ("effect_title.sh", "effect"),
-                               ("photo_thumbnail.sh", "photo"), ("vector_lower_third.sh", "vector")):
+                               ("photo_thumbnail.sh", "photo"), ("vector_lower_third.sh", "vector"),
+                               ("light_grade.sh", "light")):
         header = (RECIPES / recipe_name).read_text(encoding="utf-8").split("set -euo")[0]
         block = header.split("Command ids used", 1)[1]
         ids = re.findall(r"\b([a-z]+\.[A-Za-z_.]+[A-Za-z_])\b", block)
@@ -245,6 +281,8 @@ def test_file_confinement_flags_exist_exactly_where_the_readme_says(home):
         assert "--automation-read-root" in helped.stdout + helped.stderr and "--automation-write-root" in helped.stdout + helped.stderr, short
     film = run([_cli(home, "film"), "mcp", "--automation-read-root", str(home)], cwd=home)
     assert "unknown mcp option" in film.stdout + film.stderr
+    light = run([_cli(home, "light"), "mcp", "--automation-read-root", str(home)], cwd=home)
+    assert "unknown option" in light.stdout + light.stderr   # LightCraft has no confinement flags either
 
 
 def test_uninstall_really_removes_the_install(tmp_path):
