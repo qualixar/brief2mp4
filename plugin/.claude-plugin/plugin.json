@@ -1,6 +1,6 @@
 {
   "name": "brief2mp4",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Turn a written brief into a finished, checked MP4 motion graphic in 30 art forms (claymation, paper cut-out, anime, pixel art and more): HyperFrames, Three.js, an optional 3D pack, Blender and ffmpeg. Installs brief2motion for websites too.",
   "author": {
     "name": "Varun Pratap Bhardwaj",

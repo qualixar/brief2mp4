@@ -1,0 +1,43 @@
+{
+  "width": 1920, "height": 1080, "fps": 30, "duration": 14, "skin": "paper-cutout", "ground": 900,
+  "palette": { "sky": "#f6d7a7", "hill1": "#d98a5a", "hill2": "#b26a43", "ground": "#8a9a52", "sun": "#ffd166", "kite": "#e5484d", "kite2": "#ffd23f", "stone": "#9a8f86" },
+  "hills": [
+    { "fill": "hill1", "pts": [[0, 650], [260, 570], [620, 630], [980, 540], [1380, 620], [1700, 560], [1920, 600]] },
+    { "fill": "hill2", "pts": [[0, 760], [340, 700], [760, 750], [1180, 690], [1560, 745], [1920, 705]] }
+  ],
+  "set": [
+    { "type": "circle", "c": [1560, 250], "r": 90, "fill": "sun", "layer": "back", "role": "light" },
+    { "type": "poly", "pts": [[1130, 852], [1172, 892], [1130, 934], [1088, 892]], "smooth": false, "fill": "kite" },
+    { "type": "poly", "pts": [[1130, 852], [1172, 892], [1130, 892]], "smooth": false, "fill": "kite2", "role": "detail" },
+    { "type": "ellipse", "c": [420, 915], "r": [48, 22], "fill": "stone" }
+  ],
+  "cast": [
+    {
+      "id": "kid", "character": "child", "x": 560, "scale": 1.9, "facing": "right",
+      "track": {
+        "keys": [
+          { "t": 0, "pose": "idle" }, { "t": 3.0, "pose": "idle" }, { "t": 3.3, "pose": "point", "ease": "out" }, { "t": 6.0, "pose": "point" },
+          { "t": 6.5, "pose": "surprised", "ease": "out" }, { "t": 9.9, "pose": "surprised" }, { "t": 10.5, "pose": "sad", "ease": "inOut" }, { "t": 14, "pose": "sad" }
+        ],
+        "move": [{ "t": 0, "x": -200 }, { "t": 3.0, "x": 560, "walk": true }],
+        "layers": [{ "cycle": "talk", "from": 3.4, "to": 5.9 }],
+        "visemesFrom": { "words": "words.json", "from": 3.3, "to": 6.0, "lang": "en" }
+      }
+    },
+    {
+      "id": "crow", "character": "crow", "x": 1400, "scale": 2.4, "facing": "left",
+      "track": {
+        "keys": [
+          { "t": 0, "pose": "idle" }, { "t": 1.4, "pose": "think", "ease": "inOut" }, { "t": 4.4, "pose": "think" }, { "t": 4.9, "pose": "surprised", "ease": "out" },
+          { "t": 6.0, "pose": "surprised" }, { "t": 6.7, "pose": "laugh", "ease": "out", "mouth": "AI" }, { "t": 11.6, "pose": "laugh", "mouth": "rest" }, { "t": 12.2, "pose": "wave", "ease": "inOut" }, { "t": 14, "pose": "wave" }
+        ],
+        "layers": [{ "cycle": "talk", "from": 7.1, "to": 9.9 }, { "cycle": "laugh", "from": 6.7, "to": 11.8 }, { "cycle": "wave", "from": 12.4, "to": 14, "steps": 4 }],
+        "visemesFrom": { "words": "words.json", "from": 7.0, "to": 10.0, "lang": "en" }
+      }
+    }
+  ],
+  "captions": [
+    { "from": 3.45, "to": 5.95, "text": "Hey crow, that is my kite!" },
+    { "from": 7.2, "to": 9.95, "text": "Finders keepers, little one." }
+  ]
+}

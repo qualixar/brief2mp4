@@ -2,6 +2,26 @@
 
 All notable changes to brief2mp4. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-11-21
+
+### Added
+- **Character kit** (`plugin/skills/brief2mp4/characters/`): characters that hold poses, walk, blink and talk, in plain JavaScript and JSON with no new dependency. Every frame is a pure function of time.
+  - `rig.js`, `poses.js`: 15 named poses, walk, run, talk and blink cycles, steps per second for held drawings.
+  - Six skins on the same rig: `paper-cutout`, `cel-shaded`, `line-art`, `shadow-puppet` (hinged jaw, rods, light set pieces), `motion-comic`, `flat-explainer`.
+  - A starter cast (child, adult, crow, tomato chef), a character schema and validator, and image parts so PNG or WebP art can be rigged (`image-demo/`).
+  - Scenes: `schema/scene.schema.json` and `validate_scene.py`; moves to absolute positions with `walk` and `facing`; off-screen and low-contrast warnings; captions that wrap, scale and stay clear of the characters.
+- `scripts/lipsync.py`: word timings to nine mouth shapes, for English and Devanagari Hindi, with a WAV loudness fallback.
+- `scripts/standin_voice.py` (a preview voice from word timings), `scripts/character_sheet.py` (PNG sheets), `scripts/character_project.py` (a scene, or the 2D-in-3D starter, to a HyperFrames project; `--character-file` for your own characters).
+- `templates/threejs/characters-stage.html`: rigged 2D characters as camera-facing cards in a Three.js set.
+- `scripts/vendor_libs.ps1`: library vendoring on Windows, pinned to the same versions as `vendor_libs.sh`.
+- `examples/09-story-characters/`: a boy and a crow argue over a kite, rendered in three skins from one scene.
+
+### Changed
+- Briefs with characters, dialogue or a short story now route to the character kit (`references/formats.md`, `art_route.py`).
+
+### Fixed
+- `.gitattributes` pins LF for every text file and marks fonts, PDFs and videos as binary, so Windows checkouts no longer turn HTML templates into CRLF.
+
 ## [0.4.0] - 2026-11-18
 
 ### Added
