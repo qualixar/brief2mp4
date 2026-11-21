@@ -109,6 +109,9 @@
     return found < 0 ? 'rest' : track[found].v;
   }
 
+  // A pose gives scale as the size itself (sy: 1.15); the accumulator adds deltas, so take away the 1 first.
+  const asDelta = (value) => { const c = channels(value), o = Object.assign({}, c); ['sx', 'sy'].forEach((k) => { if (c[k] !== undefined) o[k] = c[k] - 1; }); return o; };
+
   function addDelta(acc, joint, value, w) {
     const target = acc[joint] || (acc[joint] = { r: 0, x: 0, y: 0, sx: 1, sy: 1 });
     const ch = channels(value);
@@ -172,6 +175,17 @@
     return u < 0.4 ? u / 0.4 : 1 - (u - 0.4) / 0.6;
   }
 
+  // Outside the words a mouth stays closed, so a listener never looks as if they are talking. The pose can still
+  // smile or frown (`smile`). A mouth shape is shown only when the track asks for it: a key with { mouth: "O" }
+  // holds that shape until the next key, or the track sets poseMouths: true to use each pose's own mouth.
+  function heldMouth(track, base, ts) {
+    const keys = (track.keys || []).slice().sort((p, q) => p.t - q.t);
+    let hit = null;
+    keys.forEach((k) => { if (k.t <= ts + EPS) hit = k; });
+    if (hit && hit.mouth) return hit.mouth;
+    return track.poseMouths ? base.mouth || 'rest' : 'rest';
+  }
+
   function sampleMove(moves, ts) {
     if (!moves || !moves.length) return { x: 0, y: 0, flip: 1 };
     const keys = moves.slice().sort((p, q) => p.t - q.t);
@@ -193,6 +207,7 @@
     return (ranges || []).some((r) => ts >= r[0] && ts <= r[1]);
   }
 
+  const clampScale = (v) => Math.min(1.3, Math.max(0.05, v));   // a part never grows past 130% or vanishes, whatever the mix
   const signOf = (part) => (part.sign !== undefined ? part.sign : B.SIGN[part.id] === undefined ? 1 : B.SIGN[part.id]);
 
   function pose(character, trackIn, t, opts) {
@@ -203,9 +218,9 @@
     const base = sampleKeys(character, track.keys, ts);
     const vis = track.visemes && track.visemes.length ? track.visemes : null;
     const inSpeech = vis && ts >= vis[0].t - EPS && ts <= vis[vis.length - 1].t + EPS;
-    const viseme = inSpeech ? visemeAt(vis, ts) : base.mouth || 'rest';
+    const viseme = inSpeech ? visemeAt(vis, ts) : heldMouth(track, base, ts);
     const acc = {};
-    Object.keys(base).forEach((j) => { if (!SPECIAL.has(j)) addDelta(acc, j, base[j], 1); });
+    Object.keys(base).forEach((j) => { if (!SPECIAL.has(j)) addDelta(acc, j, asDelta(base[j]), 1); });
     const layers = track.breath === false ? track.layers || [] : [{ cycle: 'breath' }].concat(track.layers || []);
     const cycles = applyLayers(character, Object.assign({}, track, { layers }), ts, o, acc, viseme !== 'rest');
     const blink = blinkAmount(character, track, ts);
@@ -216,7 +231,7 @@
     const parts = {};
     character.parts.forEach((p) => {
       const a = acc[p.id] || { r: 0, x: 0, y: 0, sx: 1, sy: 1 };
-      parts[p.id] = { r: a.r * signOf(p), x: a.x, y: a.y, sx: a.sx, sy: a.sy };
+      parts[p.id] = { r: a.r * signOf(p), x: a.x, y: a.y, sx: clampScale(a.sx), sy: clampScale(a.sy) };
     });
     return {
       t, ts, frame: steps ? Math.round(ts * steps) : Math.round(t * 60), parts, viseme, blink, smile: base.smile, lift: base.lift, cycles,

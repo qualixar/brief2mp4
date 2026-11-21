@@ -29,7 +29,7 @@
       "track": {
         "keys": [
           { "t": 0, "pose": "idle" }, { "t": 1.4, "pose": "think", "ease": "inOut" }, { "t": 4.4, "pose": "think" }, { "t": 4.9, "pose": "surprised", "ease": "out" },
-          { "t": 6.0, "pose": "surprised" }, { "t": 6.7, "pose": "laugh", "ease": "out" }, { "t": 11.6, "pose": "laugh" }, { "t": 12.2, "pose": "wave", "ease": "inOut" }, { "t": 14, "pose": "wave" }
+          { "t": 6.0, "pose": "surprised" }, { "t": 6.7, "pose": "laugh", "ease": "out", "mouth": "AI" }, { "t": 11.6, "pose": "laugh", "mouth": "rest" }, { "t": 12.2, "pose": "wave", "ease": "inOut" }, { "t": 14, "pose": "wave" }
         ],
         "move": [{ "t": 0, "x": 0, "flip": -1 }],
         "layers": [{ "cycle": "talk", "from": 7.1, "to": 9.9 }, { "cycle": "laugh", "from": 6.7, "to": 11.8 }, { "cycle": "wave", "from": 12.4, "to": 14, "steps": 4 }],
