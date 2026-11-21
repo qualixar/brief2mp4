@@ -72,3 +72,12 @@ def tone_and_silence(path: Path, plan: list[tuple[str, float]], freq: float = 22
 def wav_info(path: Path) -> tuple[float, int]:
     with wave.open(str(path), "rb") as wf:
         return wf.getnframes() / wf.getframerate(), wf.getframerate()
+
+
+def ffprobe(path: Path) -> dict:
+    """Width, height and duration of a video."""
+    import subprocess
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height:format=duration", "-of", "json", str(path)],
+                         capture_output=True, text=True, check=True).stdout
+    data = json.loads(out)
+    return {**data["streams"][0], "duration": float(data["format"]["duration"])}

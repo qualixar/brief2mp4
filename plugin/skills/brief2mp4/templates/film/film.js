@@ -12,18 +12,15 @@
   var clamp = function (v, lo, hi) { return Math.max(lo, Math.min(hi, v)); };
   var fmt = function (v, dec) { return v.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }); };
 
-  function splitWords(el) {
+  function splitWords(el) {                                     /* inline spans only: a transformed span would count as its own text block */
     var words = el.textContent.trim().split(/\s+/);
     el.textContent = "";
-    var spans = [];
-    words.forEach(function (w, i) {
-      var outer = document.createElement("span"), inner = document.createElement("span");
-      outer.className = "w"; inner.className = "wi"; inner.textContent = w;
-      outer.appendChild(inner); el.appendChild(outer);
+    return words.map(function (w, i) {
+      var span = document.createElement("span");
+      span.className = "wi"; span.textContent = w; el.appendChild(span);
       if (i < words.length - 1) el.appendChild(document.createTextNode(" "));
-      spans.push(inner);
+      return span;
     });
-    return spans;
   }
   function splitChars(el) {                                     /* typed date stamp: one span per character */
     var html = el.innerHTML.split(/<br\s*\/?>/i), chars = [];
@@ -83,7 +80,10 @@
   function texts(beat, t0, dur) {
     var stamp = beat.querySelector(".stamp"), cap = beat.querySelector(".caption"), credit = beat.querySelector(".credit");
     if (stamp) tl.fromTo(splitChars(stamp), { opacity: 0 }, { opacity: 1, duration: 0.04, stagger: 0.035, ease: "none", immediateRender: false }, t0 + 0.15);
-    if (cap) tl.fromTo(splitWords(cap), { yPercent: 115, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.55, stagger: 0.05, ease: "power3.out", immediateRender: false }, t0 + 0.35);
+    if (cap) {
+      tl.fromTo(splitWords(cap), { opacity: 0 }, { opacity: 1, duration: 0.4, stagger: 0.06, ease: "power2.out", immediateRender: false }, t0 + 0.35);
+      tl.fromTo(cap, { y: 18 }, { y: 0, duration: 0.8, ease: "power3.out", immediateRender: false }, t0 + 0.35);
+    }
     var led = beat.querySelector(".ledger");
     if (led) tl.fromTo(led, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", immediateRender: false }, t0 + 0.3);
     if (credit) tl.fromTo(credit, { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.out", immediateRender: false }, t0 + 0.9);

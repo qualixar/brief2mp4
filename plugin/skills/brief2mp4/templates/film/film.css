@@ -45,8 +45,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--
 .stamp .ch { opacity: 0; }
 
 .caption { position: absolute; left: 96px; top: 830px; width: 1296px; max-height: 136px; font: 400 58px/1.18 var(--serif); color: var(--paper); }
-.caption .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.2em; margin-bottom: -0.2em; }
-.caption .wi { display: inline-block; opacity: 0; }
+.caption .wi { opacity: 0; }                       /* inline words: fade in one by one, the block itself slides up */
 
 .ledger { position: absolute; left: 1440px; top: 330px; width: 384px; opacity: 0; }
 .ledger .n { display: block; font: 700 104px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; color: var(--brass); white-space: nowrap; }
