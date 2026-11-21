@@ -60,6 +60,16 @@
         "legLength": {
           "type": "number",
           "exclusiveMinimum": 0
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Approximate width in units, used to fit the character in a sheet cell."
+        },
+        "face": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Approximate width of the head or face in units, used for close-ups (default 0.3 x height)."
         }
       }
     },
