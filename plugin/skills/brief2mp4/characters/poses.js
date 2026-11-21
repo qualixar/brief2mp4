@@ -38,6 +38,59 @@
   const rad = (d) => (d * Math.PI) / 180;
   const pos = (x) => Math.max(0, x);
 
+
+  // One line for each pose, cycle, mouth shape and ease. scripts/build_character_docs.py copies these into
+  // README-CHARACTERS.md, and a test fails when the README and this file disagree.
+  const POSE_INFO = {
+    idle: 'standing, arms loose, a slight breath',
+    wave: 'near arm raised high behind the head, open palm (add the wave cycle to move the wrist)',
+    point: 'near arm straight out in front, one finger pointing',
+    sit: 'seated: thighs forward, knees bent, the body drops by 46% of the leg length',
+    'run-ready': 'a crouched start, leaning forward, arms bent',
+    jump: 'in the air: arms up, knees tucked, the body lifts by 28% of the leg length',
+    surprised: 'leaning back, arms out, eyes and brows wide',
+    sad: 'head and shoulders down, brows tilted, a frown',
+    laugh: 'leaning back, eyes squeezed shut, a wide smile (add the laugh cycle to shake)',
+    think: 'a hand at the chin, eyes looking up',
+    'fight-ready': 'a low guard, near arm and far arm up, brows down',
+    bow: 'bending forward from the waist, eyes closed, a small smile',
+    strike: 'a lunge: front leg out, near arm thrown forward',
+    hurt: 'thrown back, arms flung, eyes squeezed, a frown',
+    cheer: 'both arms up, a wide smile, a small hop',
+  };
+
+  const CYCLE_INFO = {
+    walk: 'legs swing, arms swing the other way, the body bobs; keep feet planted by moving at B2M.strideSpeed(character, "walk", steps)',
+    run: 'a faster, longer stride with bent arms and a lean; the body leaves the ground between steps',
+    wave: 'the wrist tips one way, then the other (two held drawings); use after a pose that raises an arm',
+    laugh: 'the shoulders and head shake',
+    breath: 'a slow rise and fall of the chest; always on unless the track sets breath: false',
+    talk: 'a layer with no drawings of its own: head nods and small arm gestures while the mouth speaks, 7 beats a second (rate)',
+    blink: 'not a layer: every character blinks every 2.5 to 5.7 s, from a seeded hash; the track sets blink: false to stop it',
+  };
+
+  const VISEME_INFO = {
+    rest: 'closed mouth (a smile or frown comes from the pose)',
+    AI: 'wide open (ah, i, my)',
+    E: 'wide, teeth showing (ee, eh)',
+    O: 'round and open (oh, ow)',
+    U: 'small and round (oo, w)',
+    MBP: 'lips pressed together (m, b, p)',
+    FV: 'top teeth on the lower lip (f, v)',
+    L: 'tongue up behind the teeth (l, th)',
+    etc: 'half open, teeth showing (every other consonant)',
+  };
+
+  const EASE_INFO = {
+    linear: 'constant speed',
+    in: 'starts slow, ends fast',
+    out: 'starts fast, settles slowly (for arrivals)',
+    inOut: 'slow at both ends (the default)',
+    sine: 'a gentle inOut',
+    backOut: 'overshoots a little, then settles',
+    hold: 'stays on the earlier pose until the key time, then snaps',
+  };
+
   // A cycle is N drawings. fn(phase) gives joint offsets (added to the pose) for phase 0..1.
   const CYCLES = {
     walk: {
@@ -92,6 +145,6 @@
     etc: { w: 0.88, open: 0.34, round: 0, teeth: 0.8 },
   };
 
-  Object.assign(B, { VISEMES, POSES, SIGN, CYCLES, VISEME_SHAPE, rad });
+  Object.assign(B, { VISEMES, POSES, SIGN, CYCLES, VISEME_SHAPE, POSE_INFO, CYCLE_INFO, VISEME_INFO, EASE_INFO, rad });
   if (typeof module !== 'undefined' && module.exports) module.exports = B;
 })(globalThis);
