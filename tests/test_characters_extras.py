@@ -64,7 +64,7 @@ const box = (v) => { const p = B2M.pose(ch, { keys: [{ t: 0, pose: 'idle' }], bl
 console.log(JSON.stringify({ rest: box('rest'), ai: box('AI') }));
 """ % WORLD)
     assert r["rest"]["gapInside"], "a shut jaw covers the gap completely"
-    assert r["ai"]["jawBottom"] > r["rest"]["jawBottom"] + 3, "an open jaw drops"
+    assert not r["ai"]["gapInside"], "an open jaw swings away from its gap, which shows as light"
 
 
 def test_the_readme_no_longer_says_a_lip_synced_human_shows_no_speech_in_shadow_puppet():
@@ -269,3 +269,28 @@ def test_the_scene_schema_accepts_walk_and_light_and_the_readme_recipes_are_vali
         assert validate_scene.validate_scene(s, EX09) == [], name
     jump_off = json.loads(recipes[2][1])
     assert any(k.get("walk") for k in jump_off["move"]) and all(k["t"] >= 0 for k in jump_off["move"])
+
+
+@needs_node
+def test_the_jaw_gap_is_a_small_wedge_at_the_front_of_the_face_for_every_mouth_shape():
+    """The light gap a jaw uncovers must read as a mouth, never as the head splitting: it stays in the front 30% of the head's width."""
+    r = js("""
+const skin = B2M.SKINS['shadow-puppet'], out = {}, w = %s;
+const box = (items, part) => { let b = null; items.filter((i) => i.part === part && i.kind === 'path' && i.fill).forEach((i) => { const q = w(i);
+  b = b ? { x0: Math.min(b.x0, q.x0), y0: Math.min(b.y0, q.y0), x1: Math.max(b.x1, q.x1), y1: Math.max(b.y1, q.y1) } : q; }); return b; };
+for (const name of ['child', 'adult', 'tomato']) {
+  const ch = require(process.argv[1] + '/../cast/' + name + '.json');
+  out[name] = {};
+  B2M.VISEMES.forEach((v) => {
+    const p = B2M.pose(ch, { keys: [{ t: 0, pose: 'idle' }], blink: false, breath: false, visemes: [{ t: 0, v }, { t: 9, v: 'rest' }] }, 0.5, { steps: 12 });
+    const items = B2M.layout(ch, skin, p, { x: 0, y: 0, scale: 1 }), head = box(items, 'head'), gap = box(items, 'jawGap'), jaw = box(items, 'jaw');
+    out[name][v] = { fromFront: (head.x1 - gap.x0) / (head.x1 - head.x0), gapW: gap.x1 - gap.x0, gapH: gap.y1 - gap.y0, jawFromFront: (head.x1 - jaw.x0) / (head.x1 - head.x0), headW: head.x1 - head.x0 };
+  });
+}
+console.log(JSON.stringify(out));
+""" % WORLD)
+    for name, shapes in r.items():
+        for v, o in shapes.items():
+            assert o["fromFront"] <= 0.30, f"{name} {v}: the gap reaches back {o['fromFront']:.0%} of the head width from the front edge (allowed 30%)"
+            assert o["gapW"] < 0.35 * o["headW"] and o["gapH"] < 0.25 * o["headW"], f"{name} {v}: the gap is a small wedge, not a slash ({o['gapW']:.0f} x {o['gapH']:.0f})"
+        assert shapes["AI"]["fromFront"] > 0.05, f"{name}: the gap sits behind the front edge, at the mouth corner, not on the profile"

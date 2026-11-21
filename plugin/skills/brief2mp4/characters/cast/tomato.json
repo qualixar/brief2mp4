@@ -165,15 +165,15 @@
        {"type": "path", "d": "M20 -176 Q30 -184 42 -174", "fill": null, "stroke": "ink", "sw": 4.4, "role": "line"}
      ]
     },
-    {"id": "jawGap", "parent": "torso", "pivot": [-14, -112], "z": 15.3,
+    {"id": "jawGap", "parent": "torso", "pivot": [19, -112], "z": 15.3,
      "variants": {
-       "shadow": {"shapes": [{"type": "poly", "pts": [[-11.7, -111.1], [31.5, -111.1], [30.6, -103.0], [22.5, -96.7], [6.3, -94.9], [-6.3, -98.5], [-12.6, -104.8]], "smooth": false, "fill": "white", "stroke": null, "role": "hole", "shade": false}]}
+       "shadow": {"shapes": [{"type": "poly", "pts": [[19.7, -111.3], [35.0, -111.3], [34.1, -104.1], [27.8, -98.7], [21.5, -100.5], [18.8, -105.9]], "smooth": false, "fill": "white", "stroke": null, "role": "hole", "shade": false}]}
      },
      "shapes": []
     },
-    {"id": "jaw", "parent": "torso", "pivot": [-14, -112], "z": 15.4, "mouth": {"kind": "jaw", "maxOpen": 32},
+    {"id": "jaw", "parent": "torso", "pivot": [19, -112], "z": 15.4, "mouth": {"kind": "jaw", "maxOpen": 46},
      "variants": {
-       "shadow": {"shapes": [{"type": "poly", "pts": [[-14, -112], [34, -112], [33, -103], [24, -96], [6, -94], [-8, -98], [-15, -105]], "smooth": false, "fill": "ink", "stroke": null, "shade": false}]}
+       "shadow": {"shapes": [{"type": "poly", "pts": [[19, -112], [36, -112], [35, -104], [28, -98], [21, -100], [18, -106]], "smooth": false, "fill": "ink", "stroke": null, "shade": false}]}
      },
      "shapes": []
     },
