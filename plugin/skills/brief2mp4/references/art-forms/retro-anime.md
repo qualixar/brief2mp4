@@ -58,12 +58,26 @@ This is the look from `art-forms/looks-toon.js`, which `tests/art_forms/check_lo
     city(430, 40, 120, '#4a1a6e', true, 11, 58); city(470, 28, 78, '#1b0b2e', true, 21, 70);
     g.fillStyle = '#0f0620'; g.fillRect(0, 462, W, 80); g.fillStyle = '#ff8a3d'; g.fillRect(0, 462, W, 3);   // the rooftop, with a rim of sunset light
     const bloom = g.createRadialGradient(480, sunY, 20, 480, sunY, 330); bloom.addColorStop(0, 'rgba(255,220,130,.5)'); bloom.addColorStop(1, 'rgba(255,160,90,0)'); g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = bloom; g.fillRect(0, 0, W, H); g.restore();
-    const hx = 300, by = 470, sway = Math.sin(ts * 3) * 6; g.save(); g.translate(hx, by); g.scale(1.45, 1.45);
-    polyFill(g, [[-40, -150], [40, -150], [32, -70], [-32, -70]], '#2f4bb5'); polyFill(g, [[6, -150], [40, -150], [32, -70], [6, -70]], '#1e327f');
-    g.fillStyle = '#10102a'; g.fillRect(-28, -72, 24, 72); g.fillRect(4, -72, 24, 72);
-    for (let i = 0; i < 3; i++) polyFill(g, [[26, -186], [70 + i * 26 + sway * (i + 1), -194 + i * 14 + Math.sin(ts * 4 + i) * 7], [110 + i * 30 + sway * 2, -170 + i * 18], [28, -170 + i * 8]], '#1b1b3a');   // hair streaming in the wind
-    disc(g, 0, -184, 32, '#1b1b3a'); g.fillStyle = '#4a56a0'; g.beginPath(); g.arc(0, -184, 32, Math.PI * 1.15, Math.PI * 1.65); g.arc(0, -178, 24, Math.PI * 1.65, Math.PI * 1.15, true); g.fill();
-    path(g, Array.from({ length: 12 }, (_, i) => [34 + i * 14 + sway * i * 0.2, -146 + Math.sin(ts * 5 + i * 0.7) * 9 - i * 1.5])); g.lineWidth = 12; g.strokeStyle = '#e8363f'; g.lineJoin = 'round'; path(g, Array.from({ length: 12 }, (_, i) => [34 + i * 14 + sway * i * 0.2, -146 + Math.sin(ts * 5 + i * 0.7) * 9 - i * 1.5]), false); g.stroke();   // the scarf
+    const sway = Math.sin(ts * 3.2) * 5, wave = (i, k) => Math.sin(ts * 4.5 + i * 0.8 + k) ;
+    g.save(); g.translate(330, 472); g.scale(1.0, 1.0);   // a figure from behind in a jacket, standing on the roof edge: about 45% of the frame's height
+    for (const [d, ax, ay] of [[-1, -22, -100], [1, 22, -100]]) { const kx = d * 24; celPart(g, [[ax - 15, ay], [ax + 15, ay], [kx + 12, -4], [kx - 12, -4]], '#2a3068', '#171b40', '#ff9a63', 0.55); celPart(g, [[kx - 16, -6], [kx + 16, -6], [kx + 22 * d, 8], [kx - 14 * d, 8]], '#12122e', '#0a0a1c', '#ff9a63', 0.5); }   // legs and shoes
+    celPart(g, [[-50, -178], [50, -178], [42, -98], [46, -88], [-46, -88], [-42, -98]], '#2f4bb5', '#1d2d78', '#ffb36b', 0.52);   // the jacket, wider at the shoulders and flared at the hem
+    celPart(g, [[-28, -178], [-18, -204], [18, -204], [28, -178], [0, -170]], '#27408f', '#17265a', '#ffb36b', 0.5);   // a raised collar
+    celPart(g, taper([[-46, -172], [-62, -132], [-40, -98]], 12, 10), '#2f4bb5', '#1d2d78', '#ffb36b', 0.55); celPart(g, [[-48, -106], [-34, -92], [-30, -104], [-44, -114]], '#e2a381', '#a8704f', '#ffb36b', 0.5);   // the left arm, hand in a pocket
+    celPart(g, taper([[48, -172], [66, -132], [60, -92]], 12, 10), '#2f4bb5', '#1d2d78', '#ffb36b', 0.3); disc(g, 60, -86, 9, '#e2a381');   // the right arm hanging, a fist
+    celPart(g, [[-10, -204], [10, -204], [12, -190], [-12, -190]], '#e2a381', '#a8704f', '#ffb36b', 0.5);   // the neck
+    for (let i = 0; i < 2; i++) {   // the scarf: a wrap at the collar and two tails streaming to the right
+      const tail = Array.from({ length: 9 }, (_, j) => [14 + j * 21, -192 + i * 8 + wave(j, i * 1.4) * (4 + j * 1.6) + j * 1.5]);
+      celPart(g, taper(tail, 9 - i * 2, 3), i ? '#c92b36' : '#e8363f', '#8f1c28', '#ffc08a', 0.0);
+    }
+    celPart(g, [[-30, -196], [30, -196], [28, -182], [-28, -182]], '#e8363f', '#a8202e', '#ffc08a', 0.5);
+    const head = ellipseLine(0, -224, 29, 31); celPart(g, head, '#1b1b3a', '#0e0e24', '#ffb36b', 0.5);
+    for (let i = 0; i < 8; i++) {   // spiky hair streaming to the right, each lock a tapering blade that waves on twos
+      const a = -2.5 + i * 0.36, bx = Math.cos(a) * 24, by = -224 + Math.sin(a) * 26, len = 44 + (i % 3) * 14, w = wave(i, 0) * 11;
+      celPart(g, [[bx - 9, by + 6], [bx + len * 0.6 + sway, by - 8 + w - i * 1.5], [bx + len + sway * 1.4, by + 6 + w * 1.4 + i * 2], [bx + 9, by + 13]], '#1b1b3a', '#0e0e24', '#ffb36b', 0.35 + (i % 2) * 0.1);
+    }
+    g.fillStyle = '#4a56a0'; g.beginPath(); g.arc(0, -224, 30, Math.PI * 1.22, Math.PI * 1.7); g.arc(0, -214, 22, Math.PI * 1.7, Math.PI * 1.22, true); g.fill();   // a hard highlight band on the hair
+    celPart(g, [[22, -222], [30, -214], [26, -204], [20, -210]], '#e2a381', '#a8704f', '#ffb36b', 0.4);   // an ear
     g.restore();
     speckle(g, W, H, 40 + (f % 6), 55, [255, 240, 220]);
   } }
