@@ -11,10 +11,11 @@
 #   --fps N        expected frame rate (default 30)
 #   --lufs N       loudness target (default -14), checked within +/-1.5 LU
 #   --silent-ok    a silent soundtrack is what the brief asked for
+#   --joins T,T    times (s) where separately rendered acts were joined: each is checked for a pop (SSIM)
 set -uo pipefail
 
 FILE="${1:-}"; shift || true
-SECONDS_="" SIZE="1920x1080" FPS=30 LUFS=-14 SILENT_OK=0
+SECONDS_="" SIZE="1920x1080" FPS=30 LUFS=-14 SILENT_OK=0 JOINS=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --seconds) SECONDS_="$2"; shift 2 ;;
@@ -22,6 +23,7 @@ while [[ $# -gt 0 ]]; do
     --fps) FPS="$2"; shift 2 ;;
     --lufs) LUFS="$2"; shift 2 ;;
     --silent-ok) SILENT_OK=1; shift ;;
+    --joins) JOINS="$2"; shift 2 ;;
     *) echo "check_delivery.sh: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -74,8 +76,20 @@ fi
 # such as #101114 is not mistaken for a black frame.
 black="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "blackdetect=d=0.5:pic_th=0.98:pix_th=0.03" -an -f null - 2>&1 | grep -c black_start || true)"
 [[ "$black" == 0 ]] && pass "no black stretch over 0.5 s" || warn "$black black stretch(es) over 0.5 s: intended?"
-frozen="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "freezedetect=n=0.001:d=1.5" -an -f null - 2>&1 | grep -c freeze_start || true)"
-[[ "$frozen" == 0 ]] && pass "nothing frozen over 1.5 s" || warn "$frozen frozen stretch(es) over 1.5 s: expected where the brief asks for a hold (say so in REPORT.md), otherwise dead air"
+
+# Seams and freezes: one-frame flicker, pops at joins, cut classification, true freezes (check_seams.py).
+# Its PASS / WARN / FAIL / INFO lines are printed as they are; a FAIL counts here too.
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY="$(command -v python3 || command -v python || true)"
+if [[ -z "$PY" ]] || ! "$PY" -c "import sys; sys.exit(sys.version_info < (3, 8))" 2>/dev/null; then
+  warn "seam and freeze checks skipped: Python 3.8+ not found (install it, then rerun)"
+else
+  seam_args=("$FILE")
+  [[ -n "$JOINS" ]] && seam_args+=(--joins "$JOINS")
+  seams="$("$PY" "$HERE/check_seams.py" "${seam_args[@]}" 2>&1)" || true
+  echo "$seams"
+  FAILS=$((FAILS + $(echo "$seams" | grep -c '^FAIL' || true)))
+fi
 
 echo "----"
 if [[ "$FAILS" == 0 ]]; then echo "RESULT: PASS ($FILE)"; exit 0; else echo "RESULT: FAIL, $FAILS check(s) ($FILE)"; exit 1; fi
