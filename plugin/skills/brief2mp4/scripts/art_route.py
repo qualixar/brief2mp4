@@ -40,8 +40,15 @@ SUBJECTS = [
 ]
 
 
-# a brief with characters or dialogue also needs the character kit, whichever look it picks
-CHARACTERS = re.compile(r"\b(characters?|dialogue|dialog|conversation|skit|mascot|lip[- ]?sync(?:ed)?|short story|animated story|cartoon|talks? (?:to|with)|talking|speaks?|says)\b", re.I)
+# A brief with characters or dialogue also needs the character kit, whichever look it picks. It takes a character noun
+# or a scripted scene, never a bare "says" or "characters": "a chart that says revenue doubled, 40 characters per line" has none.
+_PEOPLE = r'(?:child|kid|boy|girl|man|woman|crow|bird|fox|dog|cat|robot|chef|tomato|mascot|hero|villain|knight|king|queen|monkey|owl)'
+CHARACTERS = re.compile(
+    r"\b(?:dialogue|dialog|conversation|skit|mascot|lip[- ]?sync(?:ed)?|short story|animated story|cartoon)\b"     # words that mean a scripted scene
+    r"|\b(?:a|an|the|our|my|your|his|her|their|two|three|four|five|six|several|main|animated|cartoon|story)\s+(?:[a-z-]+\s+)?characters?\b"
+    r"(?!\s+(?:per|long|limit|max|maximum|wide|count|in\s+(?:a|the|each|every)\b))"                              # not "characters per line"
+    r"|\b" + _PEOPLE + r"s?\s+(?:says|said|asks|replies|shouts|whispers|answers|talks|speaks)\b"                  # a someone who talks
+    r"|\btalking\s+" + _PEOPLE + r"|\btalking\s+(?:character|animal)s?\b", re.I)
 KIT = 'characters/README-CHARACTERS.md'
 KIT_SKINS = ('line-art', 'paper-cutout', 'shadow-puppet', 'cel-shaded', 'motion-comic', 'flat-explainer')
 

@@ -18,7 +18,8 @@ from pathlib import Path
 
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema" / "character.schema.json"
 TYPES = {"object": dict, "array": list, "string": str, "boolean": bool, "null": type(None)}
-BUILTIN_COLOURS = {"ink", "mouth", "teeth", "tongue", "white"}
+# The colour names every character may use without defining them (shapes.js DEFAULT_PALETTE has the same names; a test keeps them equal).
+BUILTIN_COLOURS = {"ink", "mouth", "teeth", "tongue", "lip", "white"}
 NEEDS = {"path": ["d"], "ellipse": ["c", "r"], "circle": ["c", "r"], "capsule": ["a", "b", "ra"], "rect": ["x", "y", "w", "h"], "poly": ["pts"]}
 
 
@@ -152,8 +153,35 @@ def _shapes_in(where: str, shapes: list, palette: set) -> list[str]:
     return errors
 
 
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+ID_RE = re.compile(r"^[a-z][a-z0-9-]*$")
+
+
+def picture_problem(src: str, base_dir: Path | None) -> str | None:
+    """Why a picture reference cannot be used, or None. A file must be a real PNG or WebP that sits inside the
+    character file's folder (no ../ and no absolute path); a data: URI must be data:image/png or data:image/webp, base64."""
+    if src.startswith("data:"):
+        if not re.match(r"data:image/(png|webp);base64,[A-Za-z0-9+/=]*$", src):
+            return "only data:image/png;base64, and data:image/webp;base64, pictures are accepted"
+        return None
+    if base_dir is None:
+        return None
+    root = base_dir.resolve()
+    target = (root / src).resolve()
+    if target != root and root not in target.parents:
+        return f"picture '{src}' must stay inside the character file's folder"
+    if not target.is_file():
+        return f"picture '{src}' not found next to the character file"
+    with open(target, "rb") as fh:
+        head = fh.read(12)
+    ext = target.suffix.lower()
+    if not ((ext == ".png" and head[:8] == PNG_MAGIC) or (ext == ".webp" and head[:4] == b"RIFF" and head[8:12] == b"WEBP")):
+        return f"picture '{src}' is not a PNG or WebP file (its first bytes are not a PNG or WebP header)"
+    return None
+
+
 def _images_in(where: str, holder: dict, base_dir: Path | None) -> list[str]:
-    """Check the picture files a part, variant or mouth block points at (when the file's folder is known)."""
+    """Check the pictures a part, variant or mouth block points at (files are checked when the file's folder is known)."""
     errors: list[str] = []
     mouth = holder.get("mouth") or {}
     if mouth.get("kind") == "images" and "rest" not in mouth.get("images", {}):
@@ -161,9 +189,9 @@ def _images_in(where: str, holder: dict, base_dir: Path | None) -> list[str]:
     pictures = [holder["image"]] if "image" in holder else []
     pictures += list((mouth.get("images") or {}).values())
     for pic in pictures:
-        src = pic.get("src", "")
-        if base_dir is not None and not src.startswith("data:") and not (base_dir / src).is_file():
-            errors.append(f"{where}: picture '{src}' not found next to the character file")
+        problem = picture_problem(pic.get("src", ""), base_dir)
+        if problem:
+            errors.append(f"{where}: {problem}")
     return errors
 
 

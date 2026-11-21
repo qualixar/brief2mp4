@@ -19,23 +19,34 @@ import validate  # noqa: E402
 
 KIT = Path(__file__).resolve().parent
 SCHEMA = json.loads((KIT / "schema" / "scene.schema.json").read_text(encoding="utf-8"))
-BUILTIN_COLOURS = {"ink", "mouth", "teeth", "tongue", "lip", "white"}
+BUILTIN_COLOURS = validate.BUILTIN_COLOURS
 
 
-def character_ids() -> list[str]:
-    return sorted(p.stem for p in (KIT / "cast").glob("*.json"))
+def character_ids(extra: dict | None = None) -> list[str]:
+    return sorted({p.stem for p in (KIT / "cast").glob("*.json")} | set(extra or {}))
 
 
-def _prop_ids(character: str) -> list[str]:
+def _prop_ids(character: str, extra: dict | None = None) -> list[str]:
+    if extra and character in extra:
+        return [p["id"] for p in extra[character]["parts"] if p.get("prop")]
     path = KIT / "cast" / f"{character}.json"
     if not path.is_file():
         return []
     return [p["id"] for p in json.loads(path.read_text(encoding="utf-8"))["parts"] if p.get("prop")]
 
 
-def _cast_errors(scene: dict, base_dir: Path | None) -> list[str]:
+def _visemes_errors(where: str, visemes: list) -> list[str]:
+    """Mouth keys must run forwards in time: the rig reads them with a binary search."""
+    times = [k.get("t") for k in visemes if isinstance(k, dict)]
+    for n, (a, b) in enumerate(zip(times, times[1:])):
+        if isinstance(a, (int, float)) and isinstance(b, (int, float)) and b < a:
+            return [f"{where}: keys must be in time order, but key {n + 1} ({b} s) comes after key {n} ({a} s); sort them by t"]
+    return []
+
+
+def _cast_errors(scene: dict, base_dir: Path | None, extra: dict | None = None) -> list[str]:
     errors: list[str] = []
-    ids = character_ids()
+    ids = character_ids(extra)
     seen: set[str] = set()
     for i, member in enumerate(scene.get("cast", [])):
         where = f"scene.cast[{i}]"
@@ -43,11 +54,14 @@ def _cast_errors(scene: dict, base_dir: Path | None) -> list[str]:
             errors.append(f"{where}.id: '{member['id']}' is used twice; every cast member needs its own id")
         seen.add(member.get("id"))
         if member.get("character") not in ids:
-            errors.append(f"{where}.character: {member.get('character')!r} is not a character. Allowed: {', '.join(ids)} (files in characters/cast/)")
+            errors.append(f"{where}.character: {member.get('character')!r} is not a character. Allowed: {', '.join(ids)} (files in characters/cast/). "
+                          f"To use your own character file, pass --character-file FILE.json to character_project.py")
         track = member.get("track", {})
         track = {"keys": track} if isinstance(track, list) else track
         errors += validate.check(track, SCHEMA["$defs"]["track"], f"{where}.track")
-        allowed = _prop_ids(member.get("character", ""))
+        allowed = _prop_ids(member.get("character", ""), extra)
+        if isinstance(track, dict) and isinstance(track.get("visemes"), list):
+            errors += _visemes_errors(f"{where}.track.visemes", track["visemes"])
         for n, prop in enumerate(track.get("props", []) if isinstance(track, dict) else []):
             name = prop if isinstance(prop, str) else prop.get("id")
             if name not in allowed:
@@ -76,12 +90,13 @@ def _palette_errors(scene: dict) -> list[str]:
     return errors
 
 
-def validate_scene(scene: dict, base_dir: Path | None = None) -> list[str]:
-    """Return every problem in a scene; an empty list means it is valid. base_dir is the scene file's folder."""
+def validate_scene(scene: dict, base_dir: Path | None = None, extra_characters: dict | None = None) -> list[str]:
+    """Return every problem in a scene; an empty list means it is valid. base_dir is the scene file's folder;
+    extra_characters maps ids to character files loaded with --character-file."""
     errors = validate.check(scene, SCHEMA, "scene")
     if not isinstance(scene.get("cast"), list) or not isinstance(scene.get("palette"), dict):
         return errors
-    errors += _cast_errors(scene, base_dir) + _palette_errors(scene)
+    errors += _cast_errors(scene, base_dir, extra_characters) + _palette_errors(scene)
     for i, cap in enumerate(scene.get("captions", [])):
         if isinstance(cap, dict) and isinstance(cap.get("from"), (int, float)) and isinstance(cap.get("to"), (int, float)):
             if cap["to"] <= cap["from"]:

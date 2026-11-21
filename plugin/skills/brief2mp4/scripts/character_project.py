@@ -7,6 +7,7 @@
 The scene file names the cast, their tracks, the backdrop and the captions (see characters/stage.js). A track may
 carry "visemesFrom": { "words": "words.json", "from": 3.3, "to": 6, "lang": "en" }; it is turned into the
 lip-sync track with scripts/lipsync.py. The same scene renders in any skin: pass --skin, or leave the scene's own.
+Your own characters (SVG-style shapes or PNG part images) join a scene with --character-file FILE.json, repeatable.
 
 As a module:
 
@@ -23,6 +24,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -30,6 +32,10 @@ from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
 KIT = SKILL / "characters"
+sys.path.insert(0, str(KIT))
+import validate  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lipsync  # noqa: E402,F401
 RUNTIME = ["poses.js", "rig.js", "shapes.js", "render.js", "skins.js", "skins-extra.js", "stage.js", "sheet.js"]
 
 
@@ -37,10 +43,18 @@ def cast_ids() -> list[str]:
     return sorted(p.stem for p in (KIT / "cast").glob("*.json"))
 
 
+def check_id(cid: str) -> str:
+    """An id ends up in file names, so it must be a plain name: lower case letters, digits and hyphens."""
+    import re
+    if not isinstance(cid, str) or not re.match(r"^[a-z][a-z0-9-]*$", cid):
+        raise SystemExit(f"character_project: {cid!r} is not a character id (lower case letters, digits and hyphens, starting with a letter)")
+    return cid
+
+
 def load_cast(ids: list[str]) -> dict[str, dict]:
     cast = {}
     for cid in ids:
-        path = KIT / "cast" / f"{cid}.json"
+        path = KIT / "cast" / f"{check_id(cid)}.json"
         if not path.is_file():
             raise SystemExit(f"character_project: no character '{cid}'. Available: {', '.join(cast_ids())}")
         cast[cid] = json.loads(path.read_text(encoding="utf-8"))
@@ -49,9 +63,12 @@ def load_cast(ids: list[str]) -> dict[str, dict]:
 
 def _inline(pic: dict, base: Path) -> None:
     src = pic.get("src", "")
-    if src and not src.startswith("data:"):
+    problem = validate.picture_problem(src, base)
+    if problem:
+        raise ValueError(problem)
+    if not src.startswith("data:"):
         mime = "image/webp" if src.lower().endswith(".webp") else "image/png"
-        pic["src"] = f"data:{mime};base64," + base64.b64encode((base / src).read_bytes()).decode("ascii")
+        pic["src"] = f"data:{mime};base64," + base64.b64encode((base / src).resolve().read_bytes()).decode("ascii")
 
 
 def inline_images(character: dict, base: Path) -> dict:
@@ -66,14 +83,25 @@ def inline_images(character: dict, base: Path) -> dict:
 
 
 def load_file(path: Path) -> dict:
-    """Load a character file from anywhere (your own art, the image-parts demo) with its pictures inlined."""
+    """Load a character file from anywhere (your own art, the image-parts demo): validate it, then inline its pictures.
+    Raises ValueError listing the problems (a picture outside the file's folder, a file that is not a PNG or WebP...)."""
     path = Path(path)
-    return inline_images(json.loads(path.read_text(encoding="utf-8")), path.resolve().parent)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    problems = validate.validate_character(data, path.resolve().parent)
+    if problems:
+        raise ValueError(f"{path}: {len(problems)} problem(s):\n  " + "\n  ".join(problems))
+    return inline_images(data, path.resolve().parent)
+
+
+def vendor_command(project: Path, three: bool = False, windows: bool | None = None) -> list[str]:
+    """The command that copies GSAP (and three.js) into a project: bash on macOS and Linux, PowerShell on Windows."""
+    if os.name == "nt" if windows is None else windows:
+        return ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SKILL / "scripts" / "vendor_libs.ps1"), "-Project", str(project)] + (["-Three"] if three else [])
+    return ["bash", str(SKILL / "scripts" / "vendor_libs.sh"), str(project)] + (["--three"] if three else [])
 
 
 def vendor(project: Path, three: bool = False) -> None:
-    cmd = ["bash", str(SKILL / "scripts" / "vendor_libs.sh"), str(project)] + (["--three"] if three else [])
-    done = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+    done = subprocess.run(vendor_command(project, three), capture_output=True, text=True, encoding="utf-8")
     if done.returncode != 0:
         raise SystemExit(f"character_project: vendoring GSAP failed (needs npm and the network once):\n{done.stderr[-600:]}")
 
@@ -111,110 +139,57 @@ class SceneError(ValueError):
 
 
 def resolve_scene(scene: dict, base: Path) -> dict:
-    """Expand each track's visemesFrom into a lip-sync track, and check the cast and skin names."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    """Expand each track's visemesFrom into a lip-sync track. A speaker whose words give no mouth shapes at all is an error."""
     import lipsync
-    for member in scene["cast"]:
+    problems = []
+    for n, member in enumerate(scene["cast"]):
         track = member.get("track")
         spec = isinstance(track, dict) and track.pop("visemesFrom", None)
         if spec:
             words = [w for w in lipsync.load_words(base / spec["words"]) if spec["from"] <= w["start"] < spec["to"]]
-            track["visemes"] = lipsync.build_track(words, scene.get("fps", 30), spec.get("lang", "en"))
+            skipped: list[str] = []
+            track["visemes"] = lipsync.build_track(words, scene.get("fps", 30), spec.get("lang", "en"), skipped)
+            for text in skipped:
+                print(f'warning: scene.cast[{n}] ({member["id"]}): no mouth shapes for the word "{text}"; it is left out', file=sys.stderr)
+            if words and not track["visemes"]:
+                problems.append(f"scene.cast[{n}].track.visemesFrom: none of the {len(words)} word(s) between {spec['from']} s and {spec['to']} s gives a mouth shape; "
+                                f"build the track from the voice's loudness instead: lipsync.py --wav voice.wav, and give it as visemes")
+    if problems:
+        raise SceneError(problems)
     return scene
 
 
-_PATHS_JS = """
+_REPORT_JS = """
 const fs = require('fs'); const B2M = require(process.argv[1]);
-const scene = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-const skin = B2M.SKINS[scene.skin], W = scene.width;
-const out = {};
-const hexToRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-const lumOf = (rgb) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
-const colourOf = (fill, x, y) => {
-  if (typeof fill === 'string') return /^#[0-9a-f]{6}$/i.test(fill) ? hexToRgb(fill) : null;
-  if (fill && fill.grad === 'radial') {
-    const k = Math.min(1, Math.max(0, (Math.hypot(x - fill.cx, y - fill.cy) - (fill.r0 || 0)) / (fill.r - (fill.r0 || 0))));
-    let i = 0; while (i < fill.stops.length - 2 && fill.stops[i + 1][0] < k) i++;
-    const a = fill.stops[i], b = fill.stops[i + 1], u = Math.min(1, Math.max(0, (k - a[0]) / (b[0] - a[0] || 1))), p = hexToRgb(a[1]), q = hexToRgb(b[1]);
-    return p.map((v, n) => v + (q[n] - v) * u);
-  }
-  return null;
-};
-const inside = (d, x, y) => {
-  const pts = []; B2M.parsePath(d).forEach((s) => s.pts.forEach((p) => pts.push(p)));
-  let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) if ((pts[i][1] > y) !== (pts[j][1] > y) && x < ((pts[j][0] - pts[i][0]) * (y - pts[i][1])) / (pts[j][1] - pts[i][1]) + pts[i][0]) c = !c;
-  return c;
-};
-const backdrop = B2M.createStage(Object.assign({}, scene, { cast: [], captions: [] }), {}).items(0).filter((i) => i.kind === 'path' && i.d && !['panel', 'caption'].includes(i.part));
-const behind = (x, y) => { for (let n = backdrop.length - 1; n >= 0; n--) { const it = backdrop[n], c = colourOf(it.fill, x, y); if (c && inside(it.d, x, y)) return c; } return null; };
-scene.cast.forEach((m) => {
-  const ch = require(process.argv[1] + '/../cast/' + m.character + '.json'), home = B2M.homeOf(m, scene), x = [], flip = [], y = [];
-  for (let t = 0; t <= scene.duration + 1e-9; t += 0.1) {
-    const p = B2M.pose(ch, m.track || {}, t, { home, scale: m.scale || 1 }).move;
-    x.push(p.x === null ? home.x : p.x); flip.push(p.flip); y.push(p.y === null ? home.y : p.y);
-  }
-  // the colour the figure mostly is (weighted by area) and the colours of the background behind its middle and its feet
-  const posed = B2M.pose(ch, m.track || {}, 0, { home, scale: m.scale || 1, steps: skin.steps, smooth: !skin.steps });
-  const items = B2M.layout(ch, skin, posed, { x: home.x, y: home.y, scale: m.scale || 1 }).filter((i) => i.kind === 'path' && typeof i.fill === 'string' && !['fx', 'rod'].includes(i.part));
-  let sum = [0, 0, 0], wsum = 0, box = null;
-  items.forEach((i) => {
-    const q = B2M.pathBounds(B2M.mapPoints(i.d, (px, py) => [i.m[0] * px + i.m[2] * py + i.m[4], i.m[1] * px + i.m[3] * py + i.m[5]])), c = colourOf(i.fill, 0, 0), a = Math.max(1, (q.x1 - q.x0) * (q.y1 - q.y0));
-    box = box ? { x0: Math.min(box.x0, q.x0), y0: Math.min(box.y0, q.y0), x1: Math.max(box.x1, q.x1), y1: Math.max(box.y1, q.y1) } : q;
-    if (c) { sum = sum.map((v, n) => v + c[n] * a); wsum += a; }
-  });
-  const tone = wsum ? sum.map((v) => v / wsum) : null, spots = box ? [[(box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2], [(box.x0 + box.x1) / 2, box.y1 - 4]] : [];
-  const bg = spots.map(([sx, sy]) => behind(sx, sy)).filter(Boolean);
-  const walks = []; const keys = ((m.track && m.track.move) || []).slice().sort((a, b) => a.t - b.t);
-  for (let n = 1; n < keys.length; n++) if (keys[n].walk) {
-    const x0 = keys[n - 1].x === undefined ? home.x : keys[n - 1].x, x1 = keys[n].x === undefined ? home.x : keys[n].x;
-    if (x0 !== x1 && keys[n].t > keys[n - 1].t) walks.push({ from: keys[n - 1].t, to: keys[n].t, steps: B2M.walkSteps(ch, Math.abs(x1 - x0), keys[n].t - keys[n - 1].t, m.scale || 1) });
-  }
-  out[m.id] = { x, y, flip, half: ((ch.proportions.width || ch.proportions.height * 0.6) * (m.scale || 1)) / 2, tone, bg, walks, lum: tone ? lumOf(tone) : null, bgLum: bg.map(lumOf) };
-});
-console.log(JSON.stringify(out));
+const scene = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')), cast = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+console.log(JSON.stringify(B2M.sceneReport(scene, cast)));
 """
 
 
-def _walk_scene(scene: dict) -> dict:
-    """Where each cast member stands every 0.1 s, which way it faces, its tone and the tone behind it, and its walks, all
-    worked out by the same rig and stage that render the film."""
+def _walk_scene(scene: dict, characters: dict[str, dict]) -> dict:
+    """Run the kit's own scene report (B2M.sceneReport): where each cast member stands, which way it faces, its walks, its
+    colour against the background and how many lines each caption needs, worked out by the rig and stage that render the film."""
     import tempfile
     node = shutil.which("node")
     if not node:
         raise SystemExit("character_project: node not found; install Node.js 22 or newer")
     with tempfile.TemporaryDirectory() as tmp:
-        f = Path(tmp) / "scene.json"
-        f.write_text(json.dumps(scene), encoding="utf-8")
-        done = subprocess.run([node, "-e", _PATHS_JS, str(KIT / "index.js"), str(f)], capture_output=True, text=True, encoding="utf-8")
+        (Path(tmp) / "scene.json").write_text(json.dumps(scene), encoding="utf-8")
+        (Path(tmp) / "cast.json").write_text(json.dumps(characters), encoding="utf-8")
+        done = subprocess.run([node, "-e", _REPORT_JS, str(KIT / "index.js"), str(Path(tmp) / "scene.json"), str(Path(tmp) / "cast.json")], capture_output=True, text=True, encoding="utf-8")
     if done.returncode != 0:
         raise SystemExit("character_project: could not trace the cast through the scene:\n" + done.stderr[-600:])
     return json.loads(done.stdout)
 
 
-def _hex(rgb: list[float]) -> str:
-    return "#" + "".join(f"{max(0, min(255, round(v))):02x}" for v in rgb)
-
-
-def screen_problems(scene: dict) -> tuple[list[str], list[str]]:
-    """Errors and warnings about where the cast stands: fully out of the frame for over half a second (error), speakers
-    facing away from each other (warning). Positions in a move track are absolute screen pixels."""
-    paths, errors, warnings = _walk_scene(scene), [], []
-    width, step = scene["width"], 0.1
-    for m in scene["cast"]:
-        if m.get("allowOffscreen"):
-            continue
-        p, run = paths[m["id"]], None
-        for i, x in enumerate(p["x"] + [None]):
-            out = x is not None and (x + p["half"] < 0 or x - p["half"] > width)
-            if out and run is None:
-                run = i
-            elif not out and run is not None:
-                if (i - run) * step > 0.5 + 1e-9:
-                    side = "left" if p["x"][run] < 0 else "right"
-                    errors.append(f"scene.cast[{scene['cast'].index(m)}] ({m['id']}, {m['character']}) is fully outside the frame to the {side} from {run * step:.1f} s to {(i - 1) * step:.1f} s "
-                                  f"(x = {p['x'][run]:.0f}, the frame is 0 to {width}). Positions in a move track are absolute screen pixels; fix x or the move keys, or set allowOffscreen: true if this is meant")
-                run = None
-    height, ground = scene["height"], scene["ground"]
+def screen_problems(scene: dict, characters: dict[str, dict] | None = None) -> tuple[list[str], list[str]]:
+    """Errors and warnings about the picture: a character fully out of the frame for over half a second (error), feet below
+    the frame (error), speakers facing away from each other, a figure close in tone to the background, a walk that needs a
+    run's drawings, a caption that needs more than two lines (warnings). Positions in a move track are absolute pixels."""
+    ids = sorted({m["character"] for m in scene["cast"]})
+    report = _walk_scene(scene, characters if characters is not None else load_cast(ids))
+    paths, errors, warnings = report["members"], [], []
+    width, height, ground, step = scene["width"], scene["height"], scene["ground"], 0.1
     for n, m in enumerate(scene["cast"]):
         p = paths[m["id"]]
         feet = max(p["y"])
@@ -225,10 +200,26 @@ def screen_problems(scene: dict) -> tuple[list[str], list[str]]:
         for w in p["walks"]:
             if w["steps"] > 12:
                 warnings.append(f"{m['id']} walks {w['from']:.1f} s to {w['to']:.1f} s fast enough to need {w['steps']:.0f} drawings a second, which looks like a run: allow more time or a shorter distance")
-        if p["lum"] is not None and p["bgLum"]:
-            ratio = min((max(p["lum"], b) + 0.05) / (min(p["lum"], b) + 0.05) for b in p["bgLum"])
-            if ratio < 1.6:
-                warnings.append(f"{m['id']} ({m['character']}) is hard to see: its tone {_hex(p['tone'])} is close to the background {_hex(p['bg'][0])} behind it (contrast {ratio:.1f}:1, aim for 1.6 or more); change the palette or the skin")
+        if p["low"]:
+            low = p["low"]
+            warnings.append(f"{m['id']} ({m['character']}) is hard to see: its tone {p['tone']} is close to the background behind it at {low['t']:.1f} s, which is {low['part']} {low['colour']} "
+                            f"(contrast {low['ratio']:.1f}:1, aim for 1.6 or more); change the palette or the skin")
+        if m.get("allowOffscreen"):
+            continue
+        run = None
+        for i, x in enumerate(p["x"] + [None]):
+            out = x is not None and (x + p["half"] < 0 or x - p["half"] > width)
+            if out and run is None:
+                run = i
+            elif not out and run is not None:
+                if (i - run) * step > 0.5 + 1e-9:
+                    side = "left" if p["x"][run] < 0 else "right"
+                    errors.append(f"scene.cast[{n}] ({m['id']}, {m['character']}) is fully outside the frame to the {side} from {run * step:.1f} s to {(i - 1) * step:.1f} s "
+                                  f"(x = {p['x'][run]:.0f}, the frame is 0 to {width}). Positions in a move track are absolute screen pixels; fix x or the move keys, or set allowOffscreen: true if this is meant")
+                run = None
+    for c in report["captions"]:
+        if c["lines"] > 2:
+            warnings.append(f"scene.captions[{c['index']}] needs {c['lines']} lines at this frame size; captions read best in two lines or fewer, so shorten it or split it into two captions")
     speakers = [m for m in scene["cast"] if isinstance(m.get("track"), dict) and m["track"].get("visemes")]
     for a in speakers:
         i = min(len(paths[a["id"]]["x"]) - 1, int(a["track"]["visemes"][0]["t"] / step) + 3)
@@ -241,26 +232,36 @@ def screen_problems(scene: dict) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def build_scene_project(scene_path: Path, out: Path, skin: str | None = None) -> dict:
-    """Write a complete HyperFrames project for the scene; return the scene as written. Raises SceneError for a bad scene."""
+def build_scene_project(scene_path: Path, out: Path, skin: str | None = None, character_files=()) -> dict:
+    """Write a complete HyperFrames project for the scene; return the scene as written. Raises SceneError for a bad scene.
+    character_files are your own character JSON files (validated, pictures inlined); the scene can use their ids."""
     scene_path = Path(scene_path)
-    sys.path.insert(0, str(KIT))
     import validate_scene
     raw = json.loads(scene_path.read_text(encoding="utf-8"))
     if skin:
         raw["skin"] = skin
-    problems = validate_scene.validate_scene(raw, scene_path.resolve().parent)
+    extras: dict[str, dict] = {}
+    for file in character_files:
+        try:
+            character = load_file(Path(file))
+        except ValueError as exc:
+            raise SceneError([f"--character-file {file}: {exc}"]) from None
+        if character["id"] in cast_ids():
+            raise SceneError([f"--character-file {file}: the id '{character['id']}' clashes with the starter cast; give your character another id"])
+        extras[character["id"]] = character
+    problems = validate_scene.validate_scene(raw, scene_path.resolve().parent, extras)
     if problems:
         raise SceneError(problems)
     scene = resolve_scene(raw, scene_path.resolve().parent)
-    errors, warnings = screen_problems(scene)
+    used = sorted({m["character"] for m in scene["cast"]})
+    builtin = [c for c in used if c not in extras]
+    errors, warnings = screen_problems(scene, {**load_cast(builtin), **{c: extras[c] for c in used if c in extras}})
     if errors:
         raise SceneError(errors)
     for w in warnings:
         print(f"warning: {w}", file=sys.stderr)
-    ids = sorted({m["character"] for m in scene["cast"]})
     out.mkdir(parents=True, exist_ok=True)
-    prepare_project(out, ids)
+    prepare_project(out, builtin, extra_cast={c: extras[c] for c in used if c in extras})
     (out / "characters" / "scene.js").write_text("window.B2M_SCENE = " + json.dumps(scene, separators=(",", ":")) + ";\n", encoding="utf-8", newline="\n")
     html = (KIT / "stage.html").read_text(encoding="utf-8")
     for key, value in (("__WIDTH__", scene["width"]), ("__HEIGHT__", scene["height"]), ("__DURATION__", scene["duration"])):
@@ -286,6 +287,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--cast", default="child,crow", help="with --stage3d: comma-separated character ids")
     ap.add_argument("--seconds", type=float, default=6.0, help="with --stage3d: duration")
     ap.add_argument("--out", required=True, help="project folder to write")
+    ap.add_argument("--character-file", action="append", default=[], metavar="FILE.json", help="your own character file (repeatable); a scene can then use its id. Its pictures are validated and inlined")
     ap.add_argument("--skin", help="override the scene's skin (line-art, paper-cutout, shadow-puppet, cel-shaded, motion-comic, flat-explainer)")
     args = ap.parse_args(argv)
     if args.stage3d:
@@ -295,7 +297,7 @@ def main(argv: list[str]) -> int:
     if not args.scene:
         ap.error("give --scene FILE, or --stage3d")
     try:
-        scene = build_scene_project(Path(args.scene), Path(args.out), args.skin)
+        scene = build_scene_project(Path(args.scene), Path(args.out), args.skin, args.character_file)
     except SceneError as exc:
         print(f"character_project: {exc}", file=sys.stderr)
         return 2

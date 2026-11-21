@@ -63,8 +63,13 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
     extra = {}
     if args.file:
-        extra_char = cp.load_file(Path(args.file))
+        try:
+            extra_char = cp.load_file(Path(args.file))
+        except (OSError, ValueError) as exc:
+            raise SystemExit(f"character_sheet: {exc}")
         extra[extra_char["id"]] = extra_char
+    if args.character:
+        cp.check_id(args.character)                         # an id becomes part of a file name
     chars = cp.cast_ids() if args.all else [args.character] if args.character else list(extra)
     if not chars:
         ap.error("give --character ID, --file FILE or --all")
