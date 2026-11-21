@@ -56,7 +56,7 @@ brief2mp4 is a free, MIT-licensed agent skill. You paste a written brief (length
 
 <p align="center">⭐ <b>Free and MIT. If brief2mp4 makes a video you keep, <a href="https://github.com/qualixar/brief2mp4">star the repo</a>.</b> It is the only signal I get that it worked for you, and it is how other Claude Code and Codex users find it. Made something? Post it in <a href="https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell">Show and tell</a>.</p>
 
-<p align="center"><b>New in 0.4.0:</b> 30 animation art forms (claymation, paper cut-out, anime, watercolour, pixel art and more), and <a href="#brief2motion-websites-that-move-installed-with-brief2mp4"><b>brief2motion now installs with brief2mp4</b></a>: one install, briefs for videos and briefs for websites.</p>
+<p align="center"><b>New in 0.5.0:</b> <a href="#characters-that-talk"><b>characters that talk</b></a>: a rig, six skins and lip sync in English and Hindi, on top of 0.4.0's 30 animation art forms. <a href="#brief2motion-websites-that-move-installed-with-brief2mp4">brief2motion</a> still installs with brief2mp4.</p>
 
 ## Quick start
 
@@ -114,7 +114,7 @@ Round 4 of the video: Fable 5.2 in Claude Code got a written brief for a 60-seco
 | **2D explainers** (YouTube, courses) | hook, setup, three-step idea, example, takeaway; diagrams that draw on, labels word by word | HyperFrames |
 | **Maths and algorithms** | equations term by term, colour-coded to the picture; one transformation per beat | HyperFrames + KaTeX, or [Manim](https://github.com/ManimCommunity/manim) inserts |
 | **Tutorial intros and callouts** | title and chapter cards, callouts and zooms over your screen recording | HyperFrames + your recording |
-| **Stories and skits** | situation, want, obstacle, turn; timing pauses before the punchline; captions to the voice | HyperFrames, SVG, Lottie or Rive characters |
+| **Stories and skits** | situation, want, obstacle, turn; timing pauses before the punchline; captions to the voice | the character kit (rig, skins, lip sync); Lottie or Rive for full studio animation |
 | **YouTube Shorts, Reels, TikTok** | 9:16 safe zones, a hook in the first frame, a change every 2-4 s, loopable endings | HyperFrames |
 | **Data stories** | charts that draw from the baseline, numbers that count to the exact value | HyperFrames + SVG/D3 |
 | **Product launches** | problem, reveal, features, call to action; real UI recreated sharp | HyperFrames, 3D pack, Blender |
@@ -174,6 +174,30 @@ Three rules carry all of them: the picture is a function of time, handmade looks
 | Sound, joins, exact length, loudness, encoding | [ffmpeg](https://ffmpeg.org) | LGPL/GPL (external tool) |
 
 Mixed briefs, recipes for each mix and the architecture in detail: [docs/architecture.md](docs/architecture.md) for people, [references/pipelines.md](plugin/skills/brief2mp4/references/pipelines.md) for the agent.
+
+## Characters that talk
+
+<p align="center">
+  <img src="assets/example09-three-skins.webp" alt="Example 09 at the same moment in three skins: a boy points at a crow and says Hey crow, that is my kite! in paper cut-out, cel-shaded anime and shadow puppet" width="720">
+</p>
+
+Example 09: a boy and a crow argue over a kite. One scene file, one mouth track, three skins: paper cut-out, cel-shaded anime and shadow puppet.
+
+A brief that says "two characters talk, walk or fight" now gets characters that hold poses, walk to a mark, blink, and move their mouths in time with the voice. The character kit is plain JavaScript and JSON with no new dependency, and every frame is a pure function of time, so renders are repeatable.
+
+- **Rig and poses.** 15 named poses, walk, run and talk cycles, eased between keys, with held drawings for handmade looks.
+- **Six skins on one rig.** `paper-cutout`, `cel-shaded`, `line-art`, `shadow-puppet` (with a hinged jaw and rods), `motion-comic` and `flat-explainer`. A character stays recognisable across them.
+- **Lip sync.** `scripts/lipsync.py` turns word timings (the same file the captions use) into nine mouth shapes, for English and Devanagari Hindi, with a fallback that reads loudness from a WAV.
+- **Your own art.** Rig PNG or WebP part images as a character file and use it in a scene with `--character-file`.
+- **Scenes that check themselves.** A scene schema and validator, characters that walk to a position and face a direction, and warnings when someone leaves the frame or disappears into the background.
+
+```bash
+python3 scripts/character_project.py --scene scene.json --skin cel-shaded --out project/
+npx hyperframes render project -o raw.mp4 --quality delivery --fps 30
+python3 scripts/character_sheet.py --character child --skin all --out sheets/
+```
+
+The starter cast is a child, a man in a kurta, a crow and a tomato chef. The full format, the pose list and the scene fields are in [characters/README-CHARACTERS.md](plugin/skills/brief2mp4/characters/README-CHARACTERS.md); the runnable scene is [examples/09-story-characters](examples/09-story-characters/).
 
 ## The 3D pack
 
