@@ -93,6 +93,7 @@
 
   /**
    * @param opts { x, y, scale } where the character stands (feet at x, y). A move track in the pose overrides it with absolute positions.
+   *        frame: { width, height } of the picture, so a skin can reach its edges (the shadow puppet's rods).
    */
   function layout(character, skin, posed, opts) {
     const o = opts || {}, eff = effectiveParts(character, posed, skin);
@@ -109,7 +110,7 @@
       const img = imageOf(part, posed);
       if (img) items.push(Object.assign({ kind: 'image', part: part.id, m: round(W[part.id]), src: img.src, x: img.x, y: img.y, w: img.w, h: img.h }, skin.image ? skin.image({ part, posed, skin }) : {}));
     });
-    if (skin.character) skin.character({ character, posed, items, matrices: W, base, push: (it) => items.push(it), under });
+    if (skin.character) skin.character({ character, posed, items, matrices: W, base, frame: o.frame, push: (it) => items.push(it), under });
     return items;
   }
 

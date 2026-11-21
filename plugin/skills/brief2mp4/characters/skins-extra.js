@@ -36,12 +36,13 @@
   const screenPoint = (m, p) => [m[0] * p[0] + m[2] * p[1] + m[4], m[1] * p[0] + m[3] * p[1] + m[5]];
   function rods(ctx) {
     const ix = ctx.character.parts.reduce((o, p) => { o[p.id] = p; return o; }, {}), out = [];
+    const bottom = ctx.frame ? ctx.frame.height + 20 : 1400;      // rods run off the bottom of the frame: that is how a puppet is held
     const rod = (from, to, w) => out.push({ kind: 'path', part: 'rod', m: [1, 0, 0, 1, 0, 0], d: 'M' + B.fmt(from[0]) + ' ' + B.fmt(from[1]) + 'L' + B.fmt(to[0]) + ' ' + B.fmt(to[1]), fill: null, stroke: ROD, sw: w, cap: 'butt' });
-    if (ix.torso) { const a = screenPoint(ctx.matrices.torso, ix.torso.pivot); rod([a[0], a[1] - 30], [a[0], 1400], 6); }
+    if (ix.torso) { const a = screenPoint(ctx.matrices.torso, ix.torso.pivot); rod([a[0], a[1] - 30], [a[0], bottom], 6 * (ctx.frame ? ctx.frame.height / 1080 : 1)); }
     ['handN', 'handF'].forEach((h) => {
       if (!ix[h]) return;
       const a = screenPoint(ctx.matrices[h], ix[h].pivot), dir = ctx.posed.move.flip;
-      rod(a, [a[0] + 70 * dir, a[1] + 420], 3.5);
+      rod(a, [a[0] + 70 * dir * ((bottom - a[1]) / 420), bottom], 3.5 * (ctx.frame ? ctx.frame.height / 1080 : 1));
     });
     out.reverse().forEach((it) => ctx.under(it));
   }
@@ -92,12 +93,13 @@
     },
     sky: (c) => [{ d: c.rect, fill: c.color('sky'), stroke: null }, { d: c.rect, fill: HALFTONE, stroke: null, alpha: 0.18 }],
     foreground(c) {
-      const out = [{ kind: 'path', part: 'panel', m: [1, 0, 0, 1, 0, 0], d: B.rectPath(36, 36, c.W - 72, c.H - 72, 0), fill: null, stroke: COMIC_INK, sw: 14, join: 'miter' }];
-      if (c.caption) {
-        const w = Math.min(c.W - 200, 60 + c.caption.length * 26);
-        out.push({ kind: 'path', part: 'caption', m: [1, 0, 0, 1, 0, 0], d: B.rectPath(80, 80, w, 84, 0), fill: '#ffd23f', stroke: COMIC_INK, sw: 6, join: 'miter' },
-          { kind: 'text', part: 'caption', m: [1, 0, 0, 1, 0, 0], x: 104, y: 138, text: c.caption, font: '800 40px "Helvetica Neue", Arial, sans-serif', fill: COMIC_INK });
-      }
+      const k = c.scale || 1, one = [1, 0, 0, 1, 0, 0], ink = COMIC_INK;
+      const out = [{ kind: 'path', part: 'panel', m: one, d: B.rectPath(36 * k, 36 * k, c.W - 72 * k, c.H - 72 * k, 0), fill: null, stroke: ink, sw: 14 * k, join: 'miter' }];
+      (c.lines || []).forEach((text, n) => {           // the caption box: one yellow box per line, stacked
+        const w = Math.min(c.W - 160 * k, (60 + text.length * 26) * k), y = (80 + n * 92) * k;
+        out.push({ kind: 'path', part: 'caption', m: one, d: B.rectPath(80 * k, y, w, 84 * k, 0), fill: '#ffd23f', stroke: ink, sw: 6 * k, join: 'miter' },
+          { kind: 'text', part: 'caption', m: one, x: 104 * k, y: y + 58 * k, text, font: '800 ' + 40 * k + 'px "Helvetica Neue", Arial, sans-serif', fill: ink });
+      });
       return out;
     },
   };

@@ -66,7 +66,7 @@
     laugh: 'the shoulders and head shake',
     breath: 'a slow rise and fall of the chest; always on unless the track sets breath: false',
     talk: 'a layer with no drawings of its own: head nods and small arm gestures while the mouth speaks, 7 beats a second (rate)',
-    blink: 'not a layer: every character blinks every 2.5 to 5.7 s, from a seeded hash; the track sets blink: false to stop it',
+    blink: 'not a layer: every character blinks every 2.5 to 5.5 s, from a seeded hash; the track sets blink: false to stop it',
   };
 
   const VISEME_INFO = {

@@ -48,7 +48,17 @@
     return d + (isClosed ? 'Z' : '');
   }
 
-  const PATH_CACHE = new Map();
+  // A cache that forgets the least recently used entry, so a long film never grows without bound.
+  function lru(max) {
+    const m = new Map();
+    return {
+      get(k) { const v = m.get(k); if (v !== undefined) { m.delete(k); m.set(k, v); } return v; },
+      set(k, v) { m.set(k, v); if (m.size > max) m.delete(m.keys().next().value); },
+      get size() { return m.size; },
+    };
+  }
+
+  const PATH_CACHE = lru(800);
   function shapePath(s) {
     if (s.type === 'path') return s.d;
     const key = JSON.stringify(s, ['type', 'c', 'r', 'rot', 'a', 'b', 'ra', 'rb', 'x', 'y', 'w', 'h', 'pts', 'smooth', 'closed']);
@@ -65,7 +75,7 @@
   }
 
   const ARGS = { M: 2, L: 2, C: 6, Q: 4, Z: 0 };
-  const PARSED = new Map();
+  const PARSED = lru(600);
   function parsePath(d) {
     let out = PARSED.get(d);
     if (out) return out;
@@ -99,6 +109,10 @@
   }
 
   // ---- colour ----
+  const channel = (v) => { const u = v / 255; return u <= 0.03928 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4); };
+  // Relative luminance (WCAG) of '#rrggbb' or [r, g, b], and the contrast ratio between two colours: 1 (the same) to 21.
+  const luminance = (c) => { const r = typeof c === 'string' ? toRgb(c) : c; return 0.2126 * channel(r[0]) + 0.7152 * channel(r[1]) + 0.0722 * channel(r[2]); };
+  const contrast = (a, b) => { const x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
   const toRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
   const toHex = (rgb) => '#' + rgb.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
   const mix = (a, b, k) => { const p = toRgb(a), q = toRgb(b); return toHex(p.map((v, i) => v + (q[i] - v) * k)); };
@@ -136,6 +150,6 @@
     return out;
   }
 
-  Object.assign(B, { shapePath, parsePath, mapPoints, jitterPath, pathBounds, ellipsePath, polyPath, rectPath, capsulePath, mix, toRgb, toHex, colorOf, DEFAULT_PALETTE, lipShapes, fmt });
+  Object.assign(B, { cacheStats: () => ({ parsed: PARSED.size, shapes: PATH_CACHE.size }), luminance, contrast, shapePath, parsePath, mapPoints, jitterPath, pathBounds, ellipsePath, polyPath, rectPath, capsulePath, mix, toRgb, toHex, colorOf, DEFAULT_PALETTE, lipShapes, fmt });
   if (typeof module !== 'undefined' && module.exports) module.exports = B;
 })(globalThis);

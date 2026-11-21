@@ -171,8 +171,9 @@
 
   function blinkAmount(character, track, ts) {
     if (track.blink === false || character.blink === false) return 0;
-    const period = 3.2, k = Math.floor(ts / period + EPS);
-    const start = k * period + 0.5 + hash(character.id, k) * 2.2, u = (ts - start) / 0.18;
+    // one blink in every 4 s window, at a seeded moment 0.5 to 2 s in: blinks come 2.5 to 5.5 s apart
+    const period = 4.0, k = Math.floor(ts / period + EPS);
+    const start = k * period + 0.5 + hash(character.id, k) * 1.5, u = (ts - start) / 0.18;
     if (u < 0 || u > 1) return 0;
     return u < 0.4 ? u / 0.4 : 1 - (u - 0.4) / 0.6;
   }
@@ -195,23 +196,27 @@
 
   // A move key with walk: true means "walk to here from the key before": the walk cycle plays between the two keys at
   // the speed that plants the feet (see walkSteps), the move is a steady glide, and unless a key says facing the
-  // character turns to face the way it walks.
+  // character turns to face the way it walks. A facing, whether a key set it or a walk turned the character, holds
+  // until a key sets another: it carries on after the last key.
   function sampleMove(moves, ts, home) {
     const h = Object.assign({ x: null, y: null, flip: 1 }, home);
     if (!moves || !moves.length) return { x: h.x, y: h.y, flip: h.flip };
     const keys = moves.slice().sort((p, q) => p.t - q.t);
     let i = -1;
     for (let n = 0; n < keys.length; n++) if (keys[n].t <= ts + EPS) i = n;
-    const xOf = (m) => (m.x === undefined ? h.x : m.x);
-    const val = (m, next) => {
-      const heading = next && next.walk && m.facing === undefined && m.flip === undefined && xOf(next) !== null && xOf(m) !== null && xOf(next) !== xOf(m) ? Math.sign(xOf(next) - xOf(m)) : null;
-      return { x: xOf(m), y: m.y === undefined ? h.y : m.y, flip: heading || facingOf(m, h.flip) };
+    const xOf = (m) => (m.x === undefined ? h.x : m.x), told = (m) => m.facing !== undefined || m.flip !== undefined;
+    const heading = (m, next) => (next && next.walk && !told(m) && xOf(next) !== null && xOf(m) !== null && xOf(next) !== xOf(m) ? Math.sign(xOf(next) - xOf(m)) : null);
+    const facingAfter = (upto) => {   // the way the character faces on the segment that starts at key `upto`
+      let f = h.flip;
+      for (let n = 0; n <= upto; n++) f = told(keys[n]) ? facingOf(keys[n], f) : heading(keys[n], keys[n + 1]) || f;
+      return f;
     };
+    const val = (n) => ({ x: xOf(keys[n]), y: keys[n].y === undefined ? h.y : keys[n].y, flip: facingAfter(Math.max(0, n)) });
     const mix = (u, v, k) => (u === null ? v : v === null ? u : lerp(u, v, k));
-    if (i < 0) return val(keys[0], keys[1]);
-    const a = val(keys[i], keys[i + 1]);
+    if (i < 0) return val(0);
+    const a = val(i);
     if (i === keys.length - 1) return a;
-    const k = ease(keys[i + 1].walk ? 'linear' : keys[i + 1].ease, (ts - keys[i].t) / (keys[i + 1].t - keys[i].t)), b = val(keys[i + 1], keys[i + 2]);
+    const k = ease(keys[i + 1].walk ? 'linear' : keys[i + 1].ease, (ts - keys[i].t) / (keys[i + 1].t - keys[i].t)), b = val(i + 1);
     return { x: mix(a.x, b.x, k), y: mix(a.y, b.y, k), flip: a.flip };
   }
 
@@ -249,7 +254,7 @@
     const steps = o.steps !== undefined ? o.steps : track.steps || null;
     const ts = quantise(t, steps);
     const base = sampleKeys(character, track.keys, ts);
-    const vis = track.visemes && track.visemes.length ? track.visemes : null;
+    const vis = track.visemes && track.visemes.length ? track.visemes.slice().sort((p, q) => p.t - q.t) : null;
     const inSpeech = vis && ts >= vis[0].t - EPS && ts <= vis[vis.length - 1].t + EPS;
     const viseme = inSpeech ? visemeAt(vis, ts) : heldMouth(track, base, ts);
     const acc = {};
@@ -281,6 +286,6 @@
     return (4 * character.proportions.legLength * Math.sin(B.rad(def.amp)) * (steps || def.steps)) / def.frames;
   }
 
-  Object.assign(B, { pose, visemeAt, hash, ease, quantise, strideSpeed, walkSteps, EASES: Object.keys(EASE) });
+  Object.assign(B, { pose, visemeAt, hash, ease, quantise, strideSpeed, walkSteps, walkLayers, EASES: Object.keys(EASE) });
   if (typeof module !== 'undefined' && module.exports) module.exports = B;
 })(globalThis);
