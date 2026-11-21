@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-import film_common as fc
+import film_common  # noqa: F401  (puts scripts/ on the path)
 import film_script as fs
 import film_story as story
 import film_storyboard as sbd

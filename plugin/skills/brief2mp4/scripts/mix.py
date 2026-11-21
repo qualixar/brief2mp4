@@ -221,7 +221,7 @@ def mix(storyboard: Path, timings: Path, sfx_dir: Path, out: Path, music: Path |
     report = {"duration": seconds, "voice_lufs": None if math.isinf(voice_lufs) else round(voice_lufs, 2), "music_gain_db": None if gain is None else round(gain, 2),
               "bed_below_voice_db": None if gain is None else BED_BELOW_VOICE - DUCK_DB, "cues": len(rows), "lufs": round(lufs, 2), "true_peak": round(tp, 2),
               "target": {"lufs": TARGET_LUFS, "true_peak": TARGET_TP}}
-    save_json(cues_path := Path(out).parent / "cues.json", {"version": 1, "note": "start = time - peak lag - lead: the effect's loudest moment lands on the event", "cues": rows})
+    save_json(Path(out).parent / "cues.json", {"version": 1, "note": "start = time - peak lag - lead: the effect's loudest moment lands on the event", "cues": rows})
     save_json(Path(out).parent / "mix_report.json", report)
     return report
 

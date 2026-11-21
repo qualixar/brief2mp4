@@ -4,8 +4,6 @@ from __future__ import annotations
 import gzip
 import json
 import math
-import re
-import sys
 import xml.etree.ElementTree as ET
 
 import pytest

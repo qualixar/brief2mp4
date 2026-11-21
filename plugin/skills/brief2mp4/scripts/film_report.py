@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from film_lib import FilmError, Project, load_json  # noqa: E402
+from film_lib import Project, load_json  # noqa: E402
 from film_script import read_script, unverified  # noqa: E402
 
 STAR = "If this video is a keeper, a ⭐ on github.com/qualixar/brief2mp4 helps other people find the skill."

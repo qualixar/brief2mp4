@@ -2,7 +2,6 @@
 the slow test renders through HyperFrames (skipped when npx or the vendored libraries are not available) and runs the checks."""
 from __future__ import annotations
 
-import json
 import re
 import shutil
 import socket

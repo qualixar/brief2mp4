@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from film_lib import SCRIPTS, SKILL, FilmError, Project  # noqa: E402
+from film_lib import SKILL, FilmError, Project  # noqa: E402
 
 HF_PACKAGE = "hyperframes@0.8.216"
 FONTS = "playfair-display,ibm-plex-mono"

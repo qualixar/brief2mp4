@@ -127,6 +127,6 @@ def test_cli_rewrites_the_storyboard(tmp_path):
     out = json.loads((tmp_path / "STORYBOARD.json").read_text(encoding="utf-8"))
     assert out["retimed"] is True and out["duration"] > 12 and out["beats"][0]["line_starts"]["L01"] == pytest.approx(0.3, abs=0.01)
     again = fc.py_script("retime.py", tmp_path / "STORYBOARD.json", tmp_path / "TIMINGS.json")             # re-running is safe: same result
-    assert json.loads((tmp_path / "STORYBOARD.json").read_text(encoding="utf-8"))["duration"] == out["duration"]
+    assert again.returncode == 0 and json.loads((tmp_path / "STORYBOARD.json").read_text(encoding="utf-8"))["duration"] == out["duration"]
     bad = fc.py_script("retime.py", tmp_path / "nope.json", tmp_path / "TIMINGS.json")
     assert bad.returncode == 1 and bad.stdout.startswith("FAIL")

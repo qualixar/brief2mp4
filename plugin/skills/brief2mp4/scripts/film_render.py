@@ -22,6 +22,11 @@ MAX_WORKERS = 12
 SEGMENT_OVER = 60.0
 
 
+def workers_for(acts: int) -> int:
+    """Chrome workers per act: about 12 in all, shared between the acts, at most 8 each."""
+    return max(1, min(8, MAX_WORKERS // max(1, acts)))
+
+
 def hf_command(npx: str, directory: Path, out: Path, quality: str, workers: int, resume: bool) -> list[str]:
     cmd = [npx, "--yes", HF_PACKAGE, "render", str(directory), "-o", str(out), "--quality", quality, "--workers", str(workers), "--fps", "30", "--quiet"]
     return cmd + (["--resume"] if resume else [])
@@ -48,7 +53,7 @@ def render_acts(project: Project, quality: str = "delivery", workers: int | None
     if not npx:
         raise FilmError("npx not found: install Node.js 22 or newer (https://nodejs.org), then run the render stage again")
     jobs = build["projects"]
-    per = workers or max(1, min(8, MAX_WORKERS // len(jobs)))
+    per = workers or workers_for(len(jobs))
     procs = []
     for job in jobs:
         out = project.p("render", f"{job['act']}.mp4")
