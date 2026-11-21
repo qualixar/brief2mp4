@@ -163,7 +163,7 @@ def test_validator_checks_picture_files_extensions_and_the_rest_mouth():
         edit(d)
         return validate.validate_character(d, DEMO)
     assert any("not found" in e for e in broken(lambda d: d["parts"][0]["image"].update(src="parts/nope.png")))
-    assert any("does not match" in e for e in broken(lambda d: d["parts"][0]["image"].update(src="parts/head.gif")))
+    assert any("not valid" in e for e in broken(lambda d: d["parts"][0]["image"].update(src="parts/head.gif")))
     assert any("rest" in e for e in broken(lambda d: next(p for p in d["parts"] if p["id"] == "mouth")["mouth"]["images"].pop("rest")))
     assert any("missing" in e for e in broken(lambda d: d["parts"][0]["image"].pop("w")))
     inline = broken(lambda d: d["parts"][0]["image"].update(src="data:image/png;base64,AAAA"))

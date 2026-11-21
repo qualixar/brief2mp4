@@ -240,7 +240,7 @@ def test_example_09_has_a_brief_the_words_and_a_readme():
     brief = (EX09 / "BRIEF.md").read_text(encoding="utf-8")
     for must in ("14.0 s", "paper cut-out", "anime", "Hey crow, that is my kite!", "Finders keepers, little one.", "words.json"):
         assert must in brief
-    assert (EX09 / "README.md").is_file() and (EX09 / "make_standin_voice.py").is_file()
+    assert (EX09 / "README.md").is_file() and (SCRIPTS / "standin_voice.py").is_file() and not (EX09 / "make_standin_voice.py").exists()
     assert [w["text"] for w in WORDS][:3] == ["Hey", "crow,", "that"]
 
 
@@ -328,7 +328,7 @@ def test_example_09_renders_in_both_skins_passes_the_delivery_checks_and_the_mou
     if shutil.which("npx") is None or shutil.which("ffmpeg") is None:
         pytest.skip("needs npx and ffmpeg")
     voice = tmp_path / "voice.wav"
-    assert subprocess.run([sys.executable, str(EX09 / "make_standin_voice.py"), str(EX09 / "words.json"), str(voice), "14"], capture_output=True).returncode == 0
+    assert subprocess.run([sys.executable, str(SCRIPTS / "standin_voice.py"), str(EX09 / "words.json"), str(voice), "--seconds", "14"], capture_output=True).returncode == 0
     bash = shutil.which("bash")
     finals = {}
     for skin in ("paper-cutout", "cel-shaded"):
