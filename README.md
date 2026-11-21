@@ -91,9 +91,11 @@ Check a machine at any time with `bash plugin/skills/brief2mp4/scripts/doctor.sh
 
 ## What it makes
 
-https://github.com/user-attachments/assets/b9c54e2b-9faa-48bb-94c1-a058f019f89a
+<p align="center">
+  <img src="assets/r4-fable-four-worlds.webp" alt="Fable 5.2, Round 4: one camera move through a desert, an underwater city, neon rain and space" width="800">
+</p>
 
-Round 2 of the contest video: Fable 5.2 in Claude Code got a written brief for a 30-second 3D data story and delivered this. That was a sealed contest run made without this skill; brief2mp4 packages the same loop (spec, build, measure, check every line, fix) so you can run it on your own briefs. The [full films](https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing) are untouched, with checksums.
+Round 4 of the video: Fable 5.2 in Claude Code got a written brief for a 60-second film, one continuous camera move through four worlds with its own music, and delivered this. That was a sealed contest run made without this skill; brief2mp4 packages the same loop (spec, build, measure, check every line, fix) so you can run it on your own briefs. The [full films](https://drive.google.com/drive/folders/1yBmCb2h63Fp5yr_37LY46f8BSRa_3GiO?usp=sharing) are untouched, with checksums.
 
 | Format | What the skill does for it | Route |
 |---|---|---|
@@ -330,7 +332,9 @@ tests/                             fast checks and render tests (bash tests/run_
 
 ## brief2motion: websites that move, installed with brief2mp4
 
-brief2mp4 makes the video. Its sister skill [brief2motion](https://github.com/qualixar/brief2motion) makes the website: write a plain brief and get a site with professional motion, checked in a real browser before you see it. It routes the brief to the right stack (GSAP scroll stories, three.js 3D product pages, Motion kinetic type, View Transitions, SVG and D3 data stories, Lottie, particles that form your product or face) and to one of 32 visual styles, from neubrutalism and glassmorphism to Swiss and Y2K. Its demo video is in the [brief2motion README](https://github.com/qualixar/brief2motion).
+brief2mp4 makes the video. Its sister skill [brief2motion](https://github.com/qualixar/brief2motion) makes the website: write a plain brief and get a site with professional motion, checked in a real browser before you see it. It routes the brief to the right stack (GSAP scroll stories, three.js 3D product pages, Motion kinetic type, View Transitions, SVG and D3 data stories, Lottie, particles that form your product or face) and to one of 32 visual styles, from neubrutalism and glassmorphism to Swiss and Y2K.
+
+https://github.com/user-attachments/assets/8b780cc9-e70f-4c7c-b3ac-7fdb56ede3ff
 
 **You already have it.** From 0.4.0, brief2mp4 lists brief2motion as a plugin dependency, so Claude Code installs both:
 
