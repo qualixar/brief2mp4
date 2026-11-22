@@ -240,3 +240,23 @@ def test_cli(tmp_path):
     assert (tmp_path / "audio" / "mix_report.json").is_file() and (tmp_path / "audio" / "stems" / "voice.wav").is_file()
     bad = fc.py_script("mix.py", tmp_path / "nope.json", tmp_path / "TIMINGS.json")
     assert bad.returncode == 1 and bad.stdout.startswith("FAIL")
+
+
+def test_a_short_track_loops_with_a_crossfade_never_a_hard_seam(tmp_path):
+    # a 3 s track that swells from silence to full: looped hard, the level would fall off a cliff at every join
+    project(tmp_path, music=False, cues=[])
+    fc.ffmpeg("-f", "lavfi", "-i", "sine=frequency=330:duration=3", "-af", "volume='t/3':eval=frame", "-ac", "2", "-ar", "48000", tmp_path / "swell.wav")
+    report = build(tmp_path, music=tmp_path / "swell.wav")
+    assert report["music_plays"] >= 5
+    s, rate, ch = read(tmp_path / "audio" / "stems" / "music.wav")
+    win = rate // 20                                                                              # 50 ms
+    mono = s[::ch]
+    rms = [(sum(v * v for v in mono[i:i + win]) / win) ** 0.5 for i in range(0, len(mono) - win, win)]
+    steps = [abs(b - a) for a, b in zip(rms, rms[1:])][10:-40]                                   # leave out the fade in and out
+    assert max(steps) < 0.3 * max(rms), max(steps) / max(rms)
+
+
+def test_a_track_long_enough_plays_once(tmp_path):
+    project(tmp_path, music=False, cues=[], seconds=8.0)
+    fc.ffmpeg("-f", "lavfi", "-i", "sine=frequency=440:duration=12", "-ac", "2", "-ar", "44100", tmp_path / "long.wav")
+    assert build(tmp_path, music=tmp_path / "long.wav")["music_plays"] == 1

@@ -153,11 +153,40 @@ def measure(path: Path) -> tuple[float, float]:
     return (float(i.group(1)) if i else -math.inf), (float(p.group(1)) if p else -math.inf)
 
 
-def build_music(music: Path, seconds: float, voice_lufs: float, windows: list, tmp: Path, out: Path) -> float:
-    """The ducked bed at `out`; returns the gain applied before ducking (dB)."""
+MAX_LOOPS = 200
+
+
+def seconds_of(path: Path) -> float | None:
+    done = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", str(path)], capture_output=True, text=True)
+    try:
+        return float(done.stdout.strip())
+    except ValueError:
+        return None
+
+
+def loop_inputs(music: Path, seconds: float) -> tuple[list, str, int]:
+    """(ffmpeg inputs, the filter that joins them, how many copies). A track shorter than the film is repeated with a
+    crossfade at every join (never a hard seam): copies overlap by up to 2 s (a quarter of the track for short ones)."""
+    dur = seconds_of(music)
+    if dur is None or dur >= seconds:
+        return ["-i", music], "[0:a]anull", 1
+    xf = min(2.0, dur / 4)
+    n = math.ceil((seconds - dur) / (dur - xf)) + 1
+    if n > MAX_LOOPS:
+        raise FilmError(f"the music is {dur:.1f} s long and would repeat {n} times under a {seconds:.0f} s film: use a longer track")
+    chain = "[0:a]aresample=%d,aformat=channel_layouts=stereo[c0];" % RATE
+    for i in range(1, n):
+        chain += f"[{i}:a]aresample={RATE},aformat=channel_layouts=stereo[r{i}];[c{i - 1}][r{i}]acrossfade=d={xf:.3f}:c1=qsin:c2=qsin[c{i}];"
+    return sum([["-i", music] for _ in range(n)], []), chain + f"[c{n - 1}]anull", n
+
+
+def build_music(music: Path, seconds: float, voice_lufs: float, windows: list, tmp: Path, out: Path) -> tuple[float, int]:
+    """The ducked bed at `out`; returns the gain applied before ducking (dB) and how many times the track plays."""
     base = tmp / "music_base.wav"
     fade = f"afade=t=in:d=0.5,afade=t=out:st={max(0.0, seconds - 1.5):.3f}:d=1.5"
-    ff("-stream_loop", "-1", "-i", music, "-t", f"{seconds:.4f}", "-af", f"aresample={RATE},aformat=channel_layouts=stereo,{fade},equalizer=f=2200:t=h:w=3000:g=-3", "-c:a", "pcm_f32le", base)
+    inputs, joined, copies = loop_inputs(music, seconds)
+    ff(*inputs, "-filter_complex", f"{joined},atrim=0:{seconds:.4f},aresample={RATE},aformat=channel_layouts=stereo,{fade},equalizer=f=2200:t=h:w=3000:g=-3[o]",
+       "-map", "[o]", "-c:a", "pcm_f32le", base)
     loud = measure(base)[0]
     if math.isinf(loud):
         raise FilmError(f"the music file {music} is silent")
@@ -168,7 +197,7 @@ def build_music(music: Path, seconds: float, voice_lufs: float, windows: list, t
     ff("-i", base, "-i", tmp / "env.wav", "-filter_complex",
        f"[0:a]volume={gain:.3f}dB,aformat=sample_fmts=fltp[m];[1:a]aresample={RATE},aformat=sample_fmts=fltp:channel_layouts=mono,pan=stereo|c0=c0|c1=c0[e];[m][e]amultiply,atrim=0:{seconds:.4f},asetpts=PTS-STARTPTS[o]",
        "-map", "[o]", "-c:a", "pcm_s16le", out)
-    return gain
+    return gain, copies
 
 
 def normalise(mixed: Path, out: Path) -> None:
@@ -201,13 +230,13 @@ def mix(storyboard: Path, timings: Path, sfx_dir: Path, out: Path, music: Path |
     write_wav(stems / "sfx.wav", build_sfx(rows, Path(sfx_dir), total))
     voice_lufs = measure(stems / "voice.wav")[0] if windows else -math.inf
     inputs = [stems / "voice.wav", stems / "sfx.wav"]
-    gain = None
+    gain, copies = None, 0
     music_stem = stems / "music.wav"
     if music_stem.exists():
         music_stem.unlink()
     with tempfile.TemporaryDirectory() as tmp:
         if music:
-            gain = build_music(Path(music), seconds, voice_lufs, windows, Path(tmp), music_stem)
+            gain, copies = build_music(Path(music), seconds, voice_lufs, windows, Path(tmp), music_stem)
             inputs.append(music_stem)
         graph = "".join(f"[{i}:a]aformat=sample_fmts=fltp:channel_layouts=stereo[a{i}];" if i else "[0:a]highpass=f=70,aformat=sample_fmts=fltp:channel_layouts=stereo[a0];"
                         for i in range(len(inputs)))
@@ -219,7 +248,7 @@ def mix(storyboard: Path, timings: Path, sfx_dir: Path, out: Path, music: Path |
         normalise(summed, Path(out))
     lufs, tp = measure(Path(out))
     report = {"duration": seconds, "voice_lufs": None if math.isinf(voice_lufs) else round(voice_lufs, 2), "music_gain_db": None if gain is None else round(gain, 2),
-              "bed_below_voice_db": None if gain is None else BED_BELOW_VOICE - DUCK_DB, "cues": len(rows), "lufs": round(lufs, 2), "true_peak": round(tp, 2),
+              "bed_below_voice_db": None if gain is None else BED_BELOW_VOICE - DUCK_DB, "cues": len(rows), "music_plays": copies, "lufs": round(lufs, 2), "true_peak": round(tp, 2),
               "target": {"lufs": TARGET_LUFS, "true_peak": TARGET_TP}}
     save_json(Path(out).parent / "cues.json", {"version": 1, "note": "start = time - peak lag - lead: the effect's loudest moment lands on the event", "cues": rows})
     save_json(Path(out).parent / "mix_report.json", report)
@@ -231,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("storyboard", help="the re-timed STORYBOARD.json")
     ap.add_argument("timings", help="TIMINGS.json")
     ap.add_argument("--sfx-dir", default="assets/sfx", help="folder with sfx.json from sfx_synth.py all")
-    ap.add_argument("--music", help="a music file (any format ffmpeg reads); looped or trimmed to the film")
+    ap.add_argument("--music", help="a music file (any format ffmpeg reads); trimmed to the film, or repeated with a crossfade at each join")
     ap.add_argument("--out", default="audio/mix.wav")
     args = ap.parse_args(argv)
     try:

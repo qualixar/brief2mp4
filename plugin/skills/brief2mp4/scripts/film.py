@@ -179,6 +179,8 @@ def stage_mix(p: Project, a) -> None:
     sb = load_json(p.storyboard, "STORYBOARD.json")
     music = Path(a.music) if a.music else (p.p(sb["music"]) if sb.get("music") else None)
     r = mixer.mix(p.storyboard, p.timings, p.sfx_dir, p.mix, music)
+    if r.get("music_plays", 0) > 1:
+        say("WARN", f"the music is shorter than the film: it plays {r['music_plays']} times, crossfaded at each join. A longer track sounds better")
     say("PASS", f"mix: {r['lufs']} LUFS, {r['true_peak']} dBTP, {r['cues']} cue(s), " + ("music ducked under the voice" if music else "no music"))
 
 
