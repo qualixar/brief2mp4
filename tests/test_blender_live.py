@@ -49,7 +49,7 @@ def test_a_recipe_runs_inside_an_existing_scene_without_taking_it_over():
 def test_recipe_list_names_every_recipe_without_needing_blender():
     out = cli_json("recipe", "list")
     names = {r["name"] for r in out["recipes"]}
-    assert names == {"loop", "retime", "cloth", "rigid", "fold", "walk"}
+    assert names == {"loop", "retime", "cloth", "rigid", "fold", "walk", "flip_bake"}
     assert all(r["summary"] for r in out["recipes"])
 
 
@@ -62,3 +62,19 @@ def test_recipe_run_passes_arguments_through_and_returns_the_result_line(tmp_pat
 def test_recipe_run_with_an_unknown_name_says_which_exist():
     proc = cli("recipe", "run", "juggle")
     assert proc.returncode == 1 and "loop" in proc.stderr and "juggle" in proc.stderr
+
+
+def test_only_the_flip_recipe_asks_for_the_users_own_add_ons():
+    from b2m3d import recipes
+    flags = {r["name"]: r["factory_startup"] for r in recipes.available()}
+    assert flags.pop("flip_bake") is False and all(flags.values())
+
+
+@needs_blender
+def test_flip_bake_skips_cleanly_when_the_add_on_is_absent(tmp_path):
+    # --factory-startup guarantees no add-on is enabled, whatever this machine has installed
+    proc = subprocess.run([paths.blender(), "-b", "--factory-startup", "-P", str(RECIPES / "b2m_flip_bake.py"), "--", "--out", str(tmp_path / "f")],
+                          capture_output=True, text=True, timeout=300)
+    line = next(ln for ln in proc.stdout.splitlines() if ln.startswith(MARKER))
+    res = json.loads(line[len(MARKER) + 1:])
+    assert res["skipped"] is True and "FLIP Fluids" in res["reason"] and not (tmp_path / "f").exists()

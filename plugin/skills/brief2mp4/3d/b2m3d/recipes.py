@@ -1,4 +1,4 @@
-"""b2m3d recipe: the Blender motion recipes (loop, retime, cloth, rigid, fold, walk) run headless.
+"""b2m3d recipe: the Blender motion recipes (loop, retime, cloth, rigid, fold, walk, flip_bake) run headless.
 
 `recipe list` needs no Blender. `recipe run NAME -- <recipe options>` runs templates/recipes/b2m_NAME.py in the
 system Blender and returns the recipe's own result JSON (its measurements, and the frames it wrote).
@@ -25,8 +25,12 @@ def available() -> list[dict]:
         name = path.stem.removeprefix("b2m_")
         if name == "common":
             continue
-        doc = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
-        found.append({"name": name, "summary": doc.splitlines()[0].removeprefix(f"b2m_{name}: "), "script": str(path)})
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        doc = ast.get_docstring(tree) or ""
+        factory = next((n.value.value for n in tree.body if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name)
+                        and n.targets[0].id == "FACTORY_STARTUP"), True)     # a recipe that needs the user's add-ons says False
+        found.append({"name": name, "summary": doc.splitlines()[0].removeprefix(f"b2m_{name}: "), "script": str(path),
+                      "factory_startup": factory})
     return found
 
 
@@ -39,5 +43,6 @@ def run_recipe(name: str, args: list[str], timeout: int = 7200) -> dict:
         raise B2M3DError("Blender was not found. Install it, or set B2M3D_BLENDER to its executable "
                          "(run `python -m b2m3d doctor` for the install command).")
     args = [a for a in args if a != "--"] if args[:1] == ["--"] else args
-    out = run([exe, "-b", "--factory-startup", "-P", known[name]["script"], "--", *args], timeout=timeout)
+    startup = ["--factory-startup"] if known[name]["factory_startup"] else []
+    out = run([exe, "-b", *startup, "-P", known[name]["script"], "--", *args], timeout=timeout)
     return last_json(out, MARKER)
