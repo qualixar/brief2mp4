@@ -59,7 +59,9 @@ def test_without_tesseract_it_skips_with_the_install_command_and_exits_3(tmp_pat
 
 @needs_ffmpeg
 @needs_tesseract
-@pytest.mark.parametrize("lines,hit", [(["TODO"], "TODO"), ([USERS.upper() + "BOB"], USERS.upper()), (["LOREM IPSUM"], "LOREM IPSUM")])
+# Real OCR end to end on words every tesseract build reads alike. Paths are proven with a stand-in OCR further down,
+# because how a thin slash is read differs between tesseract builds (Linux read "USERS. BOB" here).
+@pytest.mark.parametrize("lines,hit", [(["TODO"], "TODO"), (["LOREM IPSUM"], "LOREM IPSUM")])
 def test_a_frame_with_placeholder_text_fails(tmp_path, lines, hit):
     clip = still_video(tmp_path / "bad.mp4", text_png(tmp_path / "bad.png", lines), seconds=2)
     proc = bash_script("ocr_sweep.sh", clip, "--keep", tmp_path / "kept")
