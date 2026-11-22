@@ -157,3 +157,33 @@ def test_cli(tmp_path):
     assert proc.returncode == 0 and "PASS  4 lines cut" in proc.stdout, proc.stdout + proc.stderr
     bad = fc.py_script("split_takes.py", tmp_path / "nope.wav", tmp_path / "SCRIPT.md")
     assert bad.returncode == 1 and bad.stdout.startswith("FAIL")
+
+
+def test_each_cut_keeps_a_tenth_of_a_second_before_the_first_word_and_more_after_the_last(tmp_path):
+    # literal numbers on purpose: a line cut flush to its first word clips the consonant (the pads must not quietly become 0)
+    path, truth = take(tmp_path)
+    for line in run_split(tmp_path, path)["lines"]:
+        assert line["speech_start"] == pytest.approx(0.10, abs=0.02), line["id"]
+        assert line["duration"] - line["speech_end"] == pytest.approx(0.15, abs=0.02), line["id"]
+
+
+def test_the_notes_and_warnings_are_saved_with_the_timings(tmp_path):
+    path, _ = take(tmp_path)
+    result = run_split(tmp_path, path)
+    timings = json.loads((tmp_path / "TIMINGS.json").read_text(encoding="utf-8"))
+    assert timings["notes"] == result["notes"] and any("no word timings" in n for n in timings["notes"])
+    assert timings["warnings"] == result["warnings"]
+
+
+def test_a_take_ffmpeg_cannot_convert_for_the_recogniser_falls_back_to_pauses_with_a_note(tmp_path, monkeypatch):
+    model = tmp_path / "ggml.bin"
+    model.write_bytes(b"x")
+    real = shutil.which
+    monkeypatch.setattr(st.shutil, "which", lambda name: "/bin/whisper-cli" if name == "whisper-cli" else real(name))
+
+    class Bad:
+        returncode, stderr, stdout = 1, "Invalid data found when processing input", ""
+    monkeypatch.setattr(st.subprocess, "run", lambda *a, **k: Bad())
+    notes: list[str] = []
+    assert st.asr_words(tmp_path / "take.wav", None, str(model), notes) is None
+    assert notes and "ffmpeg could not make a 16 kHz copy" in notes[0]

@@ -154,6 +154,15 @@ def test_render_refuses_an_unverified_line_and_the_report_lists_it(tmp_path, off
     assert "## Unverified lines" in report and "- L03:" in report and "## Credits and licences" in report and "Natural Earth" in report
 
 
+def test_the_report_keeps_the_storyboard_and_assets_warnings_after_retime(tmp_path, offline, capsys):
+    root = project(tmp_path, SCRIPT.replace("source: https://example.org/summary\n", "source: https://example.org/summary\nquery: cable ship\n"))
+    assert run(root, "--to", "mix") == 0, capsys.readouterr().out
+    assert film.main(["report", "--project", str(root)]) == 0
+    report = (root / "REPORT.md").read_text(encoding="utf-8")
+    items = report.split("## Open items", 1)[1]
+    assert "fetching was skipped" in items and "typeset title beat" in items and "None recorded" not in items
+
+
 def test_missing_script_and_other_mistakes_give_one_fail_line(tmp_path, offline, capsys):
     root = tmp_path / "empty"
     root.mkdir()

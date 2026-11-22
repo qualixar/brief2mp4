@@ -109,6 +109,8 @@ def stage_voice(p: Project, a) -> None:
         if not a.take:
             raise FilmError("the voice is your recording: pass --take take.wav (and --words words.json or --model ggml-base.en.bin if the pauses between lines are short), or use --voice standin for a draft")
         result = film_voice.from_take(p.script, Path(a.take), p.lines_dir, p.timings, Path(a.words) if a.words else None, a.model)
+        for n in result.get("notes", []):
+            say("INFO", n)
         for w in result["warnings"]:
             say("WARN", w)
     elif voice == "f5-tts":
@@ -126,7 +128,6 @@ def stage_voice(p: Project, a) -> None:
 def stage_retime(p: Project, a) -> None:
     grid = load_json(Path(a.grid), "the beat grid") if a.grid else None
     sb = retimer.retime(load_json(p.storyboard, "STORYBOARD.json"), load_json(p.timings, "TIMINGS.json"), a.fps, grid, a.snap_max)
-    sb["retime"]["notes"] = []
     save_json(p.storyboard, sb)
     for w in sb["warnings"]:
         say("WARN", w)

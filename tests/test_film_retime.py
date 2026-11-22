@@ -130,3 +130,20 @@ def test_cli_rewrites_the_storyboard(tmp_path):
     assert again.returncode == 0 and json.loads((tmp_path / "STORYBOARD.json").read_text(encoding="utf-8"))["duration"] == out["duration"]
     bad = fc.py_script("retime.py", tmp_path / "nope.json", tmp_path / "TIMINGS.json")
     assert bad.returncode == 1 and bad.stdout.startswith("FAIL")
+
+
+def test_earlier_warnings_are_kept_and_retime_adds_its_own_once():
+    sb = board(warnings=["B02: no public domain, CC0 or CC BY picture was found: it is built as a typeset title beat"])
+    tm = {"lines": {**TIMINGS["lines"], "L09": {"duration": 1.0, "speech_start": 0.0, "speech_end": 1.0}}}
+    once = rt.retime(sb, tm, **ARGS)
+    assert once["warnings"][0].startswith("B02: no public domain") and any("L09" in w for w in once["warnings"])
+    twice = rt.retime(once, tm, **ARGS)
+    assert twice["warnings"] == once["warnings"]                                                     # running it again repeats nothing
+    fixed = rt.retime(twice, TIMINGS, **ARGS)                                                        # the unused line is gone now
+    assert fixed["warnings"] == ["B02: no public domain, CC0 or CC BY picture was found: it is built as a typeset title beat"]
+
+
+def test_the_voice_notes_reach_the_storyboard_for_the_report():
+    tm = {**TIMINGS, "notes": ["no word timings: pauses alone were used"], "warnings": ["L03: 3.0 s of speech, check the split"]}
+    out = rt.retime(board(), tm, **ARGS)
+    assert out["retime"]["notes"] == ["no word timings: pauses alone were used", "L03: 3.0 s of speech, check the split"]
