@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import wave
 from dataclasses import dataclass
 from pathlib import Path
@@ -93,3 +94,39 @@ def wav_seconds(path: Path) -> float:
 
 def frames(seconds: float, fps: float) -> int:
     return round(seconds * fps)
+
+
+NTSC = {"23.976": "24000/1001", "23.98": "24000/1001", "29.97": "30000/1001", "59.94": "60000/1001", "47.952": "48000/1001"}
+
+
+def parse_fps(text: str | float | int) -> tuple[float, str]:
+    """A frame rate as (value, ffmpeg/HyperFrames text): 24 -> (24.0, "24"), 29.97 or 30000/1001 -> (29.97..., "30000/1001")."""
+    raw = str(text).strip()
+    rate = NTSC.get(raw, raw)
+    num, _, den = rate.partition("/")
+    try:
+        value = float(num) / float(den or 1)
+    except (ValueError, ZeroDivisionError):
+        raise FilmError(f"--fps '{text}' is not a frame rate: use a number (24, 30, 29.97) or a ratio (30000/1001)")
+    if not 1 <= value <= 240:
+        raise FilmError(f"--fps {text} is outside 1-240")
+    if not den:
+        rate = str(int(value)) if value.is_integer() else rate
+    return value, rate
+
+
+def fps_text(sb: dict) -> str:
+    """The storyboard's frame rate as text for ffmpeg and HyperFrames (a ratio such as 30000/1001 stays exact)."""
+    fps = sb.get("fps", 30)
+    return sb.get("fps_rate") or (str(int(fps)) if float(fps).is_integer() else repr(float(fps)))
+
+
+def find_bash() -> str:
+    """bash for the shell scripts. On Windows `bash` on PATH is often the WSL launcher in System32, which cannot run them with
+    Windows paths, so Git Bash is looked for first (B2M_BASH overrides)."""
+    if os.name != "nt":
+        return shutil.which("bash") or "bash"
+    for cand in (os.environ.get("B2M_BASH"), r"C:\Program Files\Git\bin\bash.exe", r"C:\Program Files\Git\usr\bin\bash.exe", shutil.which("bash")):
+        if cand and os.path.isfile(cand) and "system32" not in cand.lower():
+            return cand
+    raise FilmError("Git Bash not found (the WSL bash in System32 cannot run these scripts): install Git for Windows, or set B2M_BASH to its bash.exe")

@@ -163,6 +163,21 @@ def test_the_report_keeps_the_storyboard_and_assets_warnings_after_retime(tmp_pa
     assert "fetching was skipped" in items and "typeset title beat" in items and "None recorded" not in items
 
 
+def test_24_fps_is_kept_by_every_stage_even_when_one_is_run_alone(tmp_path, offline, capsys):
+    root = project(tmp_path)
+    assert run(root, "--to", "mix", "--fps", "24") == 0, capsys.readouterr().out
+    assert film.main(["retime", "--project", str(root)]) == 0                                  # alone, without --fps: still 24
+    assert film.main(["build", "--project", str(root)]) == 0
+    sb, build = load_json(root / "STORYBOARD.json"), load_json(root / "BUILD.json")
+    assert sb["fps"] == 24 and sb["fps_rate"] == "24"
+    assert all(abs(b["end"] * 24 - round(b["end"] * 24)) < 0.01 for b in sb["beats"])           # every cut on a 24 fps frame
+    for job in build["projects"]:
+        assert job["frames"] == round(job["seconds"] * 24)
+    assert sum(j["frames"] for j in build["projects"]) == round(sb["duration"] * 24)
+    page = (root / build["projects"][0]["dir"] / "index.html").read_text(encoding="utf-8")
+    assert f'data-duration="{build["projects"][0]["frames"] / 24 - 0.001:.4f}"' in page
+
+
 def test_missing_script_and_other_mistakes_give_one_fail_line(tmp_path, offline, capsys):
     root = tmp_path / "empty"
     root.mkdir()
@@ -186,6 +201,48 @@ def test_list_and_help_work_without_a_project(capsys):
 
 
 # ---- the real render ---------------------------------------------------------------------------------------------------
+
+@pytest.mark.slow
+def test_a_24_fps_film_renders_at_24_with_the_picture_in_sync_with_the_plan(tmp_path):
+    if shutil.which("npx") is None or shutil.which("ffmpeg") is None:
+        pytest.skip("npx or ffmpeg not found")
+    root = project(tmp_path)
+    proc = subprocess.run([sys.executable, str(fc.SCRIPTS / "film.py"), "run", "--project", str(root), "--voice", "standin", "--no-fetch", "--acts", "2",
+                           "--fps", "24", "--quality", "draft", "--to", "render"], capture_output=True, text=True, encoding="utf-8")
+    if "vendoring GSAP and the fonts failed" in proc.stdout:
+        pytest.skip("npm and its cache are not available to vendor GSAP and the fonts once")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    sb, final = load_json(root / "STORYBOARD.json"), root / "final.mp4"
+    probe = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-show_entries", "stream=codec_type,avg_frame_rate,nb_read_frames,duration",
+                            "-of", "json", str(final)], capture_output=True, text=True, check=True).stdout
+    streams = {s["codec_type"]: s for s in __import__("json").loads(probe)["streams"]}
+    assert streams["video"]["avg_frame_rate"] == "24/1" and int(streams["video"]["nb_read_frames"]) == round(sb["duration"] * 24)
+    assert float(streams["audio"]["duration"]) == pytest.approx(float(streams["video"]["duration"]), abs=1 / 24 + 0.03)
+    check = fc.bash_script("check_delivery.sh", final, "--seconds", f"{sb['duration']:.4f}", "--fps", "24", "--joins", f"{sb['acts'][1]['start']:.4f}")
+    assert "RESULT: PASS" in check.stdout, check.stdout
+    # sync: each planned hard cut (the storyboard is re-timed to the voice) is the biggest picture change within half a second
+    # of where it was planned, to two frames. A picture rendered at 30 and relabelled 24 plays 25 % slow and misses by far more.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_seams_e2e", fc.SCRIPTS / "check_seams.py")
+    cs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cs)
+    frames = list(cs.FrameReader(str(final), "24"))
+    diffs = [0.0] + [cs.mad(a, b) for a, b in zip(frames, frames[1:])]
+    planned = [b["start"] for b in sb["beats"][1:] if b["transition"]["type"] == "hard-cut" and b["start"] > 1.0]
+    assert planned
+    for t in planned:
+        k = round(t * 24)
+        window = range(max(1, k - 12), min(len(diffs), k + 13))
+        peak = max(window, key=lambda i: diffs[i])
+        assert abs(peak - k) <= 2, (t, peak / 24, [round(diffs[i], 1) for i in window])
+    # and the dip to dark between the acts is darkest at the planned join (a truncated act moves it seconds earlier)
+    luma = [sum(f) / len(f) for f in frames]
+    for act in sb["acts"][1:]:
+        k = round(act["start"] * 24)
+        window = range(max(0, k - 14), min(len(luma), k + 15))
+        darkest = min(window, key=lambda i: luma[i])
+        assert abs(darkest - k) <= 2 and luma[darkest] < 0.5 * max(luma[i] for i in window), (act["start"], darkest / 24)
+
 
 @pytest.mark.slow
 def test_a_20_second_film_renders_through_hyperframes_and_passes_the_delivery_checks(tmp_path):

@@ -1,6 +1,6 @@
 """film_report.py: REPORT.md: what was made, what each check said, every asset's attribution and every UNVERIFIED line.
 
-The report is plain text for the person who ships the film. Credits for CC BY pictures are listed first, because they must go in
+The report is plain text for the person who ships the film, and is theirs to hand on: nothing about this skill is written into it. Credits for CC BY pictures are listed first, because they must go in
 the video description. Standard library only.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from film_lib import Project, load_json  # noqa: E402
 from film_script import read_script, unverified  # noqa: E402
 
-STAR = "If this video is a keeper, a ⭐ on github.com/qualixar/brief2mp4 helps other people find the skill."
+STAR = "If this video is a keeper, a star on github.com/qualixar/brief2mp4 helps other people find the skill."   # printed by film.py, never written into REPORT.md
 
 
 def credits(assets: dict) -> list[str]:
@@ -41,7 +41,8 @@ def write_report(project: Project) -> Path:
         for name in ("delivery", "clutter", "ocr", "contact_sheet"):
             r = checks.get(name)
             if r:
-                lines += [f"### {name}: {'PASS' if r['ok'] else 'FAIL'}", ""] + [f"    {l}" for l in r["lines"]] + [""]
+                label = {"pass": "PASS", "fail": "FAIL", "skipped": "SKIPPED (not measured)"}.get(r.get("status"), "PASS" if r["ok"] else "FAIL")
+                lines += [f"### {name}: {label}", ""] + [f"    {l}" for l in r["lines"]] + [""]
     else:
         lines += ["The checks have not been run yet: `film.py check`.", ""]
     bad = unverified(script)
@@ -49,6 +50,7 @@ def write_report(project: Project) -> Path:
     lines += ["## Sources", ""] + [f"- {l['id']}: {', '.join(l['sources'])}" for l in script.lines if l["sources"]] + [""]
     lines += ["## Credits and licences", ""] + (credits(assets) or ["No assets recorded."]) + [""]
     notes = list(sb.get("warnings", [])) + list(sb.get("retime", {}).get("notes", []))
-    lines += ["## Open items", ""] + ([f"- {n}" for n in notes] if notes else ["None recorded."]) + ["", "---", STAR, ""]
+    notes += [f"the {name} check was skipped, so it was not measured: install its tool and run `film.py check` again" for name in (checks or {}).get("skipped", [])]
+    lines += ["## Open items", ""] + ([f"- {n}" for n in notes] if notes else ["None recorded."]) + [""]
     project.report.write_text("\n".join(lines), encoding="utf-8", newline="\n")
     return project.report

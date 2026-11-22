@@ -26,6 +26,7 @@ Any stage can be run again alone. A stage that fails prints one FAIL line saying
 from __future__ import annotations
 
 import argparse
+import http.client
 import shutil
 import subprocess
 import sys
@@ -43,7 +44,8 @@ import film_storyboard  # noqa: E402
 import film_voice  # noqa: E402
 import mix as mixer  # noqa: E402
 import retime as retimer  # noqa: E402
-from film_lib import FilmError, Project, load_json, save_json  # noqa: E402
+from fetch_music import FetchError  # noqa: E402
+from film_lib import FilmError, Project, load_json, parse_fps, save_json  # noqa: E402
 from film_script import check_script, read_script, unverified  # noqa: E402
 
 STAGES = ["story", "script", "storyboard", "assets", "voice", "retime", "build", "captions", "mix", "render", "check", "report"]
@@ -86,7 +88,9 @@ def stage_storyboard(p: Project, a) -> None:
         raise FilmError("SCRIPT.md has problems: " + "; ".join(errors))
     brief_text = p.brief.read_text(encoding="utf-8") if p.brief.is_file() else ""
     brief = film_story.parse_brief(brief_text + "\n" + (p.story.read_text(encoding="utf-8") if p.story.is_file() else ""))
-    sb = film_storyboard.build_storyboard(script, brief, brief_text, a.fps, a.acts, a.look)
+    fps, rate = parse_fps(a.fps or 30)
+    sb = film_storyboard.build_storyboard(script, brief, brief_text, fps, a.acts, a.look)
+    sb["fps_rate"] = rate
     save_json(p.storyboard, sb)
     for w in sb["warnings"]:
         say("WARN", w)
@@ -127,7 +131,10 @@ def stage_voice(p: Project, a) -> None:
 
 def stage_retime(p: Project, a) -> None:
     grid = load_json(Path(a.grid), "the beat grid") if a.grid else None
-    sb = retimer.retime(load_json(p.storyboard, "STORYBOARD.json"), load_json(p.timings, "TIMINGS.json"), a.fps, grid, a.snap_max)
+    sb = load_json(p.storyboard, "STORYBOARD.json")
+    if a.fps:                                      # a new rate here applies from now on; otherwise the storyboard's rate is kept
+        sb["fps"], sb["fps_rate"] = parse_fps(a.fps)
+    sb = retimer.retime(sb, load_json(p.timings, "TIMINGS.json"), sb.get("fps"), grid, a.snap_max)
     save_json(p.storyboard, sb)
     for w in sb["warnings"]:
         say("WARN", w)
@@ -186,13 +193,26 @@ def stage_render(p: Project, a) -> None:
 def stage_check(p: Project, a) -> None:
     r = film_check.check_film(p)
     for name in ("delivery", "clutter", "ocr", "contact_sheet"):
-        say("PASS" if r[name]["ok"] else "FAIL", f"{name}: " + (r[name]["lines"][-1] if r[name]["lines"] else "no output"))
+        say(*check_summary(name, r[name]))
     if not r["ok"]:
-        raise FilmError("a check failed: see checks.json, fix the worst miss, re-render only that stage and check again")
+        film_report.write_report(p)              # the report matters most when a check failed: write it before stopping
+        raise FilmError("a check failed: see checks.json and REPORT.md, fix the worst miss, re-render only that stage and check again")
+
+
+def check_summary(name: str, result: dict) -> tuple[str, str]:
+    """(PASS | FAIL | SKIP, the line that says why): the first FAIL line of a failed check, the SKIP line of a skipped one."""
+    kind = {"pass": "PASS", "fail": "FAIL", "skipped": "SKIP"}.get(result.get("status"), "PASS" if result["ok"] else "FAIL")
+    lines = result["lines"]
+    levels = ("PASS", "FAIL", "WARN", "SKIP", "INFO", "INCOMPLETE", "RESULT")
+    body = lambda l: l.split(": ", 1)[1] if ": " in l and not l.startswith(levels) else l      # clutter lines start "A1: "
+    want = {"FAIL": ("FAIL",), "SKIP": ("SKIP", "INCOMPLETE")}.get(kind, ())
+    pick = next((l for l in lines if want and body(l).startswith(want)), None)
+    return kind, f"{name}: " + (pick or (lines[-1] if lines else "no output"))
 
 
 def stage_report(p: Project, a) -> None:
     say("PASS", f"{film_report.write_report(p).name} written")
+    say("INFO", film_report.STAR)
 
 
 FUNCS = {"story": stage_story, "script": stage_script, "storyboard": stage_storyboard, "assets": stage_assets, "voice": stage_voice, "retime": stage_retime,
@@ -207,7 +227,8 @@ def parser() -> argparse.ArgumentParser:
     ap.add_argument("--to", dest="end", choices=STAGES, help="with run: stop after this stage")
     ap.add_argument("--skip", default="", help="with run: comma-separated stages to leave out")
     ap.add_argument("--list", action="store_true", help="print the stages")
-    ap.add_argument("--fps", type=int, default=30)
+    ap.add_argument("--fps", help="storyboard (and retime, to change it): frame rate, e.g. 24, 25, 30, 29.97 or 30000/1001 (default 30); "
+                                    "every later stage uses the storyboard's rate")
     ap.add_argument("--force", action="store_true", help="story: rewrite an existing STORY.md")
     ap.add_argument("--acts", type=int, help="storyboard: how many acts (default: one per 45 s)")
     ap.add_argument("--look", help="storyboard: the look (film mode builds the archive desk)")
@@ -257,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
             if a.stage == "run":
                 print(f"== {name}")
             FUNCS[name](p, a)
-    except (FilmError, ValueError, OSError) as err:
+    except (FilmError, FetchError, ValueError, OSError, subprocess.SubprocessError, http.client.HTTPException) as err:
         print(f"FAIL  film: {err}")
         return 1
     return 0
