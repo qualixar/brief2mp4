@@ -176,6 +176,59 @@ def test_dom_route_without_chrome_skips_with_a_message_and_exit_0(tmp_path, monk
     page.write_text(PAGE, encoding="utf-8")
     monkeypatch.setattr(clutter, "find_chrome", lambda: None)
     monkeypatch.setattr(sys, "argv", ["check_clutter.py", "--dom", str(page), "--at", "1"])
-    assert clutter.main() == 0
+    assert clutter.main() == 3          # not measured: never a pass
     out = capsys.readouterr().out
-    assert out.startswith("SKIP") and "Install Google Chrome" in out
+    assert out.startswith("SKIP") and "Install Google Chrome" in out and "PASS" not in out
+
+
+def test_an_empty_box_file_is_not_a_pass(tmp_path):
+    f = tmp_path / "empty.json"
+    f.write_text("[]", encoding="utf-8")
+    proc = py_script("check_clutter.py", "--boxes", f)
+    assert proc.returncode == 1 and proc.stdout.startswith("FAIL  layout not measured") and "PASS" not in proc.stdout
+
+
+needs_chrome = pytest.mark.skipif(clutter.find_chrome() is None or os.name == "nt", reason="needs Chrome, Chromium or Edge (not run on Windows)")
+CROWDED = """<!doctype html><html><head><style>
+body{margin:0;background:#101114;width:1920px;height:1080px;position:relative;font:48px sans-serif;color:#fff}
+h1{position:absolute;left:100px;margin:0;font-size:90px}
+</style></head><body>
+<h1 id="a" style="top:60px">First title</h1><h1 id="b" style="top:100px">Second title</h1>
+<script>REGISTER</script></body></html>"""
+
+
+@needs_chrome
+def test_dom_route_waits_for_a_timeline_registered_after_the_fonts(tmp_path):
+    late = "document.fonts.ready.then(function () { window.__timelines = { m: { pause: function () {}, seek: function () {} } }; });"
+    page = tmp_path / "late.html"
+    page.write_text(CROWDED.replace("REGISTER", late), encoding="utf-8")
+    proc = py_script("check_clutter.py", "--dom", page, "--at", "1")
+    assert proc.returncode == 1 and "(overlapping)" in proc.stdout, proc.stdout + proc.stderr
+
+
+@needs_chrome
+def test_dom_route_waits_for_a_timeline_registered_a_moment_after_load(tmp_path):
+    late = "setTimeout(function () { window.__timelines = { m: { pause: function () {}, seek: function () {} } }; }, 400);"
+    page = tmp_path / "later.html"
+    page.write_text(CROWDED.replace("REGISTER", late), encoding="utf-8")
+    proc = py_script("check_clutter.py", "--dom", page, "--at", "1")
+    assert proc.returncode == 1 and "(overlapping)" in proc.stdout, proc.stdout + proc.stderr
+
+
+@needs_chrome
+def test_dom_route_fails_a_page_with_no_timeline_instead_of_measuring_it_unseeked(tmp_path):
+    page = tmp_path / "none.html"
+    page.write_text(CROWDED.replace("REGISTER", "/* no timeline */").replace("Second title", ""), encoding="utf-8")
+    proc = py_script("check_clutter.py", "--dom", page, "--at", "1")
+    assert proc.returncode == 1 and "FAIL  layout not measured: no timeline" in proc.stdout, proc.stdout + proc.stderr
+    assert "PASS" not in proc.stdout
+
+
+@needs_chrome
+def test_dom_route_fails_when_no_text_is_visible_at_any_sample(tmp_path):
+    hide = ("window.__timelines = { m: { pause: function () {}, seek: function (t) {"
+            " document.body.style.opacity = t > 5 ? 0 : 1; } } };")
+    page = tmp_path / "blank.html"
+    page.write_text(CROWDED.replace("REGISTER", hide), encoding="utf-8")
+    proc = py_script("check_clutter.py", "--dom", page, "--at", "9")
+    assert proc.returncode == 1 and "no text was visible" in proc.stdout, proc.stdout + proc.stderr
