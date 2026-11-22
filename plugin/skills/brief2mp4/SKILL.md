@@ -113,7 +113,9 @@ Rules for every tool:
 - **The picture is a pure function of time.** No wall clock, no `Math.random()` (use a seeded generator), no network calls while rendering: vendor GSAP and fonts into the project (`references/hyperframes.md` shows how). Render the same frame twice and you must get the same pixels.
 - **Every element has a job in the beat sheet.** If you cannot say which beat it serves, cut it.
 - **Text is readable.** Body text at least 40 px tall at 1080p, headlines 90 px or more. Keep 5% safe margins (96 px left and right, 54 px top and bottom at 1920x1080). No text touches or crosses the frame edge. Hold any line on screen for at least (words / 3) + 0.5 seconds.
-- **Motion is eased.** Use ease-out for things arriving and ease-in for things leaving; linear only for constant spins and turntables. Most UI moves take 0.3-0.8 s. One clear hero moment beats ten small effects.
+- **Motion is eased.** Use ease-out for things arriving and ease-in for things leaving; linear only for constant spins and turntables. Most UI moves take 0.3-0.8 s. One clear hero moment beats ten small effects. Smooth beats bouncy; vary eases and durations; shape each scene as build, breathe, resolve. The rules and numbers are in `references/motion-doctrine.md`: read it before animating.
+- **Know the render traps.** A timeline can look right in a preview and render wrong (a `fromTo` that shows early, an entrance racing an exit, durations rounding up a frame, SVG drawing, heavy overlays). `references/render-traps.md` lists each with its fix.
+- **Sound comes after picture lock.** Beat-grid fitting, effect pinning, ducking numbers and loudness are in `references/sound.md`. `scripts/beat_grid.py` fits a grid to music (needs librosa, optional); `scripts/fetch_music.py` finds CC0 and CC BY music with an attribution file.
 - **Draft small first.** Render 2-3 seconds at draft quality, look at it, then build the rest.
 - **Edit files with your file-editing tool, not `sed -i`.** `sed -i` behaves differently on macOS and Linux and can fail silently; if an edit did not apply, the next render shows the old file.
 
@@ -121,9 +123,10 @@ Rules for every tool:
 
 After every full render, do all three:
 
-1. **Measure.** `scripts/check_delivery.sh final.mp4 --seconds <N> [--size WxH] [--fps N] [--silent-ok]` must end with `RESULT: PASS`. A FAIL is a fix, not a footnote.
+1. **Measure.** `scripts/check_delivery.sh final.mp4 --seconds <N> [--size WxH] [--fps N] [--silent-ok] [--joins T,T] [--flash-ok T,T] [--strict-flicker]` must end with `RESULT: PASS`. A FAIL is a fix, not a footnote. It includes `scripts/check_seams.py`: one-frame flicker (WARN; list planned flashes with `--flash-ok`, and use `--strict-flicker` when the brief wants no flicker at all), a pop at each join of separately rendered acts (`--joins`), cuts classified hard or soft, and true freezes (WARN; slow pans over a detailed picture do not count, over a flat plate they can). Then run the layout check and the placeholder sweep: `python3 scripts/check_clutter.py --dom index.html --at <seconds at rest>` (or `--boxes boxes.json`; no card on card, 24 px between text, at most 4 text blocks, nothing clipped at the edge) and `bash scripts/ocr_sweep.sh final.mp4` (TODO, lorem, `{{ }}`, `/Users/`, `C:\`; needs tesseract, otherwise it prints the install command and skips). A check that could not measure never passes: a decode error, a broken tesseract or a page with no timeline is a FAIL, and a missing optional tool is a SKIP with exit 3 (`check_delivery.sh` then ends `RESULT: INCOMPLETE`). Say in REPORT.md what was skipped; an absent optional tool does not fail a delivery, but it is not a pass either.
 2. **Look.** `scripts/contact_sheet.sh final.mp4 --at <beat starts, hero moment, last second>` writes one PNG per moment. Open and view each image. For every frame ask: is the text spelled exactly as the spec says? Is anything cut off or overlapping? Are the colours from the palette? Is the beat that should be on screen at this time actually there? To measure instead of eyeballing (text height, distance from the edge, safe zones on a vertical video), run `python3 scripts/bounds.py <still.png> --bg "#rrggbb" [--region x0,y0,x1,y1] [--margin 96,54 | --safe top=288,bottom=672,left=64,right=192]`: it prints the pixel box of everything that is not background and whether it sits inside the zone.
 3. **Walk the list.** Go through **Done when** line by line and mark each **met** or **not met**, with the evidence: the command output line, or the frame file name.
+4. **Second reader.** For anything that will be published, have a different reader (another session or a person) run `references/review-checklist.md` on the MP4 and key frames, without your reasons: muted test, phone test, 480 px test, amateur tells. Fix one class of problem at a time.
 
 To check a mix (for example "the bed is 10 dB under the voice"), measure the stems you bounced separately, not the final mix, where other sounds fall inside the same window.
 
@@ -151,7 +154,14 @@ Fix the worst miss first, re-render, and run section 4 again. To save time, re-r
 | Blender | `--preview` (3 stills) with EEVEE, 16-32 samples | EEVEE 32-64 samples; Cycles 64-128 with denoising only when the brief asks for realism. Render PNG frames |
 | ffmpeg finish | n/a | `scripts/finish.sh`: H.264 CRF 18 preset slow, yuv420p, AAC 192k 48 kHz, -14 LUFS, true peak -1.5 dBTP, exact duration |
 
-Run one heavy render at a time. Two renders side by side are slower than two in a row.
+**Render speed: measure, then split.** More workers is not always faster. On one Apple M-series laptop an 18 s 1080p60 composition took 58 s with `--workers auto`, 46 s with `--workers 8` and 75 s with 12 (too many Chrome processes): that is one data point, so time a short span (`--start`/`--end`) with 4, 8 and one more value on your machine and keep the fastest. For a long film:
+
+1. Split it into acts at clean full-frame transitions (a sweep, wipe, flash or whip), each its own composition with local times and no music. Plan the split from the first line of the build: drive ambient motion from a pure function of film time so backgrounds match across the joins, and let every act start and end in a calm state.
+2. Render the acts at the same time, keeping the total workers across them at or below about 12. Two plain 2D renders can run side by side from separate project folders; 3D shares one GPU, so two WebGL renders do not halve the time. Never rebuild a folder while it is rendering.
+3. Join the dry renders with stream copy (`ffmpeg -f concat -safe 0 -i list.txt -c copy joined.mp4`, `references/ffmpeg.md`), then lay one continuous music bed and measure loudness once over the joined file (`finish.sh --audio`). Check each join with `check_delivery.sh --joins`.
+4. Re-render only the act that changed.
+
+For a render over about a minute, set `HF_SEGMENTED_CAPTURE=true` and add `--resume` so an interrupted render reuses finished segments instead of starting again. Do not run heavy renders or encodes while a screen recording is being made on the same machine.
 
 ## When the user says "check it against the brief"
 
@@ -166,10 +176,14 @@ That message means: re-read the **original brief** (not your spec), go through i
 - `references/formats.md`: beat sheets, routes and checks per format (explainer, maths, tutorial, story, Short, data, launch, logo, lyric, captions)
 - `references/art-forms.md` and `references/art-forms/<id>.md`: 82 art forms, each with visual rules, timing, a build recipe, assets, sound, pitfalls, sources and a tested demo (generated from `references/art-forms.json`)
 - `art-forms/looks.js`, `art-forms/gallery.html`: one deterministic demo per look, and a viewer
+- `references/motion-doctrine.md`: the rules behind motion that looks finished: easing, variety, scene shape, transitions, pacing per format
+- `references/render-traps.md`: timelines that look right and render wrong, each with its fix
+- `references/review-checklist.md`: the second-reader pass: viewing tests, checklist, amateur tells
+- `references/sound.md`: beat-grid fitting, effect pinning, ducking, loudness, free music with credit, optional generators and their licences
 - `references/pipelines.md`: architecture diagram, route per beat, recipes for mixed pipelines, methods
 - `references/ecosystem.md`: 45+ open-source motion, 3D and agent-skill repos, when to use each, how to connect them
 - `characters/README-CHARACTERS.md`: the character kit (rig, poses, skins, lip sync, image parts, scenes) with a starter cast in `characters/cast/`
 - `3d/README-3D.md`: the optional 3D pack (components, commands, shot JSON, brief-to-shot mapping, look rules)
 - `edit/README-EDIT.md`: the optional edit pack (ArtCraft editors: install, verification, recipes, command discovery, MCP)
-- `scripts/finish.sh`, `scripts/check_delivery.sh`, `scripts/contact_sheet.sh`, `scripts/sound_bed.sh`, `scripts/doctor.sh`, `scripts/detect_3d.sh`, `scripts/bounds.py`, `scripts/vendor_libs.sh` (and `scripts/vendor_libs.ps1` on Windows), `scripts/detect_edit.sh`, `scripts/art_route.py` (brief to art form), `scripts/build_art_forms.py` (regenerates the art-form pages), `scripts/lipsync.py` (word timestamps or a WAV to a mouth-shape track), `scripts/standin_voice.py` (word timestamps to a preview WAV), `scripts/build_character_docs.py` (regenerates the kit README's tables from the code), `scripts/character_sheet.py` (a PNG sheet of any character in any skin), `scripts/character_project.py` (a character scene or the 2D-in-3D starter to a HyperFrames project)
+- `scripts/finish.sh`, `scripts/check_delivery.sh`, `scripts/check_seams.py` (flicker, join pops, cut classification, freezes), `scripts/check_clutter.py` and `scripts/dom_boxes.js` (layout rules from page boxes), `scripts/ocr_sweep.sh` (placeholder text in the final file), `scripts/beat_grid.py` (beats, downbeats, onsets, snap), `scripts/cut_points.sh` (scene cuts), `scripts/fetch_music.py` (CC0 and CC BY audio with ATTRIBUTION.md), `scripts/contact_sheet.sh`, `scripts/sound_bed.sh`, `scripts/doctor.sh`, `scripts/detect_3d.sh`, `scripts/bounds.py`, `scripts/vendor_libs.sh` (and `scripts/vendor_libs.ps1` on Windows), `scripts/detect_edit.sh`, `scripts/art_route.py` (brief to art form), `scripts/build_art_forms.py` (regenerates the art-form pages), `scripts/lipsync.py` (word timestamps or a WAV to a mouth-shape track), `scripts/standin_voice.py` (word timestamps to a preview WAV), `scripts/build_character_docs.py` (regenerates the kit README's tables from the code), `scripts/character_sheet.py` (a PNG sheet of any character in any skin), `scripts/character_project.py` (a character scene or the 2D-in-3D starter to a HyperFrames project)
 - `templates/SPEC.md`, `templates/threejs/index.html`, `templates/threejs/characters-stage.html` (rigged characters in a 3D set), `templates/blender/scene.py`

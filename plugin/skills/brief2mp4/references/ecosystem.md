@@ -96,6 +96,20 @@ These teach an agent craft: shot recipes, launch structure, polish passes, promp
 |---|---|---|---|
 | [FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg) | 67.3k | LGPL/GPL | Encode, join, mix, measure. Every route ends here (`scripts/finish.sh`) |
 
+## Tools the checks and sound scripts call (optional, you install them)
+
+brief2mp4 never bundles these. Each script prints the exact install command and a SKIP line, and exits 3, when its tool is missing: a delivery does not fail because an optional tool is absent, but a skipped check is never reported as a pass. Star counts and licences were read from GitHub on 22 Nov 2026.
+
+| Tool | Stars | Licence | Used by | Note |
+|---|---|---|---|---|
+| [librosa](https://github.com/librosa/librosa) | 9.1k | ISC | `scripts/beat_grid.py` | Beat and onset detection. `python3 -m pip install --user librosa`. The tempo is an estimate, so the script fits a grid through the beats |
+| [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) | 5.6k | BSD-3-Clause | `scripts/cut_points.sh` | Scene cuts from a recording. `python3 -m pip install --user scenedetect opencv-python-headless`. Soft dissolves and screen recordings with little change can be missed: lower `--threshold` |
+| [Tesseract](https://github.com/tesseract-ocr/tesseract) | 77.6k | Apache-2.0 | `scripts/ocr_sweep.sh` | Reads text from frames. OCR misreads thin or wide-spaced display type, so a hit is a reason to look at the frame, and a miss is not proof |
+| [Openverse](https://github.com/WordPress/openverse) (a WordPress project) | 0.7k | MIT (its code); each track has its own licence | `scripts/fetch_music.py` | Search API for CC0, public domain and CC BY audio, no key for light use. Anonymous requests are rate limited. CC BY needs the credit in `ATTRIBUTION.md` in the description. Openverse reports what the host says: confirm on the source page |
+| [Audiocraft / MusicGen](https://github.com/facebookresearch/audiocraft) (Meta) | 23.9k | Code MIT; **model weights CC BY-NC 4.0** | optional, see `references/sound.md` | Music and effects from a prompt. Weights are non-commercial only |
+| [F5-TTS](https://github.com/SWivid/F5-TTS) | 15.6k | Code MIT; **pre-trained models CC BY-NC** | optional, see `references/sound.md` | Voice-over and voice cloning. Clone only a voice you have the right to |
+| [Demucs](https://github.com/adefossez/demucs) | 3.6k | MIT | optional, see `references/sound.md` | Splits a song into stems so cuts can follow the drums. The original Meta repository is archived; this is the maintained fork |
+
 ## Picking between the frameworks
 
 - **The brief is a motion graphic and an agent is building it:** HyperFrames. HTML and CSS are what language models write most reliably, the timeline is seekable by design, and lint plus snapshots catch mistakes before a render.
