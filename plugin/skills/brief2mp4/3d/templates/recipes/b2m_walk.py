@@ -26,58 +26,51 @@ DEFAULTS = {
     "step_height": 0.12,   # how high the swing foot lifts, metres
     "thigh": 0.45,
     "shin": 0.45,
-    "hip_height": 0.78,    # well under thigh + shin, so the legs reach the stride without locking
-    "bob": 0.015,          # vertical bounce of the hips, twice a cycle
+    "hip_height": 0.82,    # under thigh + shin, so the legs reach the stride without locking
+    "bob": 0.02,           # vertical bounce of the hips, twice a cycle: lowest with both feet down, highest over one foot
+    "arm_swing": 0.6,      # arm swing as a share of the opposite thigh's swing
+    "twist": 0.1,          # radians the chest turns against the hips each step
+    "lead": 0.4,           # metres the camera's aim runs ahead of the body, leaving room in the direction of travel
     "naive": False,        # feet follow the body instead of planting (shows foot slide)
 }
 
 
-def _box(coll, name, size, loc, parent, color, rot_y=0.0):
-    sx, sy, sz = (s / 2 for s in size)
-    verts = [(a * sx, b * sy, d * sz) for d in (-1, 1) for b in (-1, 1) for a in (-1, 1)]
-    faces = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
-    obj = c.mesh_object(coll, name, verts, faces)
-    obj.parent = parent
-    obj.location, obj.rotation_euler = loc, (0, rot_y, 0)
-    c.paint(obj, color)
-    return obj
-
-
-def _ball(coll, name, radius, loc, parent, color):
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=(0, 0, 0))
-    obj = bpy.context.object
-    bpy.context.collection.objects.unlink(obj)
-    c.add(coll, obj)
-    obj.name = name
-    obj.parent = parent
-    obj.location = loc
-    bpy.ops.object.shade_smooth()
-    c.paint(obj, color)
-    return obj
-
-
 def _figure(coll, p):
-    body = c.material("b2m_body", p["subject"], roughness=0.45)
-    limb = c.material("b2m_limb", p["accent"], roughness=0.45)
-    ink = c.material("b2m_ink", p["ink"], roughness=0.6)
+    """A jointed mannequin: tapered rounded limbs, ball joints, an egg head. Hip, knee, ankle, shoulder and elbow
+    are empties, so the walk keys plain rotations. Proportions follow the leg length (thigh + shin)."""
+    body = c.material("b2m_body", p["subject"], roughness=0.42, coat=0.3)
+    joint = c.material("b2m_joint", p["accent"], roughness=0.3, metallic=0.2, coat=0.5)
+    sole = c.material("b2m_sole", p["ink"], roughness=0.6)
     l1, l2 = float(p["thigh"]), float(p["shin"])
+    u = (l1 + l2) / 0.94                                  # body scale: 1.0 for a 0.94 m leg, about 1.78 m tall
     pelvis = c.empty(coll, "b2m_pelvis", (0, 0, float(p["hip_height"])))
-    _box(coll, "b2m_hips", (0.2, 0.34, 0.14), (0, 0, 0), pelvis, body)
-    torso = c.empty(coll, "b2m_torso", (0, 0, 0.07), pelvis)
-    _box(coll, "b2m_chest", (0.22, 0.36, 0.5), (0, 0, 0.27), torso, body)
-    _ball(coll, "b2m_head", 0.12, (0, 0, 0.66), torso, ink)
+    c.capsule(coll, "b2m_hips", 0.115 * u, 0.1 * u, 0.2 * u, body, pelvis, (0, 0, 0.09 * u), squash=0.62)
+    torso = c.empty(coll, "b2m_torso", (0, 0, 0.06 * u), pelvis)
+    c.capsule(coll, "b2m_chest", 0.17 * u, 0.12 * u, 0.44 * u, body, torso, (0, 0, 0.52 * u), squash=0.68)
+    c.capsule(coll, "b2m_neck", 0.045 * u, 0.05 * u, 0.12 * u, body, torso, (0, 0, 0.62 * u))
+    head = c.capsule(coll, "b2m_head", 0.1 * u, 0.09 * u, 0.24 * u, body, torso, (0.01 * u, 0, 0.86 * u), squash=0.9)
+    head.rotation_euler = (0, 0.12, 0)
     rig = {"pelvis": pelvis, "torso": torso, "legs": {}, "arms": {}}
-    for side, y in (("L", 0.1), ("R", -0.1)):
+    for side, y in (("L", 0.095 * u), ("R", -0.095 * u)):
         hip = c.empty(coll, f"b2m_hip{side}", (0, y, 0), pelvis)
         knee = c.empty(coll, f"b2m_knee{side}", (0, 0, -l1), hip)
         ankle = c.empty(coll, f"b2m_ankle{side}", (0, 0, -l2), knee)
-        _box(coll, f"b2m_thigh{side}", (0.11, 0.11, l1), (0, 0, -l1 / 2), hip, limb)
-        _box(coll, f"b2m_shin{side}", (0.09, 0.09, l2), (0, 0, -l2 / 2), knee, limb)
-        foot = _box(coll, f"b2m_foot{side}", (0.26, 0.1, 0.06), (0.06, 0, 0.03), ankle, ink)
+        c.capsule(coll, f"b2m_thigh{side}", 0.075 * u, 0.052 * u, l1, body, hip)
+        c.capsule(coll, f"b2m_shin{side}", 0.05 * u, 0.036 * u, l2 - 0.05 * u, body, knee)
+        c.capsule(coll, f"b2m_kneecap{side}", 0.056 * u, 0.056 * u, 0.112 * u, joint, knee, (0, 0, 0.056 * u))
+        foot = c.empty(coll, f"b2m_foot{side}", (0, 0, 0), ankle)          # keyed to keep the sole flat
+        shoe = c.capsule(coll, f"b2m_shoe{side}", 0.045 * u, 0.045 * u, 0.25 * u, sole, foot, (-0.06 * u, 0, 0.034 * u))
+        shoe.rotation_euler = (0, -math.pi / 2, 0)       # lying along +x: heel behind the ankle, toes forward
+        shoe.scale = (0.75, 1.0, 1.0)
         rig["legs"][side] = {"hip": hip, "knee": knee, "ankle": ankle, "foot": foot}
-        shoulder = c.empty(coll, f"b2m_shoulder{side}", (0, y * 2.4, 0.42), torso)
-        _box(coll, f"b2m_arm{side}", (0.08, 0.08, 0.5), (0, 0, -0.25), shoulder, limb)
-        rig["arms"][side] = shoulder
+        shoulder = c.empty(coll, f"b2m_shoulder{side}", (0, y * 1.95, 0.46 * u), torso)
+        c.capsule(coll, f"b2m_ball{side}", 0.055 * u, 0.055 * u, 0.11 * u, joint, shoulder, (0, 0, 0.055 * u))
+        c.capsule(coll, f"b2m_upper{side}", 0.048 * u, 0.04 * u, 0.29 * u, body, shoulder)
+        elbow = c.empty(coll, f"b2m_elbow{side}", (0, 0, -0.29 * u), shoulder)
+        c.capsule(coll, f"b2m_elbowcap{side}", 0.042 * u, 0.042 * u, 0.084 * u, joint, elbow, (0, 0, 0.042 * u))
+        c.capsule(coll, f"b2m_fore{side}", 0.04 * u, 0.032 * u, 0.26 * u, body, elbow)
+        c.capsule(coll, f"b2m_hand{side}", 0.045 * u, 0.04 * u, 0.13 * u, body, elbow, (0, 0, -0.25 * u), squash=0.6)
+        rig["arms"][side] = {"shoulder": shoulder, "elbow": elbow}
     return rig
 
 
@@ -130,7 +123,8 @@ def _animate(rig, p):
     for f in range(1, int(p["frames"]) + 1):
         k = f - 1
         phase = (k / float(p["cycle_frames"])) % 1.0
-        hz = float(p["hip_height"]) + float(p["bob"]) * math.cos(2 * c.TAU * phase)
+        low = (float(p["duty"]) - 0.5) / 2                # the middle of the double support, when both feet are down
+        hz = float(p["hip_height"]) - float(p["bob"]) * math.cos(2 * c.TAU * (phase - low))
         _key(rig["pelvis"], "location", 0, hip_x(k), f)
         _key(rig["pelvis"], "location", 2, hz, f)
         angles = {}
@@ -145,8 +139,11 @@ def _animate(rig, p):
             _key(leg["foot"], "rotation_euler", 1, t2, f)        # undo the shin's tilt: the sole stays flat
             angles[side] = t1
         for side, other in (("L", "R"), ("R", "L")):
-            _key(rig["arms"][side], "rotation_euler", 1, -angles[other] * 0.8, f)   # the arm swings with the opposite leg
-        _key(rig["torso"], "rotation_euler", 1, -0.08, f)                          # a slight forward lean
+            swing = angles[other] * float(p["arm_swing"])                          # the arm swings with the opposite leg
+            _key(rig["arms"][side]["shoulder"], "rotation_euler", 1, -swing, f)
+            _key(rig["arms"][side]["elbow"], "rotation_euler", 1, -(0.25 + 0.6 * max(0.0, swing)), f)   # bends more going forward
+        _key(rig["torso"], "rotation_euler", 1, 0.06, f)                           # a slight forward lean
+        _key(rig["torso"], "rotation_euler", 2, float(p["twist"]) * (angles["L"] - angles["R"]), f)  # chest turns with the arms
     c.set_interpolation(list(_ids(rig)), "LINEAR")
     return targets, worst
 
@@ -156,7 +153,8 @@ def _ids(rig):
     yield rig["torso"]
     for leg in rig["legs"].values():
         yield from (leg["hip"], leg["knee"], leg["foot"])
-    yield from rig["arms"].values()
+    for arm in rig["arms"].values():
+        yield from (arm["shoulder"], arm["elbow"])
 
 
 def _ruler(coll, p, length):
@@ -165,10 +163,10 @@ def _ruler(coll, p, length):
     for i in range(int(length / 0.5) + 4):
         x = -1.0 + i * 0.5
         base = len(verts)
-        verts += [(x, -1.2, 0.002), (x + 0.03, -1.2, 0.002), (x + 0.03, 1.2, 0.002), (x, 1.2, 0.002)]
+        verts += [(x, -0.9, 0.002), (x + 0.02, -0.9, 0.002), (x + 0.02, 0.9, 0.002), (x, 0.9, 0.002)]
         faces.append((base, base + 1, base + 2, base + 3))
     bars = c.mesh_object(coll, "b2m_ruler", verts, faces)
-    c.paint(bars, c.material("b2m_ruler", c.mix_hex(p["floor"], p["ink"], 0.3), roughness=0.8))
+    c.paint(bars, c.material("b2m_ruler", c.mix_hex(p["floor"], p["ink"], 0.22), roughness=0.8))
 
 
 def build(params=None, clear=True):
@@ -176,16 +174,16 @@ def build(params=None, clear=True):
     coll = c.begin("walk", clear)
     scene = bpy.context.scene
     scene.frame_start, scene.frame_end = 1, int(p["frames"])
-    objs = c.stage(scene, coll, p, target=(0, 0, 0.8), cam=(1.4, -4.6, 1.5), lens=40)
+    objs = c.stage(scene, coll, p, target=(0, 0, 0.72), cam=(1.4, -4.6, 1.5), lens=40)
     rig = _figure(coll, p)
     travel = float(p["speed"]) * (int(p["frames"]) - 1) / float(p["fps"])
     _ruler(coll, p, travel + 4)
     targets, worst = _animate(rig, p)
     aim, cam = objs["aim"], objs["camera"]            # the camera and lights ride the aim point, which follows the body
     if cam is not None and p["stage"]:
-        cam.parent, cam.location = aim, (1.6, -6.6, 0.7)
+        cam.location = (0.7, -5.2, 0.6)              # relative to the orbit pivot, which sits on the aim
     for f in (1, int(p["frames"])):
-        _key(aim, "location", 0, float(p["speed"]) * (f - 1) / float(p["fps"]), f)
+        _key(aim, "location", 0, float(p["lead"]) + float(p["speed"]) * (f - 1) / float(p["fps"]), f)
     c.set_interpolation([aim], "LINEAR")
     c.caption(scene, coll, p["caption"], p, cam)
     return {"p": p, "scene": scene, "rig": rig, "targets": targets, "overshoot": worst}

@@ -41,5 +41,7 @@ def test_a_delayed_sheet_hangs_still_until_released_and_still_lands():
 def test_the_render_only_smoothing_does_not_change_the_simulation():
     plain = run_recipe("cloth", "--frames", "40", "--cloth-res", "20")
     smooth = run_recipe("cloth", "--frames", "40", "--cloth-res", "20", "--smooth-levels", "1")
-    assert smooth["centre_z"] == pytest.approx(plain["centre_z"], abs=1e-6)
+    # Blender's threaded cloth solver differs between runs by about 3e-5 m on this grid (seen with the same options
+    # twice), so the tolerance sits above that noise and far below what a simulated subdivision would move.
+    assert smooth["centre_z"] == pytest.approx(plain["centre_z"], abs=2e-4)
     assert smooth["vertices"] == plain["vertices"] == 441

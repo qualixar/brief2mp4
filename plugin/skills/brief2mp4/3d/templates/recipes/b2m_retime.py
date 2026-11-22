@@ -57,12 +57,21 @@ def make_mapper(old: dict, new: dict):
     return mapper
 
 
+def animated_ids(objs) -> list:
+    """The objects, their data and their shape keys: where keyframes can live."""
+    ids: list = []
+    for o in objs:
+        data = getattr(o, "data", None)
+        ids += [o] + ([data] if data is not None else []) + ([data.shape_keys] if getattr(data, "shape_keys", None) else [])
+    return ids
+
+
 def retime_between_markers(scene, new_frames: dict, objs=None, tail: int = 0) -> dict:
     """Move the named markers to new_frames and remap the keys of objs (default: every object in the scene)."""
     old = {m.name: float(m.frame) for m in scene.timeline_markers}
     mapper = make_mapper(old, new_frames)
     moved = 0
-    for idb in c.animated_ids(objs if objs is not None else list(scene.objects)):
+    for idb in animated_ids(objs if objs is not None else list(scene.objects)):
         for fc in c.fcurves(idb):
             for kp in fc.keyframe_points:      # freeze the handles where they are, so Blender cannot recompute them
                 kp.handle_left_type = kp.handle_right_type = "FREE"

@@ -34,3 +34,14 @@ def test_a_single_link_is_a_pendulum_with_the_right_period():
 def test_a_ball_joint_chain_also_holds_together():
     ball = run_recipe("rigid", "--links", "3", "--joint", "point", "--frames", "60", "--release-angle", "60")
     assert ball["max_joint_gap"] < 0.05 * 0.5
+
+
+def test_the_camera_keeps_the_whole_swing_in_frame(chain):
+    assert chain["frame_margin"] > 0.02                 # every joint and the tip stay inside the picture, with a margin
+
+
+def test_a_long_chain_released_near_level_also_stays_in_frame():
+    long = run_recipe("rigid", "--links", "7", "--link-length", "0.45", "--release-angle", "85", "--anchor-height", "3.5",
+                      "--damping", "0.01", "--frames", "120")
+    assert long["tip_travel_x"] > 3.0                   # it really swings wide, so the margin is tested at the extremes
+    assert long["frame_margin"] > 0.02

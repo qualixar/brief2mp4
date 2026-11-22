@@ -22,6 +22,7 @@ DEFAULTS = {
     "bob_cycles": 1,     # whole bobs per loop
     "rock": 14.0,        # degrees the ring rocks each way
     "rock_cycles": 2,    # whole rocks per loop
+    "glow": 0.6,         # emission strength of the ring; 0 for a plain lacquered ring
 }
 
 
@@ -32,13 +33,14 @@ def _gem(coll, p):
     c.add(coll, gem)
     for poly in gem.data.polygons:
         poly.use_smooth = False
-    c.paint(gem, c.material("b2m_gem", p["subject"], roughness=0.25, metallic=0.35))
+    c.paint(gem, c.material("b2m_gem", p["subject"], roughness=0.3, metallic=0.1, coat=0.7))
     bpy.ops.mesh.primitive_torus_add(major_radius=1.15, minor_radius=0.05, location=(0, 0, 0))
     ring = bpy.context.object
     bpy.context.collection.objects.unlink(ring)
     c.add(coll, ring)
     ring.parent = gem
-    c.paint(ring, c.material("b2m_ring", p["accent"], roughness=0.3, emission=p["accent"], strength=0.6))
+    c.paint(ring, c.material("b2m_ring", p["accent"], roughness=0.3, metallic=0.3, coat=0.6, emission=p["accent"],
+                             strength=float(p["glow"])))
     return gem, ring
 
 

@@ -1,4 +1,4 @@
-# SPEC: five motions, one film
+# SPEC: five motions, one studio
 
 ## Delivery
 | Item | Value |
@@ -6,9 +6,9 @@
 | File | final.mp4 |
 | Frame | 1920x1080 |
 | Frame rate | 30 fps |
-| Duration | 20.0 s |
+| Duration | 24.0 s (720 frames) |
 | Video | H.264, yuv420p |
-| Audio | AAC 48 kHz stereo, -14 LUFS, true peak <= -1 dBTP (a quiet bed) |
+| Audio | AAC 48 kHz stereo, -14 LUFS, true peak <= -1 dBTP |
 
 ## Exact text (character for character)
 1. "Cloth drop"
@@ -18,33 +18,40 @@
 5. "Seamless loop"
 
 ## Look
-- Palette: stage #1a1d29, floor #262a3a, subject #f0b24a, accent #d9573b, ink #f3ecdd. No teal or mint.
-- Type: Blender's built-in sans as flat 3D text, 54 px tall at 1080p, bottom left, 100 px from the left edge and 70 px from the bottom.
-- Mood: calm, exact, a workshop.
-- Art form: 3D product render look, smooth 30 fps motion.
+- One studio for every act: `--look studio` on each recipe. A seamless backdrop (the floor curves up into the wall, so there is no horizon), a soft key from the upper left, a weak fill, a rim from behind and a wash on the wall; ray-traced reflections and bounce light; Eevee at 64 samples.
+- Palette, the same line for every act: backdrop #c4beb6 (world) and #cdc7bf (set), subject #e0632f (vermilion), accent #3358c8 (cobalt), ink #24212a (charcoal). No teal or mint.
+- Materials: lacquered links and gem (clear coat), fabric sheen and 12 mm thickness on the cloth, paper 4 mm thick with a cobalt underside, a vermilion mannequin with cobalt joints and charcoal feet.
+- Type: Blender's built-in sans as flat 3D text, 38 px tall at 1080p, bottom left, 100 px from the left edge and 70 px from the bottom, after a short vermilion bar. Each caption fades in over 9 frames while rising 10 px, and fades out before the next dissolve.
+- Camera: every move drifts the same way (the backdrop slides left): a 4, 3 and 4 degrees-a-second orbit on the cloth, chain and fold, the follow on the walk, and a still camera on the loop, so its seam has nothing to hide behind.
+- Mood: calm, exact, a well-lit workshop.
+
+## The cut
+The music is 95 BPM, so a bar is 2.524 s (75.7 frames). Acts join on every second bar line, at frames 114, 265, 416 and 568. Each act renders 6 frames past each of its joins, and neighbours dissolve into each other over those 12 frames (0.4 s), centred on the bar line. The last 0.6 s eases into the backdrop colour while the music fades.
 
 ## Beat sheet
 | Time (s) | On screen | Motion |
 |---|---|---|
-| 0.0-4.0 | cloth sheet over a sphere, "Cloth drop" | hangs still for 0.8 s, falls from 2.2 m, touches at about 1.4 s, drapes and settles |
-| 4.0-8.0 | seven-link chain, "Hinged chain" | released at 85 degrees, swings across and back |
-| 8.0-12.0 | paper sheet, "Folding" | three folds at 29 frames each, each halving the width |
-| 12.0-16.0 | figure on a ruled floor, "Walking, feet planted" | constant speed, camera follows, feet planted |
-| 16.0-20.0 | gem and ring, "Seamless loop" | a 2 s loop played twice |
+| 0.0-3.8 | a sheet above a cobalt sphere, "Cloth drop" | the sheet is already falling at frame 1, lands on the sphere at about 0.3 s, drapes into folds and settles; the camera orbits slowly |
+| 3.8-8.83 | a seven-link chain on a post, "Hinged chain" | the first big downbeat of the music lands on the dissolve; the chain, released at 85 degrees, whips across and back; the whole arc stays in frame |
+| 8.83-13.87 | a vermilion sheet, "Folding" | three folds of 34 frames, 9 frames apart; each turns the cobalt underside up; the camera eases to the stack and closes in |
+| 13.87-18.93 | a mannequin on a ruled floor, "Walking, feet planted" | walks right at 0.95 m/s, one step every 17 frames, the camera following with room ahead |
+| 18.93-24.0 | a gem and ring, "Seamless loop" | one turn per bar (a 76-frame loop) played twice; the camera holds; the picture eases out at the end |
 
-Hero moment: 1.4 s: the cloth lands on the sphere.
+Hero moment: 3.8 s, the music's beat comes in as the chain is released.
 
 ## Tool
-Blender, headless, through the 3D pack's motion recipes (cloth, rigid, fold, walk, loop) because each act is a simulation or a measured cycle that a recipe already gets right; ffmpeg joins the acts.
+Blender, headless, through the 3D pack's motion recipes (cloth, rigid, fold, walk, loop), because each act is a simulation or a measured cycle that a recipe already gets right. The five acts render in parallel. ffmpeg dissolves them together; `scripts/finish.sh` lays the music and sets the loudness.
 
 ## Decisions (choices the brief left open)
-- Each act is rendered separately by `build.sh` and joined with stream copy, so one act can be re-rendered alone.
-- The dips between acts are 6-frame fades to the stage colour at each side of a join.
-- The soundtrack is the skill's generated bed (`scripts/sound_bed.sh`), not music: sine pad and soft pulse.
+- The music is a CC0 track from Openverse (see ATTRIBUTION.md), chosen for its tempo: a 95 BPM bar lets each act run two bars. It is cut so its first big downbeat (12.69 s into the track) lands on the first join.
+- Dissolves, not cuts: the five acts happen in one studio, so the join says "this continues". The dissolve is centred on the bar line, so the beat and the change land together.
+- No depth of field: the captions are 3D text 1 m from the lens, and depth of field would blur them. The shots are wide enough that it would add little.
+- The loop act renders frames 1-158 in one go; the gem's curves are cyclic, so frames past 77 keep looping.
 
 ## Done when
-- [ ] final.mp4 is 20.0 s, 1920x1080, 30 fps (check_delivery.sh PASS, joins at 4, 8, 12 and 16 s)
-- [ ] at 1.5 s, 5.5 s, 9.5 s, 13.5 s and 17.5 s each caption is fully on screen, spelled exactly, nothing cut off
-- [ ] act 4: planted feet move under 2 mm a frame (the recipe's own measurement, in the build log)
-- [ ] act 5: the 60-frame loop's first and last frames match (the recipe's own pixel-level check passes in the test suite)
+- [ ] final.mp4 is 24.0 s, 1920x1080, 30 fps (`check_delivery.sh` PASS with `--joins 3.8,8.833,13.867,18.933 --strict-flicker`)
+- [ ] at 2.0, 6.3, 11.3, 16.4 and 21.0 s each caption is fully on screen, spelled exactly, nothing cut off
+- [ ] act 2: `frame_margin` above 0 (the recipe's own measurement: no joint leaves the frame)
+- [ ] act 4: planted feet move under 2 mm a frame (`max_slide_per_frame` in build/act4.json)
+- [ ] act 5: the loop's seam slope gap under 0.02 (`seam_slope_gap` in build/act5.json)
 - [ ] no teal or mint anywhere in the frame

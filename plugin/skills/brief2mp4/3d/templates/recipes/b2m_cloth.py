@@ -29,6 +29,8 @@ DEFAULTS = {
     "quality": 6,             # solver steps per frame
     "self_collision": False,  # folds that rest on themselves; slower
     "smooth_levels": 0,       # Subdivision after the cloth, in the render only (the numbers are read from the sim)
+    "thickness": 0.0,         # render-only thickness of the sheet in metres (a Solidify after the cloth); 0 = a bare surface
+    "sheen": 0.0,             # the soft edge glow of fabric, 0-1
 }
 
 
@@ -64,7 +66,7 @@ def _sheet(coll, p):
     sheet = c.mesh_object(coll, "b2m_cloth", verts, faces)
     for poly in sheet.data.polygons:
         poly.use_smooth = True
-    c.paint(sheet, c.material("b2m_cloth", p["subject"], roughness=0.75))
+    c.paint(sheet, c.material("b2m_cloth", p["subject"], roughness=0.75, sheen=float(p["sheen"])))
     mod = sheet.modifiers.new("Cloth", "CLOTH")
     s, col = mod.settings, mod.collision_settings
     s.quality, s.mass, s.bending_stiffness = int(p["quality"]), float(p["mass"]), float(p["bend"])
@@ -76,6 +78,9 @@ def _sheet(coll, p):
     if int(p["smooth_levels"]) > 0:
         sub = sheet.modifiers.new("Smooth", "SUBSURF")      # render only: toggling it while stepping would reset the cloth cache
         sub.show_viewport, sub.show_render, sub.render_levels = False, True, int(p["smooth_levels"])
+    if float(p["thickness"]) > 0:
+        solid = sheet.modifiers.new("Thickness", "SOLIDIFY")  # render only, like the smoothing: the measured sim is untouched
+        solid.show_viewport, solid.thickness, solid.offset = False, float(p["thickness"]), 1.0
     return sheet
 
 

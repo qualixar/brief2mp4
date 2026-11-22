@@ -30,6 +30,9 @@ DEFAULTS = {
     "pause": 8,             # frames between folds, and flat at the start and folded at the end
     "crease_radius": 0.06,  # how far the bend spreads on each side of the crease
     "layer_gap": 0.01,      # thickness of one layer of paper, in metres
+    "back": "",             # colour of the underside (hex); empty means the same as the top, like plain paper
+    "thickness": 0.0,       # render-only thickness of the sheet (a Solidify), under layer_gap; 0 = a bare surface
+    "follow": True,         # the camera eases over to the stack and closes in as it halves, during each fold
 }
 
 
@@ -45,6 +48,28 @@ def fold_positions(cur, crease_x, axis_z, frac, radius):
         dx, dz = x - crease_x, z - axis_z
         out.append((crease_x + dx * math.cos(a) - dz * math.sin(a), y, axis_z + dx * math.sin(a) + dz * math.cos(a)))
     return out, zone
+
+
+def _paper(sheet, p):
+    """Top colour, and the underside's own colour when `back` is set: that side shows wherever a fold turns it up.
+    With thickness the underside is the Solidify shell; without it, a Backfacing switch in one material."""
+    top = c.material("b2m_sheet", p["subject"], roughness=0.8)
+    c.paint(sheet, top)
+    thick = float(p["thickness"])
+    if p["back"] and thick > 0:
+        sheet.data.materials.append(c.material("b2m_sheet_back", p["back"], roughness=0.8))
+    elif p["back"]:
+        nodes, links = top.node_tree.nodes, top.node_tree.links
+        bsdf = next(n for n in nodes if n.type == "BSDF_PRINCIPLED")
+        geo, mix = nodes.new("ShaderNodeNewGeometry"), nodes.new("ShaderNodeMix")
+        mix.data_type = "RGBA"
+        mix.inputs["A"].default_value, mix.inputs["B"].default_value = c.hex_rgba(p["subject"]), c.hex_rgba(p["back"])
+        links.new(geo.outputs["Backfacing"], mix.inputs["Factor"])
+        links.new(mix.outputs["Result"], bsdf.inputs["Base Color"])
+    if thick > 0:
+        solid = sheet.modifiers.new("Thickness", "SOLIDIFY")    # render only: the measured shape keys are untouched
+        solid.show_viewport, solid.thickness, solid.offset = False, thick, -1.0
+        solid.material_offset = 1 if p["back"] else 0             # the new shell takes the underside colour
 
 
 def _grid(p):
@@ -104,18 +129,34 @@ def build(params=None, clear=True):
         raise ValueError("folds must be at least 1 and fold_steps at least 2")
     coll = c.begin("fold", clear)
     scene = bpy.context.scene
-    objs = c.stage(scene, coll, p, target=(-0.2, 0, -0.15), cam=(-0.2, -4.4, 2.6), lens=45)   # aimed low, so the sheet sits above the caption
+    objs = c.stage(scene, coll, p, target=(0, 0, 0.2), cam=(0, -5.2, 3.1), lens=45)   # room above for the rising flap
     verts, faces = _grid(p)
     sheet = c.mesh_object(coll, "b2m_sheet", verts, faces, (0, 0, float(p["layer_gap"])))
     for poly in sheet.data.polygons:
         poly.use_smooth = True
-    c.paint(sheet, c.material("b2m_sheet", p["subject"], roughness=0.8))
+    _paper(sheet, p)
     per_fold, zone, creases, axes = _fold_keys(sheet, verts, p)
     end, starts = _animate(per_fold, p)
     scene.frame_start, scene.frame_end = 1, end
+    if p["follow"] and p["stage"]:
+        _follow(objs["aim"], objs["camera"], creases, starts, -float(p["sheet_width"]) / 2, int(p["fold_frames"]))
     c.caption(scene, coll, p["caption"], p, objs["camera"])
     return {"p": p, "sheet": sheet, "scene": scene, "zone": zone, "starts": starts, "creases": creases,
             "axes": axes, "flat": verts}
+
+
+def _follow(aim, cam, creases, starts, left, span):
+    """During each fold, ease the aim to the middle of the stack it leaves and bring the camera in by the same share
+    as the width shrinks (to 0.82 of the distance per fold), so the subject keeps its place and size in frame."""
+    offset, height = tuple(cam.location), aim.location.z
+    centre, scale = 0.0, 1.0
+    for crease, start in zip(creases, starts):
+        for frame, x, k in ((start, centre, scale), (start + span, (left + crease) / 2, scale * 0.82)):
+            aim.location.x, aim.location.z = x, height * k
+            aim.keyframe_insert("location", frame=frame)
+            cam.location = tuple(v * k for v in offset)
+            cam.keyframe_insert("location", frame=frame)
+        centre, scale = (left + crease) / 2, scale * 0.82
 
 
 def _evaluated(sheet):
