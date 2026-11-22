@@ -43,7 +43,9 @@ B='(^|[^A-Za-z0-9_])'
 E='([^A-Za-z0-9_]|$)'
 PATTERN="${B}(TODO|TBD|FIXME)${E}|lorem ipsum|${B}lorem${E}|placeholder|not recorded"
 PATTERN+='|\{\{|\}\}|\[(INSERT|TODO|TBD|PLACEHOLDER)[^]]*\]'
-PATTERN+='|/Users/|/home/[a-z]|[A-Za-z]:\\|[A-Za-z]:/Users'
+# OCR often reads a thin slash as | I l 1 J or \\, so a home path is matched with any of those around "users".
+PATTERN+="|${B}[/|\\\\Il1J]users[/|\\\\Il1J]"
+PATTERN+='|/home/[a-z]|[A-Za-z]:\\|[A-Za-z]:/Users'
 [[ -n "$EXTRA" ]] && PATTERN+="|$EXTRA"
 
 HITS=0
