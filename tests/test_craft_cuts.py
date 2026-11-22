@@ -48,10 +48,10 @@ def test_min_scene_drops_a_cut_that_comes_too_soon(tmp_path):
     assert data["cuts"] == []
 
 
-def test_without_scenedetect_it_skips_with_the_install_command_and_exits_0(tmp_path):
+def test_without_scenedetect_it_skips_with_the_install_command_and_exits_3(tmp_path):
     clip = cut_clip(tmp_path / "cut.mp4")
     proc = bash_script("cut_points.sh", clip, env={"SCENEDETECT": "definitely-not-installed"})
-    assert proc.returncode == 0
+    assert proc.returncode == 3
     assert proc.stdout.startswith("SKIP") and "python3 -m pip install --user scenedetect opencv-python-headless" in proc.stdout
 
 

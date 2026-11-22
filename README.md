@@ -111,6 +111,7 @@ Round 4 of the video: Fable 5.2 in Claude Code got a written brief for a 60-seco
 | **Stylised 3D** | planets, particles, abstract shapes, flying cameras | Three.js |
 | **3D products with physics** | parts that drop and settle, exploded views, turntables | 3D pack |
 | **Photoreal shots** | glass, metal, soft shadows | Blender |
+| **Explainers and documentaries** (1-10 min, narrated) | film mode: one brief in a project folder, every stage's file on disk (story, script with a source per line, storyboard, licensed archive pictures and maps, your voice or a stand-in, re-timed picture, mix, render, checks, report); render refuses unsourced lines | `scripts/film.py`, HyperFrames |
 
 <p align="center">
   <img src="assets/example05-explainer.png" alt="Example 05, a 2D explainer made by the skill: the hook question, the cache diagram mid-count at 652 ms, three labels, and the closing line Keep a copy close." width="49%">
@@ -149,7 +150,7 @@ Three rules carry all of them: the picture is a function of time, handmade looks
 
 1. **Spec.** Before any code the agent writes `SPEC.md`: size, frame rate, exact duration, codecs and loudness; every on-screen word copied exactly; the palette; a beat sheet with times; and a "done when" list with one checkable line per requirement.
 2. **Route and build.** Each beat goes to the tool that fits it, starting from templates that already render. HyperFrames is the spine where every layer meets on one timeline.
-3. **Self-check.** `check_delivery.sh` measures the file (PASS, WARN or FAIL). `contact_sheet.sh` pulls stills at the important moments, and the agent views them and marks every "done when" line met or not met, with evidence.
+3. **Self-check.** `check_delivery.sh` measures the file (PASS, WARN, FAIL, or SKIP when an optional tool is missing, which ends `RESULT: INCOMPLETE`, never PASS), including one-frame flicker, pops at act joins and frozen stretches (`check_seams.py`). `check_clutter.py` checks the layout (no card on card, 24 px between text, at most four text blocks, nothing clipped) and `ocr_sweep.sh` reads the finished frames for placeholder text and leaked paths. `contact_sheet.sh` pulls stills at the important moments, and the agent views them and marks every "done when" line met or not met, with evidence.
 4. **Fix.** Worst miss first, render again, up to three rounds.
 5. **Deliver.** `final.mp4` and a `REPORT.md` that says what was checked, how, and what is still open.
 
@@ -332,10 +333,13 @@ plugin/
   .codex-plugin/plugin.json        Codex plugin manifest
   skills/brief2mp4/
     SKILL.md                       the loop the agent follows
-    references/                    formats, pipelines, art forms, ecosystem, hyperframes, threejs, blender, ffmpeg
-    scripts/                       finish, check_delivery, contact_sheet, sound_bed, doctor, detect_3d,
-                                   detect_edit, art_route, lipsync, character_project, bounds.py, vendor_libs
-    templates/                     SPEC.md, a Three.js scene, a Blender turntable
+    references/                    formats, pipelines, art forms, ecosystem, hyperframes, threejs, blender, ffmpeg,
+                                   motion doctrine, render traps, review checklist, sound
+    scripts/                       finish, check_delivery, check_seams, check_clutter, ocr_sweep, contact_sheet,
+                                   beat_grid, cut_points, fetch_music, sound_bed, doctor, detect_3d, detect_edit,
+                                   art_route, lipsync, character_project, bounds.py, vendor_libs; film mode:
+                                   film.py and its stages, fetch_archive, make_map, sfx_synth, split_takes, retime, mix
+    templates/                     SPEC.md, a Three.js scene, a Blender turntable, the film-mode archive desk
     art-forms/                     82 deterministic art-form demos
     characters/                    the character kit: rig, poses, six skins, starter cast
     3d/                            the optional 3D pack and its installers

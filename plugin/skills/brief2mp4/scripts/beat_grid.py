@@ -6,7 +6,7 @@
   python3 beat_grid.py snap grid.json --times 1.2,3.4 --emit js        # a ready-to-paste snippet for a HyperFrames timeline
 
 analyze needs librosa (optional: python3 -m pip install --user librosa). Without it, the command prints the
-install line and exits 0 with a SKIP, so a missing optional tool never fails a build. snap needs nothing.
+install line and a SKIP and exits 3 (nothing was made: never read as success, never a failure either). snap needs nothing.
 
 How the grid is built, and why:
   1. librosa tracks the beats. A tempo estimate alone drifts, so the beats are then fitted with a straight
@@ -106,7 +106,7 @@ def analyze(path, per_bar, tol):
     except ImportError:
         print("SKIP  beat_grid: librosa is not installed, so no beat grid was made.")
         print(f"      Install it: {INSTALL}   (needs Python 3.9 or newer; the first import takes a few seconds)")
-        return 0
+        return 3
     y, sr = librosa.load(path, sr=22050, mono=True)
     duration = len(y) / sr
     hop = HOP

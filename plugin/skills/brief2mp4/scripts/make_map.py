@@ -13,6 +13,10 @@ continent, "world", or bbox:minlon,minlat,maxlon,maxlat. --point is Name=lat,lon
 (data-len), which is what a frame-by-frame draw-on needs (references/render-traps.md, trap 7).
 
 The boundaries are Natural Earth, public domain (data/NATURAL-EARTH.md), shipped as a 54 KB subset so this works offline.
+Natural Earth draws boundaries by their de facto status (who controls the ground), not by any one country's claim. A map
+of a disputed region (Kashmir, Crimea, Western Sahara and others) can be unacceptable to some audiences, and some
+countries restrict how their borders may be shown: check before publishing such a map, or pass --geojson with an
+outline that follows the rules where it will be shown.
 The projection is chosen for the region: Equal Earth for the world and wide regions, Albers equal-area conic for wide
 regions in the mid latitudes, Mercator for small areas and the tropics. Only the main body of a country sets the frame
 (French Guiana does not stretch a map of France); points always fit. Next to the SVG it writes a .json with the

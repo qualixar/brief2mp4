@@ -3,7 +3,8 @@
 
   python3 retime.py STORYBOARD.json TIMINGS.json [--grid grid.json] [--fps 30]
 
-The voice is never stretched; the picture adapts to it. Every line is placed so a short breath separates it from the
+The voice is never stretched; the picture adapts to it. The warnings the storyboard and assets stages saved are kept
+(retime's own are added once, and replaced when it runs again); the voice stage's notes go in `retime.notes` for the report. Every line is placed so a short breath separates it from the
 one before, and each beat cut falls in the middle of the breath between its last line and the next beat's first:
 
   lead 0.30 s before the first word, 0.30 s between lines of one beat, 0.45 s between beats, 0.80 s between acts,
@@ -106,9 +107,16 @@ def retime(storyboard: dict, timings: dict, fps: float | None = None, grid: dict
         beat["sound"] = _resolve_cues(beat) if beat.get("sound") else []
         beat.pop("_speech_start")
     sb["acts"] = [{**a, "start": min(b["start"] for b in sb["beats"] if b["act"] == a["id"]), "end": max(b["end"] for b in sb["beats"] if b["act"] == a["id"])} for a in sb["acts"]]
-    sb.update(duration=round(beat_start, 4), retimed=True, fps=fps, warnings=warnings,
-              retime={**o, "grid": bool(beats_grid), "snap_max": snap_max if beats_grid else None})
+    earlier = [w for w in sb.get("warnings", []) if w not in (sb.get("retime") or {}).get("warnings", [])]   # this stage's last run is replaced
+    voice_notes = list(timings.get("notes", [])) + list(timings.get("warnings", []))
+    sb.update(duration=round(beat_start, 4), retimed=True, fps=fps, warnings=_unique(earlier + warnings),
+              retime={**o, "grid": bool(beats_grid), "snap_max": snap_max if beats_grid else None, "warnings": warnings, "notes": voice_notes})
     return sb
+
+
+def _unique(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    return [w for w in items if not (w in seen or seen.add(w))]
 
 
 def _gap(a: dict, b: dict, o: dict) -> float:

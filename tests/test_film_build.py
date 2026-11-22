@@ -141,7 +141,7 @@ def test_the_counter_ends_when_the_number_is_spoken(tmp_path):
     spoken_end = b3["line_starts"]["L03"] + next(w for w in words if w["text"] == "million")["end"] - b3["start"]
     assert end == pytest.approx(min(spoken_end, b3["duration"] - 0.4), abs=0.02) and at < end
     html = page(out)
-    assert 'data-count-from="0" data-count-to="1400000"' in html and '<span class="n" style="font-size:68px">0</span><span class="l">km of cable</span>' in html
+    assert 'data-count-from="0" data-count-to="1400000"' in html and '<p class="ledger"><span class="n" style="font-size:68px">0</span><br /><span class="l">km of cable</span></p>' in html
 
 
 def test_counter_window_on_known_words():
@@ -265,3 +265,31 @@ def test_film_js_parses():
 def test_the_looks_page_names_the_archive_desk_in_the_art_form_list_of_the_router():
     import art_route
     assert art_route.route("an archive documentary with stills and a map")["form"] == "archive-documentary"
+
+
+def test_map_land_reaches_past_the_view_so_a_push_in_from_below_scale_1_shows_no_edge(tmp_path):
+    css = (fc.TEMPLATES / "film.css").read_text(encoding="utf-8")
+    assert re.search(r"\.plate \.mapbox svg \{[^}]*overflow: visible", css), "the map svg must not clip its own land at the viewBox"
+    p, sb, tm, out, _ = build(tmp_path)
+    svg = (tmp_path / "assets" / "maps" / "B02.svg").read_text(encoding="utf-8")
+    xs = [float(v) for v in re.findall(r"[ML](-?[\d.]+) ", " ".join(re.findall(r'class="mm-(?:land|ctx|hl)"[^>]* d="([^"]+)"', svg)))]
+    assert min(xs) < 0 and max(xs) > 1296, "land is drawn past both sides of the plate's view"
+
+
+def chrome():
+    import check_clutter
+    return check_clutter.find_chrome()
+
+
+@pytest.mark.skipif(chrome() is None, reason="needs Chrome, Chromium or Edge")
+def test_a_date_stamp_with_an_ampersand_types_one_character_not_an_entity(tmp_path):
+    js = (fc.TEMPLATES / "film.js").read_text(encoding="utf-8")
+    stub = "window.gsap={timeline:function(){var t={fromTo:function(){return t},to:function(){return t},set:function(){return t}};return t}};"
+    page = tmp_path / "p.html"
+    page.write_text(f'<!doctype html><html><body><section class="beat" data-t0="0" data-t1="2"><p class="stamp">No. 01 / 01<br />R&amp;D &lt;1931&gt;</p>'
+                    f"</section><script>{stub}</script><script>{js}</script></body></html>", encoding="utf-8")
+    dom = subprocess.run([chrome(), "--headless=new", "--disable-gpu", f"--user-data-dir={tmp_path / 'prof'}", "--dump-dom", page.as_uri()],
+                         capture_output=True, text=True, timeout=60).stdout
+    chars = re.findall(r'<span class="ch">(.*?)</span>', dom)
+    assert "".join(chars) == "No. 01 / 01R&amp;D &lt;1931&gt;", chars                       # one span per visible character
+    assert chars.count("&amp;") == 1 and "<br>" in dom.split('class="stamp"', 1)[1]

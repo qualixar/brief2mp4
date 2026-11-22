@@ -9,7 +9,8 @@ SCRIPT.md is plain text a person or an agent writes. A few header lines, then on
     ## L01
     say: Ninety-nine percent of intercontinental data does not fly. It swims.
     screen: UNDER THE SEA           words shown on screen (kept apart from the narration)
-    source: https://example.org/page   a URL for every factual line, or UNVERIFIED
+    source: https://example.org/page   a URL (with a host) for every factual line; `none (no factual claim)` for a line
+                                       that states nothing checkable ("Then it failed."); left out, the line is UNVERIFIED
     visual: archive                 archive, map, counter or title (default: archive when there is a query or asset)
     query: submarine cable ship     what to search for (archive)
     asset: assets/archive/ship.jpg  or a picture you already have
@@ -17,11 +18,13 @@ SCRIPT.md is plain text a person or an agent writes. A few header lines, then on
     beat: 2                         lines with the same beat number share one screen
 
 A map beat also takes `region:`, `point: Name=lat,lon` and `route: A>B`. A counter takes `count: 0 -> 1400000 | km of cable`.
-A line with no `source:` is UNVERIFIED: it must be cut or confirmed before render. Standard library only.
+A line with no `source:` (or a URL with no host, such as `https://`) is UNVERIFIED: it must be cut or confirmed before render.
+`source: none` is an explicit exemption, listed in REPORT.md so a reader can disagree. Standard library only.
 """
 from __future__ import annotations
 
 import re
+import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -106,15 +109,22 @@ def parse_script(text: str) -> Script:
     for ident, body in blocks:
         f = _parse_fields(body, f"SCRIPT.md {ident}")
         source = f.get("source", "").strip()
-        urls = [u for u in re.split(r"[\s,]+", source) if u.lower().startswith(("http://", "https://"))]
+        urls = [u for u in re.split(r"[\s,]+", source) if is_url(u)]
+        no_claim = bool(re.match(r"^none\b", source, re.I))
         line = {"id": ident, "say": f.get("say", ""), "screen": f.get("screen", ""), "source": source,
-                "sources": urls, "unverified": not urls, "visual": f.get("visual", ""), "query": f.get("query", ""),
+                "sources": urls, "no_claim": no_claim and not urls, "unverified": not urls and not no_claim, "visual": f.get("visual", ""), "query": f.get("query", ""),
                 "asset": f.get("asset", ""), "date": f.get("date", ""), "region": f.get("region", ""),
                 "points": f.get("point", []), "routes": f.get("route", []), "count": f.get("count", ""),
                 "beat": f.get("beat", ""), "words": len(words_of(f.get("say", "")))}
         line["seconds"] = estimate_seconds(line["say"], pace)
         lines.append(line)
     return Script(meta, tuple(lines))
+
+
+def is_url(text: str) -> bool:
+    """An http(s) link with a real host name (a dot in it): `https://` alone, or `https://x`, is not a source."""
+    parts = urllib.parse.urlsplit(text.strip())
+    return parts.scheme in ("http", "https") and bool(parts.hostname) and "." in (parts.hostname or "")
 
 
 def read_script(path: Path) -> Script:
@@ -147,3 +157,8 @@ def check_script(script: Script) -> tuple[list[str], list[str]]:
 
 def unverified(script: Script) -> list[str]:
     return [line["id"] for line in script.lines if line["unverified"]]
+
+
+def no_claim(script: Script) -> list[str]:
+    """Lines marked `source: none`: no factual claim, so no source; REPORT.md lists them."""
+    return [line["id"] for line in script.lines if line.get("no_claim")]

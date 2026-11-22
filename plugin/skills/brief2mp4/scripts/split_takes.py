@@ -217,7 +217,11 @@ def asr_words(take: Path, words_path: Path | None, model: str | None, notes: lis
     import json
     with tempfile.TemporaryDirectory() as tmp:
         wav, base = Path(tmp) / "t16.wav", Path(tmp) / "out"
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(take), "-ar", "16000", "-ac", "1", str(wav)], check=True, capture_output=True)
+        conv = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(take), "-ar", "16000", "-ac", "1", str(wav)], capture_output=True, text=True)
+        if conv.returncode != 0:
+            if notes is not None:
+                notes.append(f"ffmpeg could not make a 16 kHz copy for whisper-cli ({conv.stderr.strip()[-120:]}): pauses alone were used")
+            return None
         done = subprocess.run([tool, "-m", model, "-f", str(wav), "-oj", "-of", str(base), "-ml", "1", "-sow"], capture_output=True, text=True)
         if done.returncode != 0 or not base.with_suffix(".json").is_file():
             if notes is not None:
@@ -303,7 +307,8 @@ def split(take: Path, script_path: Path, out_dir: Path, timings_path: Path, word
         est = estimate_seconds(line["say"], script.pace)
         if (t1 - t0) > 2.5 * est + 1.0 or (t1 - t0) < 0.3 * est:
             warnings.append(f"{line['id']}: {t1 - t0:.1f} s of speech, but the script suggests {est:.1f} s at {script.pace:g} wpm: check the split")
-    save_json(Path(timings_path), {"version": 1, "source": Path(take).name, "rate": RATE, "pace": script.pace, "lines": {l["id"]: l for l in lines}, "order": [l["id"] for l in lines]})
+    save_json(Path(timings_path), {"version": 1, "source": Path(take).name, "rate": RATE, "pace": script.pace, "lines": {l["id"]: l for l in lines},
+                                   "order": [l["id"] for l in lines], "notes": notes, "warnings": warnings})
     return {"lines": lines, "warnings": warnings, "notes": notes}
 
 

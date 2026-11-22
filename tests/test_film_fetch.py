@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import io
 import json
+import shutil
+import struct
 import sys
 import urllib.error
 import urllib.parse
@@ -192,3 +194,27 @@ def test_cli_says_so_when_nothing_is_usable(monkeypatch, capsys):
 def test_prints_help():
     proc = fc.run([sys.executable, fc.SCRIPTS / "fetch_archive.py", "--help"])
     assert proc.returncode == 0 and "usage" in proc.stdout.lower()
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg not found")
+def test_a_picture_over_1920_px_is_scaled_down_and_the_record_matches_the_saved_file(tmp_path, monkeypatch):
+    import hashlib
+    c = {**first_candidate(), "width": 2400, "height": 600}
+    fake_network(monkeypatch, {c["url"]: fc.png_bytes(2400, 600)})                   # an Openverse original: no thumbnail asked for
+    entry = fa.download(c, tmp_path / "a", tmp_path / "ASSETS.json", delay=0)
+    saved = tmp_path / entry["file"]
+    w, h = struct.unpack(">II", saved.read_bytes()[16:24])
+    assert (w, h) == (1920, 480) and (entry["width"], entry["height"]) == (1920, 480) and entry["resized"] is True
+    assert entry["sha256"] == hashlib.sha256(saved.read_bytes()).hexdigest()
+    tall = {**first_candidate(), "title": "tall scan", "width": 1900, "height": 30000}
+    fake_network(monkeypatch, {tall["url"]: fc.png_bytes(190, 3000)})                  # narrow but very tall: the longest side counts
+    entry = fa.download(tall, tmp_path / "a", tmp_path / "ASSETS.json", delay=0)
+    assert max(entry["width"], entry["height"]) == 1920
+
+
+def test_a_small_picture_is_kept_as_it_came(tmp_path, monkeypatch):
+    c = first_candidate()
+    body = fc.png_bytes()
+    fake_network(monkeypatch, {c["url"]: body})
+    entry = fa.download(c, tmp_path / "a", tmp_path / "ASSETS.json", delay=0)
+    assert (tmp_path / entry["file"]).read_bytes() == body and entry["resized"] is False

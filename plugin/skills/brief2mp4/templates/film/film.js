@@ -23,13 +23,16 @@
     });
   }
   function splitChars(el) {                                     /* typed date stamp: one span per character */
-    var html = el.innerHTML.split(/<br\s*\/?>/i), chars = [];
-    el.innerHTML = "";
-    html.forEach(function (line, li) {
+    var lines = [""], chars = [];                                 /* text, not markup: "&amp;" stays one "&", and <br> splits lines */
+    Array.prototype.forEach.call(el.childNodes, function (n) {
+      if (n.nodeName === "BR") lines.push(""); else lines[lines.length - 1] += n.textContent;
+    });
+    el.textContent = "";
+    lines.forEach(function (line, li) {
       Array.from(line).forEach(function (c) {
         var s = document.createElement("span"); s.className = "ch"; s.textContent = c; el.appendChild(s); chars.push(s);
       });
-      if (li < html.length - 1) el.appendChild(document.createElement("br"));
+      if (li < lines.length - 1) el.appendChild(document.createElement("br"));
     });
     return chars;
   }

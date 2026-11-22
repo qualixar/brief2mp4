@@ -99,6 +99,30 @@ def frozen_clip(path: Path) -> Path:
     return path
 
 
+def with_silent_audio(src: Path, dst: Path) -> Path:
+    """Copy the picture and add a silent 48 kHz stereo AAC track, so every non-picture delivery check passes with --silent-ok."""
+    ffmpeg("-i", src, "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+           "-c:a", "aac", "-shortest", dst)
+    return dst
+
+
+def vfr_clip(path: Path) -> Path:
+    """Variable frame rate: 1.5 s of testsrc2 at 10 fps, then a hard cut to 1.5 s of mandelbrot at 30 fps (60 frames in 3 s)."""
+    ffmpeg("-f", "lavfi", "-i", "testsrc2=s=320x180:r=10:d=1.5", "-f", "lavfi", "-i", "mandelbrot=s=320x180:r=30",
+           "-filter_complex", "[1:v]trim=duration=1.5,setpts=PTS-STARTPTS[b];[0:v][b]concat=n=2:v=1:a=0",
+           "-fps_mode", "passthrough", *X264, path)
+    return path
+
+
+def truncated_clip(path: Path, seconds: float = 6) -> Path:
+    """A clip whose index (moved to the front) promises `seconds` of video, cut to its first third of bytes."""
+    full = path.with_name(path.stem + "_full.mp4")
+    ffmpeg("-f", "lavfi", "-i", f"testsrc2=s=320x180:r=30:d={seconds}", *X264, "-movflags", "+faststart", full)
+    data = full.read_bytes()
+    path.write_bytes(data[:len(data) // 3])
+    return path
+
+
 # ---- text in a still (no drawtext needed): a 5x7 bitmap font written as a PNG --------------------------------------
 
 FONT = {

@@ -1,6 +1,7 @@
 """The craft references and scripts: present, linked from SKILL.md, public-safe, sane in size, runnable with --help."""
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -15,8 +16,10 @@ NEW_SH = ["ocr_sweep.sh", "cut_points.sh"]
 NEW_FILES = [REFS / n for n in NEW_REFS] + [SCRIPTS / n for n in NEW_PY + NEW_SH + ["dom_boxes.js"]]
 SKILL_TEXT = (SKILL / "SKILL.md").read_text(encoding="utf-8")
 
-# Nothing personal, no private paths or channels, and no "ideas from" credits: only tools that are called or installed get credit.
-BANNED = ["varun", "qualixar", "diary", "my channel", "subscribers", "/us" + "ers/v", "ideas from", "inspired by"]
+# No home-folder paths and no "ideas from" credits: only tools that are called or installed get credit. Maintainers add
+# their own private terms (names, channels) locally without committing them, as the other hygiene tests do: B2M_BANNED="a,b,c"
+BANNED = ["ideas from", "inspired by"] + [t.strip().lower() for t in os.environ.get("B2M_BANNED", "").split(",") if t.strip()]
+HOME_PATH = re.compile(r"(/us" r"ers/|/home/|[a-z]:\\us" r"ers\\)[a-z0-9]")     # a real home folder, not the pattern that hunts for one
 
 
 @pytest.mark.parametrize("path", NEW_FILES, ids=lambda p: p.name)
@@ -24,6 +27,7 @@ def test_new_files_are_public_safe(path):
     text = path.read_text(encoding="utf-8").lower().replace("github.com/qualixar/brief2mp4", "")   # the repo's own address is fine
     for word in BANNED:
         assert word not in text, f"{path.name} mentions '{word}'"
+    assert not HOME_PATH.search(text), f"{path.name} names a home folder: {HOME_PATH.search(text).group(0)}"
 
 
 @pytest.mark.parametrize("path", NEW_FILES, ids=lambda p: p.name)

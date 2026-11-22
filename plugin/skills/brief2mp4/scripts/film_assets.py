@@ -64,12 +64,26 @@ def _inside(project: Project, path: Path, folder: Path) -> Path:
         return dest
 
 
-def archive_beat(project: Project, beat: dict, entries: list, warnings: list, fetch: bool, delay: float) -> None:
+def known_or_supplied(project: Project, path: Path, kind: str, prior: list[dict]) -> dict:
+    """The entry ASSETS.json already holds for this file (same path or same SHA-256), else a new 'supplied by the user' one.
+
+    A picture or track that an earlier run downloaded keeps its licence, author and credit when the stage runs again: only a
+    file nobody has recorded yet is the user's own."""
+    rel, sha = project.rel(path), _sha(path)
+    same = [e for e in prior if e.get("kind") == kind and e.get("licence_code")]
+    by_file = [e for e in same if e.get("file") == rel]
+    by_sha = sorted((e for e in same if e.get("sha256") == sha), key=lambda e: e.get("licence_code") == "user")   # a credit beats "supplied"
+    for e in by_file + by_sha:
+        return {**e, "file": rel, "sha256": sha}
+    return supplied(project, path, kind)
+
+
+def archive_beat(project: Project, beat: dict, entries: list, warnings: list, fetch: bool, delay: float, prior: list[dict] | None = None) -> None:
     if beat["asset"]:
         path = _inside(project, project.p(beat["asset"]) if not Path(beat["asset"]).is_absolute() else Path(beat["asset"]), project.archive_dir)
         beat["asset"] = project.rel(path)
         if not any(e["file"] == beat["asset"] for e in entries):
-            entries.append(supplied(project, path, "archive"))
+            entries.append(known_or_supplied(project, path, "archive", prior or []))
         return
     found = []
     if fetch and beat["query"]:
@@ -127,10 +141,10 @@ def musicgen(project: Project, prompt: str, seconds: float, python: str = sys.ex
     return out.with_suffix(".wav")
 
 
-def music(project: Project, entries: list, sb: dict, path: Path | None, query: str | None, prompt: str | None) -> str | None:
+def music(project: Project, entries: list, sb: dict, path: Path | None, query: str | None, prompt: str | None, prior: list[dict] | None = None) -> str | None:
     if path:
         dest = _inside(project, Path(path), project.p("assets", "music"))
-        entries.append(supplied(project, dest, "music"))
+        entries.append(known_or_supplied(project, dest, "music", prior or []))
         return project.rel(dest)
     if query:
         ns = argparse.Namespace(limit=5, category="music", min_seconds=max(30, sb["duration"] / 2), max_seconds=3600, retries=3, backoff=1.0)
@@ -157,19 +171,30 @@ def run_assets(project: Project, sb: dict, fetch: bool = True, delay: float = 1.
                music_query: str | None = None, music_prompt: str | None = None) -> dict:
     out = copy.deepcopy(sb)
     entries: list[dict] = []
-    warnings = list(out.get("warnings", []))
+    warnings: list[str] = []
+    prior = fetch_archive.load_assets(project.assets)["assets"]
     countries = None
     for beat in out["beats"]:
         if beat["kind"] == "archive" or beat.get("asset") or beat.get("query"):
-            archive_beat(project, beat, entries, warnings, fetch, delay)
+            archive_beat(project, beat, entries, warnings, fetch, delay, prior)
         if beat.get("map") or beat.get("inset"):
             countries = countries or make_map.load_countries()
             map_files(project, beat, entries, countries)
     sound_effects(project, out, entries, seed)
-    out["music"] = music(project, entries, out, music_file, music_query, music_prompt) if (music_file or music_query or music_prompt) else out.get("music")
-    merged = [e for e in (fetch_archive.load_assets(project.assets)["assets"]) if e.get("kind") not in ("map", "sfx") and not any(x["file"] == e["file"] for x in entries)]
+    out["music"] = music(project, entries, out, music_file, music_query, music_prompt, prior) if (music_file or music_query or music_prompt) else out.get("music")
+    merged = [e for e in fetch_archive.load_assets(project.assets)["assets"] if e.get("kind") not in ("map", "sfx") and not any(x["file"] == e["file"] for x in entries)]
     for e in entries:
         merged = [m for m in merged if m["file"] != e["file"]] + [e]
     save_json(project.assets, {"version": 1, "assets": merged})
-    out["warnings"] = warnings
+    out["warnings"] = merge_warnings(out.get("warnings", []), warnings)
     return out
+
+
+def merge_warnings(old: list[str], new: list[str]) -> list[str]:
+    """Earlier stages' warnings, then this run's, each once (running a stage again does not repeat its warnings)."""
+    seen, merged = set(), []
+    for w in list(old) + list(new):
+        if w not in seen:
+            seen.add(w)
+            merged.append(w)
+    return merged
