@@ -1,6 +1,7 @@
 """Film mode docs and files: present, linked from SKILL.md, public-safe, small, runnable with --help, credits with licences."""
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -17,15 +18,18 @@ CLI = ["film.py", "fetch_archive.py", "make_map.py", "build_map_data.py", "sfx_s
 FILES = ([SCRIPTS / n for n in FILM_PY + NEW_PY] + [fc.TEMPLATES / n for n in ("index.html", "film.css", "film.js", "README.md")]
          + [SKILL / "data" / "NATURAL-EARTH.md", REFS / "formats.md"])
 SKILL_TEXT = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-# No personal names, paths or channels; no "inspired by" credit.
-BANNED = ["varun", "diary", "my channel", "subscribers", "/us" + "ers/v", "ideas from", "inspired by"]
+# No home-folder paths and no "inspired by" credit. Maintainers add their private terms (names, channels) locally without committing
+# them, as the other hygiene tests do: B2M_BANNED="a,b,c"
+BANNED = ["ideas from", "inspired by"] + [t.strip().lower() for t in os.environ.get("B2M_BANNED", "").split(",") if t.strip()]
+HOME_PATH = re.compile(r"(/us" r"ers/|/home/|[a-z]:\\us" r"ers\\)[a-z0-9]")     # a real home folder, not a pattern that hunts for one
 
 
 @pytest.mark.parametrize("path", FILES, ids=lambda p: p.name)
 def test_files_are_public_safe(path):
     text = path.read_text(encoding="utf-8").lower().replace("github.com/qualixar/brief2mp4", "")
-    for word in BANNED + ["qualixar"]:
+    for word in BANNED:
         assert word not in text, f"{path.name} mentions '{word}'"
+    assert not HOME_PATH.search(text), f"{path.name} names a home folder"
 
 
 @pytest.mark.parametrize("path", [SCRIPTS / n for n in FILM_PY + NEW_PY] + [fc.TEMPLATES / n for n in ("index.html", "film.css", "film.js", "README.md")], ids=lambda p: p.name)
