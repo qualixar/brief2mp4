@@ -3,9 +3,10 @@
 Every recipe has the same shape and works in two places:
 
   headless   blender -b --factory-startup -P b2m_<name>.py -- --out frames --frames 96
-  live       import b2m_<name>; b2m_<name>.build({...}, clear=False)     (inside a running Blender)
+  live       import b2m_<name>; b2m_<name>.build({...})     (inside a running Blender; keeps the open scene)
 
-A recipe exposes DEFAULTS (every knob), build(params, clear) which makes the scene and returns a state dict, and
+A recipe exposes DEFAULTS (every knob), build(params, clear=False) which makes the scene and returns a state dict
+(only the headless main() passes clear=True, which empties the file first), and
 measure(state) which returns plain numbers that prove the motion did what it should. main() parses, builds, measures,
 renders if --out is given, and prints one line: B2M3D_RECIPE {json}. Rules kept here so the recipes stay short:
 colours go linear, nodes are found by type, engine names are tried in turn, and curves are read through fcurves()
@@ -13,7 +14,6 @@ because Blender 5 moved them into slotted actions. --look studio and --orbit are
 """
 from __future__ import annotations
 
-import argparse
 import json
 import math
 import os
@@ -22,78 +22,11 @@ import sys
 import bpy
 from mathutils import Vector
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from b2m_math import (COMMON, TAU, _bool, frame_list, hex_rgba, merged, mix_hex, parse_args,  # noqa: E402,F401
+                      smoothstep)
+
 MARKER = "B2M3D_RECIPE"
-
-COMMON = {
-    "out": "",            # folder for frames; empty means measure only, render nothing
-    "render_frames": "",  # "1,48,10-12"; empty means every frame
-    "fmt": "PNG",         # PNG, or BMP for tiny test frames
-    "fps": 30, "width": 1920, "height": 1080, "samples": 16, "engine": "EEVEE",
-    "bg": "#15171c", "floor": "#23262e", "subject": "#f2a65a", "accent": "#e4572e", "ink": "#f4efe6",
-    "stage": True,        # False: add only the subject; keep the scene's own floor, lights, camera and world (live use)
-    "caption": "",        # one short line shown low in the frame, as 3D text
-    "caption_px": 54,     # caption height at the frame's own resolution (54 px at 1080p), with a short bar before it
-    "caption_frames": "", # "a-b": the caption shows from frame a to frame b; empty means the whole shot
-    "caption_fade": 0,    # frames the caption takes to fade in (and rise 10 px) and to fade out; 0 means always on
-    "look": "plain",      # plain: floor plane, three lights (fast). studio: seamless backdrop, soft lights, ray tracing
-    "orbit": 0.0,         # degrees per second the camera turns round its aim, at constant speed; 0 holds it still
-    "json": "",           # also write the result to this file
-}
-
-
-def _bool(text: str) -> bool:
-    return str(text).lower() in ("1", "true", "yes", "on")
-
-
-def parse_args(defaults: dict, description: str, argv: list[str] | None = None) -> dict:
-    """Every key of defaults becomes --key-with-dashes, typed like its default. Arguments follow `--`."""
-    if argv is None:
-        argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    ap = argparse.ArgumentParser(description=description)
-    for key, default in {**COMMON, **defaults}.items():
-        flag = "--" + key.replace("_", "-")
-        if isinstance(default, bool):          # --naive, or --naive 0
-            ap.add_argument(flag, dest=key, type=_bool, nargs="?", const=True, default=default)
-        else:
-            ap.add_argument(flag, dest=key, type=type(default), default=default)
-    return vars(ap.parse_args(argv))
-
-
-def merged(defaults: dict, params: dict | None) -> dict:
-    """defaults plus overrides; an unknown key is an error, so a typo cannot silently do nothing."""
-    base = {**COMMON, **defaults}
-    extra = set(params or {}) - set(base)
-    if extra:
-        raise KeyError(f"unknown parameter(s): {', '.join(sorted(extra))}")
-    return {**base, **(params or {})}
-
-
-def frame_list(spec: str, start: int, end: int) -> list[int]:
-    """'1,48,10-12' -> [1, 10, 11, 12, 48]; empty -> start..end."""
-    if not spec.strip():
-        return list(range(start, end + 1))
-    frames: set[int] = set()
-    for part in spec.split(","):
-        part = part.strip()
-        if "-" in part[1:]:
-            a, b = part.split("-", 1)
-            frames.update(range(int(a), int(b) + 1))
-        elif part:
-            frames.add(int(part))
-    return sorted(frames)
-
-
-def hex_rgba(h: str, alpha: float = 1.0) -> tuple[float, float, float, float]:
-    h = h.lstrip("#")
-    srgb = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
-    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb]
-    return (*lin, alpha)
-
-
-def mix_hex(a: str, b: str, t: float) -> str:
-    """A colour t of the way from hex a to hex b, mixed in sRGB."""
-    pa, pb = (tuple(int(h.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)) for h in (a, b))
-    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(pa, pb))
 
 
 def material(name: str, color: str, roughness: float = 0.5, metallic: float = 0.0,
@@ -117,19 +50,68 @@ def paint(obj: bpy.types.Object, mat: bpy.types.Material) -> None:
 
 
 def begin(name: str, clear: bool) -> bpy.types.Collection:
-    """clear=True (headless): an empty file. clear=False (live): keep the user's scene and only replace
-    the collection this recipe made last time, so running it twice does not pile up objects."""
+    """clear=True (headless main() only): an empty file. clear=False (the default, live): keep the user's scene and only
+    replace the collection this recipe made last time, and the data it left behind, so running it twice does not pile
+    up objects, meshes, materials or actions."""
     if clear:
         bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
     old = bpy.data.collections.get(f"b2m_{name}")
     if old is not None:
+        made = _made_by(old)
         for obj in list(old.all_objects):
             bpy.data.objects.remove(obj, do_unlink=True)
         bpy.data.collections.remove(old)
+        purge_orphans(made)
     coll = bpy.data.collections.new(f"b2m_{name}")
     scene.collection.children.link(coll)
     return coll
+
+
+def _made_by(coll) -> list:
+    """The data the recipe's objects used: meshes, curves, lights, cameras, materials and the actions keyed on them."""
+    made: list = []
+    for obj in coll.all_objects:
+        owners = [obj, obj.data, getattr(obj.data, "shape_keys", None)]
+        owners += [m for s in obj.material_slots for m in (s.material, getattr(s.material, "node_tree", None)) if m is not None]
+        made += [o for o in owners[1:] if o is not None and not isinstance(o, bpy.types.ShaderNodeTree | bpy.types.Key)]
+        made += [o.animation_data.action for o in owners if o is not None and getattr(o, "animation_data", None)
+                 and o.animation_data.action is not None]
+    return list(dict.fromkeys(made))
+
+
+KINDS = (("meshes", "Mesh"), ("curves", "Curve"), ("materials", "Material"), ("actions", "Action"), ("lights", "Light"),
+         ("cameras", "Camera"))
+
+
+def purge_orphans(made: list) -> int:
+    """Remove the data the recipe's old objects used once nothing else uses it; data still in use elsewhere stays."""
+    removed, pending = 0, list(made)
+    for _ in range(3):                    # a mesh frees its material, a material its action: a few passes
+        for idb in list(pending):
+            kind = next((k for k, t in KINDS if isinstance(idb, getattr(bpy.types, t))), None)
+            if kind and idb.users == 0:
+                getattr(bpy.data, kind).remove(idb)
+                pending.remove(idb)
+                removed += 1
+    return removed
+
+
+def keeps_selection(build):
+    """Decorator for build(): the recipe selects objects to add rigid bodies and primitives; give the person's selection
+    and active object back afterwards (objects the recipe removed are simply gone from it)."""
+    def wrapped(params=None, clear=False):
+        layer = bpy.context.view_layer
+        names = {o.name for o in layer.objects if o.select_get()}
+        active = layer.objects.active.name if layer.objects.active else None
+        state = build(params, clear)
+        layer = bpy.context.view_layer
+        for o in layer.objects:
+            o.select_set(o.name in names and not clear)
+        layer.objects.active = layer.objects.get(active) if active and not clear else None
+        return state
+    wrapped.__doc__, wrapped.__name__ = build.__doc__, build.__name__
+    return wrapped
 
 
 def add(coll: bpy.types.Collection, obj: bpy.types.Object) -> bpy.types.Object:
@@ -373,10 +355,17 @@ def emit(result: dict, json_path: str = "") -> dict:
     return result
 
 
+def verdict(result: dict, problems: list[str]) -> dict:
+    """Add ok and warnings to a measurement, and print each warning, so a number out of range is never silent."""
+    for line in problems:
+        print(f"WARNING b2m: {line}", file=sys.stderr)
+    return {**result, "ok": not problems, "warnings": problems}
+
+
 def run_main(module_name: str, defaults: dict, description: str, build, measure) -> dict:
     """The standard main(): parse, build, measure, render, print."""
     p = parse_args(defaults, description)
-    state = build(p, clear=True)
+    state = build(p, clear=True)                    # headless: start from an empty file
     scene = bpy.context.scene
     animate_orbit(scene, p)
     result = {"recipe": module_name, "frame_start": scene.frame_start, "frame_end": scene.frame_end,
@@ -387,10 +376,3 @@ def run_main(module_name: str, defaults: dict, description: str, build, measure)
         result["rendered"] = render_frames(scene, p["out"], frames, p["fmt"])
     return emit(result, p["json"])
 
-
-def smoothstep(x: float) -> float:
-    x = min(1.0, max(0.0, x))
-    return x * x * (3 - 2 * x)
-
-
-TAU = 2 * math.pi

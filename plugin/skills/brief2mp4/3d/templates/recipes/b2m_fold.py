@@ -3,9 +3,10 @@
 Each fold is a short chain of shape keys, one per slice of the turn (fold_steps slices of 180 degrees in all),
 and each key is relative to the one before it. Blender blends vertex positions in a straight line, so a single
 key from flat to folded would squash the sheet; with a key every 30 degrees the free edge swings along the arc.
-The crease is rounded over crease_radius (the sheet stretches a little there: about 9 percent more area with two
-creases at the default; a smaller radius and a larger grid_x make it crisper), folded layers stack layer_gap apart
-so they never touch, and the slices are timed with a smooth ease so the fold starts and ends gently.
+The crease is rounded over crease_radius, capped at 6 percent of the stack's width so later folds of a shrinking
+stack keep their proportion (the sheet stretches a little there; area_ratio reports by how much and a smaller radius
+with a larger grid_x is crisper). Folded layers stack layer_gap apart so they never touch, no crease point dips under
+the layer it started on, and the slices are timed with a smooth ease so the fold starts and ends gently.
 
   blender -b --factory-startup -P b2m_fold.py -- --folds 3 --fold-frames 30 --out frames
 """
@@ -18,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
 
 import b2m_common as c  # noqa: E402
+from b2m_math import crease_radius, fold_positions  # noqa: E402  (pure functions, tested without Blender)
 
 DEFAULTS = {
     "folds": 2,             # each fold halves the width of the current stack
@@ -36,20 +38,6 @@ DEFAULTS = {
 }
 
 
-def fold_positions(cur, crease_x, axis_z, frac, radius):
-    """Positions after turning the part to the right of crease_x by frac * 180 degrees about a line at (crease_x, axis_z).
-    The turn angle ramps smoothly over the crease zone, so the crease is rounded."""
-    out, zone = [], set()
-    for i, (x, y, z) in enumerate(cur):
-        t = (x - (crease_x - radius)) / (2 * radius)
-        a = math.pi * frac * c.smoothstep(t)
-        if 0.0 < t < 1.0:
-            zone.add(i)
-        dx, dz = x - crease_x, z - axis_z
-        out.append((crease_x + dx * math.cos(a) - dz * math.sin(a), y, axis_z + dx * math.sin(a) + dz * math.cos(a)))
-    return out, zone
-
-
 def _paper(sheet, p):
     """Top colour, and the underside's own colour when `back` is set: that side shows wherever a fold turns it up.
     With thickness the underside is the Solidify shell; without it, a Backfacing switch in one material."""
@@ -63,9 +51,10 @@ def _paper(sheet, p):
         bsdf = next(n for n in nodes if n.type == "BSDF_PRINCIPLED")
         geo, mix = nodes.new("ShaderNodeNewGeometry"), nodes.new("ShaderNodeMix")
         mix.data_type = "RGBA"
-        mix.inputs["A"].default_value, mix.inputs["B"].default_value = c.hex_rgba(p["subject"]), c.hex_rgba(p["back"])
-        links.new(geo.outputs["Backfacing"], mix.inputs["Factor"])
-        links.new(mix.outputs["Result"], bsdf.inputs["Base Color"])
+        ins = {s.identifier: s for s in mix.inputs}               # by identifier: the colour sockets, never the float ones
+        ins["A_Color"].default_value, ins["B_Color"].default_value = c.hex_rgba(p["subject"]), c.hex_rgba(p["back"])
+        links.new(geo.outputs["Backfacing"], ins["Factor_Float"])
+        links.new(next(o for o in mix.outputs if o.identifier == "Result_Color"), bsdf.inputs["Base Color"])
     if thick > 0:
         solid = sheet.modifiers.new("Thickness", "SOLIDIFY")    # render only: the measured shape keys are untouched
         solid.show_viewport, solid.thickness, solid.offset = False, thick, -1.0
@@ -81,12 +70,13 @@ def _grid(p):
 
 def _fold_keys(sheet, verts, p):
     """Add the shape-key chain. Returns (keys per fold, zone vertices, crease x per fold, axis z per fold)."""
-    gap, steps, radius = float(p["layer_gap"]), int(p["fold_steps"]), float(p["crease_radius"])
+    gap, steps = float(p["layer_gap"]), int(p["fold_steps"])
     sheet.shape_key_add(name="Basis", from_mix=False)
     prev, cur, zone, per_fold, creases, axes = sheet.data.shape_keys.key_blocks["Basis"], list(verts), set(), [], [], []
     for k in range(int(p["folds"])):
         xs = [v[0] for v in cur]
         crease = (min(xs) + max(xs)) / 2
+        radius = crease_radius(float(p["crease_radius"]), max(xs) - min(xs))   # in proportion to the shrinking stack
         axis = max(v[2] for i, v in enumerate(cur) if i not in zone) + gap / 2   # above the flat layers, so the turning part clears them
         creases.append(crease)
         axes.append(axis)
@@ -123,10 +113,18 @@ def _animate(per_fold, p):
     return frame, starts
 
 
-def build(params=None, clear=True):
+@c.keeps_selection
+def build(params=None, clear=False):
     p = c.merged(DEFAULTS, params)
-    if p["folds"] < 1 or p["fold_steps"] < 2:
-        raise ValueError("folds must be at least 1 and fold_steps at least 2")
+    if p["folds"] < 1 or p["fold_steps"] < 6:
+        raise ValueError("folds must be at least 1 and fold_steps at least 6: a shape key blends in a straight line, so "
+                         "a key every 60 degrees (3 steps) squashes the half-fold edge by 13 percent, every 30 degrees by 3")
+    if p["layer_gap"] <= 0 or p["crease_radius"] <= 0:
+        raise ValueError("layer_gap and crease_radius must be above 0: with no gap the folded layers z-fight")
+    k, gap = int(p["folds"]), float(p["layer_gap"])
+    if (2 ** k - 1) * gap > float(p["sheet_width"]) / 2 ** k / 2:
+        raise ValueError(f"{k} folds at layer_gap {gap:g} make a stack {(2 ** k - 1) * gap:g} m thick on a "
+                         f"{float(p['sheet_width']) / 2 ** k:g} m wide sheet, thicker than half its width: lower layer_gap")
     coll = c.begin("fold", clear)
     scene = bpy.context.scene
     objs = c.stage(scene, coll, p, target=(0, 0, 0.2), cam=(0, -5.2, 3.1), lens=45)   # room above for the rising flap
@@ -172,23 +170,50 @@ def _extent(pts, axis):
     return max(vals) - min(vals)
 
 
+WIDTH_TOLERANCE = 0.08   # final width within 8 percent of width / 2**folds
+AREA_LIMIT = 1.20        # the creases may stretch the sheet by at most 20 percent (a thick stack wraps, so it stretches)
+
+
+def expected_width(p) -> float:
+    """width / 2**folds, plus the bulge of the last crease, which wraps the folded stack: half its final thickness."""
+    k = int(p["folds"])
+    return float(p["sheet_width"]) / 2 ** k + (2 ** k - 1) * float(p["layer_gap"]) / 2
+
+
 def measure(state):
     scene, sheet, p = state["scene"], state["sheet"], state["p"]
     scene.frame_set(1)
     flat, flat_area = _evaluated(sheet)
+    lowest = min(q[2] for q in flat)
     half_frame = state["starts"][0] + int(p["fold_frames"]) // 2
-    scene.frame_set(half_frame)
-    half, _ = _evaluated(sheet)
-    scene.frame_set(scene.frame_end)
+    for f in range(scene.frame_start, scene.frame_end + 1):       # every frame: the crease must never dip under the sheet
+        scene.frame_set(f)
+        pts, _ = _evaluated(sheet)
+        lowest = min(lowest, min(q[2] for q in pts))
+        if f == half_frame:
+            half = pts
     final, final_area = _evaluated(sheet)
     levels = sorted({round(q[2], 5) for i, q in enumerate(final) if i not in state["zone"]})
     free_edge = max(range(len(state["flat"])), key=lambda i: state["flat"][i][0])
-    return {"flat_width": _extent(flat, 0), "flat_thickness": _extent(flat, 2), "final_width": _extent(final, 0),
-            "final_height": _extent(final, 1), "final_thickness": levels[-1] - levels[0], "layer_gap": float(p["layer_gap"]),
-            "layers": len(levels), "min_layer_separation": min((b - a for a, b in zip(levels, levels[1:])), default=0.0),
-            "half_fold_edge_z": half[free_edge][2],
-            "half_fold_expected_z": (state["flat"][free_edge][0] - state["creases"][0]) + state["axes"][0],
-            "area_ratio": final_area / flat_area, "shape_keys": len(sheet.data.shape_keys.key_blocks)}
+    expected = expected_width(p)
+    result = {"flat_width": _extent(flat, 0), "flat_thickness": _extent(flat, 2), "final_width": _extent(final, 0),
+              "expected_width": expected, "final_height": _extent(final, 1), "final_thickness": levels[-1] - levels[0],
+              "layer_gap": float(p["layer_gap"]), "layers": len(levels),
+              "min_layer_separation": min((b - a for a, b in zip(levels, levels[1:])), default=0.0),
+              "half_fold_edge_z": half[free_edge][2],
+              "half_fold_expected_z": (state["flat"][free_edge][0] - state["creases"][0]) + state["axes"][0],
+              "area_ratio": final_area / flat_area, "shape_keys": len(sheet.data.shape_keys.key_blocks),
+              "min_z": lowest + sheet.matrix_world.translation.z, "min_local_z": lowest}
+    problems = []
+    if abs(result["final_width"] / expected - 1) > WIDTH_TOLERANCE:
+        problems.append(f"final width {result['final_width']:.3f} m is not within {WIDTH_TOLERANCE:.0%} of {expected:.3f} m: "
+                        "lower crease_radius or raise grid_x")
+    if result["area_ratio"] > AREA_LIMIT:
+        problems.append(f"the creases stretch the sheet {result['area_ratio'] - 1:.0%} (limit {AREA_LIMIT - 1:.0%}): "
+                        "lower crease_radius or raise grid_x")
+    if lowest < -1e-6:
+        problems.append(f"a crease dips {-lowest * 1000:.1f} mm under the bottom layer")
+    return c.verdict(result, problems)
 
 
 if __name__ == "__main__":

@@ -35,3 +35,17 @@ def test_the_feet_actually_step(walk):
 def test_a_walk_without_planting_does_slide_so_the_check_is_not_vacuous():
     naive = run_recipe("walk", *ARGS, "--naive")
     assert naive["max_slide_per_frame"] > 0.02           # the foot drags along the floor at the speed of the body
+
+
+def test_the_walk_reports_ok_when_the_legs_reach(walk):
+    assert walk["ok"] is True and walk["warnings"] == [] and walk["max_leg_stretch"] == 0
+
+
+def test_a_stride_the_legs_cannot_reach_is_flagged_not_reported_as_slide_free():
+    fast = run_recipe("walk", "--frames", "40", "--speed", "3.0")
+    assert fast["ok"] is False and "cannot reach" in fast["warnings"][0]
+
+
+def test_hips_too_high_for_the_legs_are_refused():
+    with pytest.raises(AssertionError, match="never reach the ground"):
+        run_recipe("walk", "--frames", "10", "--hip-height", "0.95")

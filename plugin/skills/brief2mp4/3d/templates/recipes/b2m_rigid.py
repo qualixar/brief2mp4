@@ -102,10 +102,23 @@ def _joint(coll, name, pivot, a, b, kind):
     return e
 
 
-def build(params=None, clear=True):
-    p = c.merged(DEFAULTS, params)
+def _check(p) -> None:
     if p["joint"] not in ("hinge", "point"):
         raise ValueError("joint must be hinge or point")
+    n, length, width, top = int(p["links"]), float(p["link_length"]), float(p["link_width"]), float(p["anchor_height"])
+    if n < 1 or length < 2 * width:
+        raise ValueError(f"links must be at least 1 and link_length ({length:g}) at least twice link_width ({width:g}): "
+                         "shorter links overlap at the joints and the chain jitters apart")
+    if n * length + width >= top:
+        raise ValueError(f"the chain hangs {n * length + width:g} m (links x link_length + link_width) from an anchor "
+                         f"{top:g} m up, so it would swing through the floor: raise anchor_height above {n * length + width:g} "
+                         "or shorten the chain")
+
+
+@c.keeps_selection
+def build(params=None, clear=False):
+    p = c.merged(DEFAULTS, params)
+    _check(p)
     coll = c.begin("rigid", clear)
     scene = bpy.context.scene
     scene.frame_start, scene.frame_end = 1, int(p["frames"])
@@ -148,7 +161,7 @@ def _trace(state):
     """Step the simulation once, recording joint gaps, the tip's x and y, the first link's angle, and the smallest
     distance from any joint to the frame edge as a share of the frame (negative: something left the frame)."""
     scene, anchor, links, length = state["scene"], state["anchor"], state["links"], state["length"]
-    gaps, tip_x, off_plane, angle, margin = [], [], [], [], 1.0
+    gaps, tip_x, off_plane, angle, margin, low = [], [], [], [], 1.0, float("inf")
     for f in range(scene.frame_start, scene.frame_end + 1):
         scene.frame_set(f)
         far = [c.world_pos(anchor)] + [c.world_pos(lk, (0, 0, length / 2)) for lk in links]
@@ -157,12 +170,13 @@ def _trace(state):
                 u = world_to_camera_view(scene, scene.camera, pt)
                 margin = min(margin, u.x, 1 - u.x, u.y, 1 - u.y)
         near = [c.world_pos(lk, (0, 0, -length / 2)) for lk in links]
+        low = min(low, min(pt.z for pt in far + near))
         gaps.append(max((a - b).length for a, b in zip(far, near)))
         tip_x.append(far[-1].x)
         off_plane.append(max(abs(c.world_pos(lk).y) for lk in links))
         first = far[1] - far[0]
         angle.append(math.atan2(first.x, -first.z))
-    return gaps, tip_x, off_plane, angle, margin
+    return gaps, tip_x, off_plane, angle, margin, low
 
 
 def _period(angle, fps):
@@ -172,9 +186,19 @@ def _period(angle, fps):
 
 
 def measure(state):
-    gaps, tip_x, off_plane, angle, margin = _trace(state)
-    return {"frame_margin": margin, "constraints": len(state["links"]), "max_joint_gap": max(gaps), "tip_travel_x": max(tip_x) - min(tip_x),
-            "max_out_of_plane": max(off_plane), "period_s": _period(angle, state["scene"].render.fps)}
+    gaps, tip_x, off_plane, angle, margin, low = _trace(state)
+    result = {"frame_margin": margin, "constraints": len(state["links"]), "max_joint_gap": max(gaps),
+              "tip_travel_x": max(tip_x) - min(tip_x), "max_out_of_plane": max(off_plane), "min_z": low,
+              "period_s": _period(angle, state["scene"].render.fps / state["scene"].render.fps_base)}
+    problems = []
+    if margin < 0:
+        problems.append(f"the swing leaves the frame (frame_margin {margin:.3f}): fewer links, a smaller release_angle, "
+                        "or a wider lens")
+    if low < 0:
+        problems.append(f"a link end reaches z = {low:.3f}, below the floor")
+    if max(gaps) > 0.05 * state["length"]:
+        problems.append(f"a joint opened {max(gaps):.4f} m, over 5% of a link: raise substeps or lower the mass ratio")
+    return c.verdict(result, problems)
 
 
 if __name__ == "__main__":

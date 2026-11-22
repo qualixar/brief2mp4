@@ -16,6 +16,8 @@ import bpy  # noqa: E402
 
 import b2m_common as c  # noqa: E402
 
+BASE_FPS = 30.0   # the frame rate the cloth settings were tuned at; other rates scale the speed multiplier
+
 DEFAULTS = {
     "frames": 90,
     "object": "sphere",       # sphere, box or none
@@ -72,6 +74,9 @@ def _sheet(coll, p):
     s.quality, s.mass, s.bending_stiffness = int(p["quality"]), float(p["mass"]), float(p["bend"])
     s.tension_stiffness = s.compression_stiffness = 15.0
     s.shear_stiffness, s.air_damping = 5.0, 1.0
+    r = bpy.context.scene.render
+    s.time_scale = BASE_FPS * r.fps_base / r.fps         # Blender steps cloth per frame: keep its speed in seconds at any fps
+    s.quality = max(s.quality, math.ceil(int(p["quality"]) * s.time_scale))   # and the same solver steps per second
     col.use_collision, col.distance_min, col.collision_quality = True, 0.015, 4
     col.use_self_collision = bool(p["self_collision"])
     mod.point_cache.frame_start, mod.point_cache.frame_end = 1 + int(p["delay"]), int(p["frames"])
@@ -84,8 +89,19 @@ def _sheet(coll, p):
     return sheet
 
 
-def build(params=None, clear=True):
+def _check(p) -> None:
+    top = 2 * float(p["object_size"]) if p["object"] != "none" else 0.0
+    if float(p["drop_height"]) <= top + 0.05:
+        raise ValueError(f"drop_height {p['drop_height']} starts the sheet inside the {p['object']} (its top is at {top:g} m): "
+                         "raise it above the object")
+    if not 0 <= int(p["delay"]) < int(p["frames"]) - 1:
+        raise ValueError(f"delay {p['delay']} must be under frames - 1 ({int(p['frames']) - 1}), or the sheet is never released")
+
+
+@c.keeps_selection
+def build(params=None, clear=False):
     p = c.merged(DEFAULTS, params)
+    _check(p)
     coll = c.begin("cloth", clear)
     scene = bpy.context.scene
     scene.frame_start, scene.frame_end = 1, int(p["frames"])
@@ -111,25 +127,31 @@ def _positions(sheet):
 
 def measure(state):
     scene, sheet, n = state["scene"], state["sheet"], state["n"]
-    end = scene.frame_end
+    end, mid = scene.frame_end, (n // 2) * (n + 1) + n // 2
     scene.frame_set(1)
     start = _positions(sheet)
-    last_ten, before = None, None
+    last_ten, before, centre_z = None, None, [start[mid][2]]
     for f in range(2, end + 1):
         scene.frame_set(f)
+        pts = _positions(sheet)
+        centre_z.append(pts[mid][2])
         if f == state["delay"] + 1 and state["delay"] > 0:
-            before = _positions(sheet)                    # the frame the sheet is released: still where it started
+            before = pts                                  # the frame the sheet is released: still where it started
         if f == end - 10:
-            last_ten = _positions(sheet)
-    final = _positions(sheet)
+            last_ten = pts
+    final = pts if end > 1 else start
     zs = [q[2] for q in final]
     nan = sum(1 for q in final if any(math.isnan(v) for v in q))
-    centre = final[(n // 2) * (n + 1) + n // 2]
+    centre = final[mid]
     edge = [final[j * (n + 1) + i][2] for j in range(n + 1) for i in range(n + 1) if i in (0, n) or j in (0, n)]
     moved = [math.dist(a, b) for a, b in zip(final, last_ten or final)]
+    halfway = (centre_z[0] + centre[2]) / 2               # seconds from release until the centre has fallen half way
+    fall = next((i for i, z in enumerate(centre_z) if z <= halfway), None)
+    fps = scene.render.fps / scene.render.fps_base
     return {"start_mean_z": sum(q[2] for q in start) / len(start), "final_min_z": min(zs), "final_max_z": max(zs),
             "floor_z": 0.0, "object_top_z": state["top"], "centre_z": centre[2], "edge_mean_z": sum(edge) / len(edge),
             "motion_last_10_frames": sum(moved) / len(moved), "nan_vertices": nan, "vertices": len(final),
+            "half_fall_s": (fall - state["delay"]) / fps if fall is not None else None,
             "moved_before_release": max((math.dist(a, b) for a, b in zip(start, before)), default=0.0) if before else 0.0}
 
 

@@ -39,9 +39,12 @@ def test_a_caption_is_drawn_in_the_frame(tmp_path):
     assert mean_abs_diff(tmp_path / "plain" / "0001.bmp", tmp_path / "titled" / "0001.bmp") > 0.3
 
 
-def test_orbit_moves_the_camera_so_the_seam_frames_no_longer_match(tmp_path):
-    run_recipe("loop", "--loop-frames", "25", "--orbit", "40", "--out", str(tmp_path), "--render-frames", "1,25", *TINY)
-    assert mean_abs_diff(tmp_path / "0001.bmp", tmp_path / "0025.bmp") > 1.0    # the still camera's seam is under 0.3
+def test_orbit_moves_the_camera_and_a_whole_turn_per_loop_keeps_the_seam(tmp_path):
+    still, moving = tmp_path / "still", tmp_path / "moving"
+    run_recipe("loop", "--loop-frames", "25", "--out", str(still), "--render-frames", "7", *TINY)
+    run_recipe("loop", "--loop-frames", "25", "--orbit", "450", "--out", str(moving), "--render-frames", "1,7,25", *TINY)
+    assert mean_abs_diff(still / "0007.bmp", moving / "0007.bmp") > 1.0       # a quarter turn of the camera by frame 7
+    assert mean_abs_diff(moving / "0001.bmp", moving / "0025.bmp") < 0.3      # and back where it started at the seam
 
 
 def test_a_fading_caption_is_absent_before_its_window_and_present_inside_it(tmp_path):
@@ -57,3 +60,39 @@ def test_the_studio_look_renders_a_different_set(tmp_path):
     run_recipe("loop", "--out", str(tmp_path / "plain"), "--render-frames", "1", *TINY)
     run_recipe("loop", "--out", str(tmp_path / "studio"), "--look", "studio", "--render-frames", "1", *TINY)
     assert mean_abs_diff(tmp_path / "plain" / "0001.bmp", tmp_path / "studio" / "0001.bmp") > 5.0
+
+
+def test_an_orbit_that_does_not_turn_whole_turns_per_loop_is_refused():
+    with pytest.raises(AssertionError, match="seam jumps"):
+        run_recipe("loop", "--loop-frames", "25", "--orbit", "20")
+
+
+def test_a_whole_turn_orbit_loops_and_too_few_frames_are_refused():
+    assert run_recipe("loop", "--loop-frames", "25", "--orbit", "450")["pose_gap"] < 1e-4    # 450 deg/s x 0.8 s = one turn
+    with pytest.raises(AssertionError, match="at least 4"):
+        run_recipe("loop", "--loop-frames", "2")
+
+
+CAMERA_MOVES = '''
+import sys, json, math
+sys.path.insert(0, sys.argv[sys.argv.index("--") + 1])
+import bpy, b2m_loop as r
+state = r.build({"loop_frames": 13}, clear=True)
+pivot = bpy.data.objects["b2m_orbit"]
+for f, z in ((1, 0.0), (13, 0.5)):                   # a camera move the curves of the gem and ring know nothing about
+    pivot.rotation_euler[2] = z
+    pivot.keyframe_insert("rotation_euler", index=2, frame=f)
+print("B2M3D_RECIPE", json.dumps(r.measure(state)))
+'''
+
+
+def test_the_seam_measurement_includes_the_camera():
+    import json
+    import subprocess
+
+    from b2m3d import paths
+    from blender_common import RECIPES
+    proc = subprocess.run([paths.blender(), "-b", "--factory-startup", "--python-expr", CAMERA_MOVES, "--", str(RECIPES)],
+                          capture_output=True, text=True, timeout=300)
+    line = next(ln for ln in proc.stdout.splitlines() if ln.startswith("B2M3D_RECIPE"))
+    assert json.loads(line.split(" ", 1)[1])["pose_gap"] > 0.1

@@ -50,10 +50,18 @@ def setattr_path(obj, path, index, value):
     setattr(obj, path, vec)
 
 
-def build(params=None, clear=True):
+@c.keeps_selection
+def build(params=None, clear=False):
     p = c.merged(DEFAULTS, params)
     if int(p["turns"]) != p["turns"]:
         raise ValueError("turns must be a whole number, or the last frame will not match the first")
+    n, fps = int(p["loop_frames"]), float(p["fps"])
+    if n < 4:
+        raise ValueError("loop_frames must be at least 4: frame loop_frames repeats frame 1, so the loop is loop_frames - 1 long")
+    sweep = float(p["orbit"]) * (n - 1) / fps                # degrees the camera turns over one loop
+    if abs(sweep - 360 * round(sweep / 360)) > 1e-6:
+        raise ValueError(f"orbit {p['orbit']:g} deg/s turns the camera {sweep:g} degrees per loop, so the seam jumps: use 0, "
+                         f"or a whole turn per loop ({360 * fps / (n - 1):g} deg/s)")
     coll = c.begin("loop", clear)
     scene = bpy.context.scene
     n = int(p["loop_frames"])
@@ -106,7 +114,7 @@ def measure(state):
     curves = [fc for idb in (gem, ring) for fc in c.fcurves(idb)]
     cyclic = [fc for fc in curves if fc.modifiers and fc.modifiers[0].type == "CYCLES"]
     gap = 0.0
-    for obj in (gem, ring):
+    for obj in (gem, ring) + ((scene.camera,) if scene.camera is not None else ()):   # the camera too: an orbit can break it
         scene.frame_set(1)
         first = _matrix(obj)
         scene.frame_set(n)

@@ -36,3 +36,16 @@ def test_markers_that_would_cross_are_refused():
     except AssertionError as exc:
         exe_fail = str(exc)
     assert exe_fail and "increase" in exe_fail
+
+
+def test_a_partial_retime_moves_only_the_named_marker_and_keeps_the_others_in_sync():
+    res = run_recipe("retime", "--marks", "start=1,hit=25,end=49", "--targets", "hit=40")
+    assert res["markers_after"] == {"start": 1, "hit": 40, "end": 49}     # the unnamed markers stay where they are
+    assert res["frame_end"] == 49                                          # nothing is cut off the end
+    assert res["marker_pose_error"] < 1e-4                                 # each marker still shows its authored pose
+    assert res["shape_error"] < 1e-4
+
+
+def test_fractional_targets_are_refused_because_markers_sit_on_whole_frames():
+    with pytest.raises(AssertionError, match="whole frames"):
+        run_recipe("retime", "--targets", "start=1,hit=40.5,end=60")

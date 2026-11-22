@@ -45,3 +45,64 @@ def test_a_long_chain_released_near_level_also_stays_in_frame():
                       "--damping", "0.01", "--frames", "120")
     assert long["tip_travel_x"] > 3.0                   # it really swings wide, so the margin is tested at the extremes
     assert long["frame_margin"] > 0.02
+
+
+def test_a_chain_that_would_reach_the_floor_is_refused():
+    with pytest.raises(AssertionError, match="through the floor"):
+        run_recipe("rigid", "--links", "5", "--link-length", "0.6", "--frames", "5")       # 3.0 m from a 2.6 m anchor
+
+
+def test_links_shorter_than_twice_their_width_are_refused():
+    with pytest.raises(AssertionError, match="twice link_width"):
+        run_recipe("rigid", "--link-length", "0.08", "--link-width", "0.12", "--frames", "5")
+
+
+def test_the_lowest_point_is_reported_and_stays_above_the_floor(chain):
+    assert chain["min_z"] > 0 and chain["ok"] is True and chain["warnings"] == []
+
+
+NO_JOINTS = '''
+import sys, json
+sys.path.insert(0, sys.argv[sys.argv.index("--") + 1])
+import bpy, b2m_rigid as r
+state = r.build({"links": 3, "frames": 40, "release_angle": 60.0}, clear=True)
+for o in list(bpy.data.objects):
+    if o.name.startswith("b2m_joint"):
+        bpy.data.objects.remove(o)                    # the control: the same chain with its constraints deleted
+print("B2M3D_RECIPE", json.dumps(r.measure(state)))
+'''
+
+
+def test_the_control_a_chain_with_no_constraints_falls_apart():
+    import json
+    import subprocess
+
+    from b2m3d import paths
+    from blender_common import RECIPES
+    proc = subprocess.run([paths.blender(), "-b", "--factory-startup", "--python-expr", NO_JOINTS, "--", str(RECIPES)],
+                          capture_output=True, text=True, timeout=300)
+    line = next(ln for ln in proc.stdout.splitlines() if ln.startswith("B2M3D_RECIPE"))
+    res = json.loads(line.split(" ", 1)[1])
+    assert res["max_joint_gap"] > 2.0 and res["ok"] is False      # metres apart, and the verdict says so
+
+
+NARROW_LENS = '''
+import sys, json
+sys.path.insert(0, sys.argv[sys.argv.index("--") + 1])
+import bpy, b2m_rigid as r
+state = r.build({"links": 3, "frames": 40, "release_angle": 70.0}, clear=True)
+bpy.context.scene.camera.data.lens = 400.0          # far too long a lens: the swing leaves the frame
+print("B2M3D_RECIPE", json.dumps(r.measure(state)))
+'''
+
+
+def test_a_swing_that_leaves_the_frame_is_flagged():
+    import json
+    import subprocess
+
+    from b2m3d import paths
+    from blender_common import RECIPES
+    proc = subprocess.run([paths.blender(), "-b", "--factory-startup", "--python-expr", NARROW_LENS, "--", str(RECIPES)],
+                          capture_output=True, text=True, timeout=300)
+    res = json.loads(next(ln for ln in proc.stdout.splitlines() if ln.startswith("B2M3D_RECIPE")).split(" ", 1)[1])
+    assert res["frame_margin"] < 0 and res["ok"] is False and "leaves the frame" in res["warnings"][0]

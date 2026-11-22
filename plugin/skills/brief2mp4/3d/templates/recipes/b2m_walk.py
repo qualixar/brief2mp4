@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
 
 import b2m_common as c  # noqa: E402
+from b2m_math import foot_target, solve_leg  # noqa: E402,F401  (pure functions, tested without Blender)
 
 DEFAULTS = {
     "frames": 96,
@@ -72,40 +73,6 @@ def _figure(coll, p):
         c.capsule(coll, f"b2m_hand{side}", 0.045 * u, 0.04 * u, 0.13 * u, body, elbow, (0, 0, -0.25 * u), squash=0.6)
         rig["arms"][side] = {"shoulder": shoulder, "elbow": elbow}
     return rig
-
-
-def solve_leg(hip, target, l1, l2):
-    """Two-bone IK in the vertical plane. Returns (thigh angle, shin angle, overshoot, reached target); angles are
-    measured from straight down, positive toward +x. The knee always bends forward."""
-    dx, dz = target[0] - hip[0], target[1] - hip[1]
-    dist = math.hypot(dx, dz)
-    reach = min(dist, l1 + l2 - 1e-4)
-    overshoot = max(0.0, dist - (l1 + l2))
-    fx, fz = hip[0] + dx * reach / dist, hip[1] + dz * reach / dist
-    alpha = math.atan2(dx, -dz)
-    beta = math.acos(max(-1.0, min(1.0, (l1 * l1 + reach * reach - l2 * l2) / (2 * l1 * reach))))
-    t1 = alpha + beta
-    kx, kz = hip[0] + l1 * math.sin(t1), hip[1] - l1 * math.cos(t1)
-    t2 = math.atan2(fx - kx, -(fz - kz))
-    return t1, t2, overshoot, (fx, fz)
-
-
-def foot_target(k, offset, p, hip_x):
-    """World (x, z) of one foot at frame index k. offset shifts the leg half a cycle for the other foot."""
-    cycle, duty, speed, fps = float(p["cycle_frames"]), float(p["duty"]), float(p["speed"]), float(p["fps"])
-    pos = k / cycle + offset
-    n = math.floor(pos)
-    phase = pos - n
-    stride = speed * cycle / fps
-    mid_k = (n + duty / 2 - offset) * cycle           # frame at the middle of this stance, when the hip is over the foot
-    plant = hip_x(mid_k)
-    if p["naive"]:
-        half = stride * duty / 2
-        return hip_x(k) + half * math.cos(c.TAU * phase), float(p["step_height"]) * max(0.0, math.sin(c.TAU * phase))
-    if phase < duty:
-        return plant, 0.0
-    s = (phase - duty) / (1 - duty)
-    return plant + stride * c.smoothstep(s), float(p["step_height"]) * math.sin(math.pi * s)
 
 
 def _key(obj, path, index, value, frame):
@@ -169,8 +136,14 @@ def _ruler(coll, p, length):
     c.paint(bars, c.material("b2m_ruler", c.mix_hex(p["floor"], p["ink"], 0.22), roughness=0.8))
 
 
-def build(params=None, clear=True):
+@c.keeps_selection
+def build(params=None, clear=False):
     p = c.merged(DEFAULTS, params)
+    if float(p["hip_height"]) + float(p["bob"]) >= float(p["thigh"]) + float(p["shin"]):
+        raise ValueError(f"hip_height + bob ({float(p['hip_height']) + float(p['bob']):g}) must be under thigh + shin "
+                         f"({float(p['thigh']) + float(p['shin']):g}), or the feet never reach the ground")
+    if not 0.5 < float(p["duty"]) < 1.0:
+        raise ValueError("duty must be between 0.5 and 1: a walk always has a foot on the ground")
     coll = c.begin("walk", clear)
     scene = bpy.context.scene
     scene.frame_start, scene.frame_end = 1, int(p["frames"])
@@ -215,10 +188,17 @@ def measure(state):
                 run = []
     plants.sort()
     steps = [b[1] - a[1] for a, b in zip(plants, plants[1:])]
-    return {"root_distance": root[-1] - root[0], "contact_frames": contact, "max_slide_per_frame": slide,
-            "min_foot_z": min(z for pts in trace.values() for _, z in pts), "max_foot_lift": lift,
-            "max_leg_stretch": state["overshoot"], "max_ik_error": err, "plants": len(plants),
-            "step_length": sum(steps) / len(steps) if steps else 0.0}
+    result = {"root_distance": root[-1] - root[0], "contact_frames": contact, "max_slide_per_frame": slide,
+              "min_foot_z": min(z for pts in trace.values() for _, z in pts), "max_foot_lift": lift,
+              "max_leg_stretch": state["overshoot"], "max_ik_error": err, "plants": len(plants),
+              "step_length": sum(steps) / len(steps) if steps else 0.0}
+    problems = []
+    if state["overshoot"] > 1e-6:      # the solver could not reach the plant: the foot floats or drags where slide is blind
+        problems.append(f"the legs cannot reach the stride (max_leg_stretch {state['overshoot']:.3f} m): lower speed, "
+                        "cycle_frames or hip_height, or lengthen the legs")
+    if contact == 0 or len(plants) < 2:
+        problems.append("the feet never plant on the ground, so the slide check saw nothing: lower hip_height")
+    return c.verdict(result, problems)
 
 
 if __name__ == "__main__":

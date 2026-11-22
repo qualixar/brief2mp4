@@ -2,8 +2,11 @@
 
 Timeline markers name the beats ("start", "hit", "end"). retime_between_markers() moves them to new frames and
 stretches or squeezes every keyframe (and its handles) between two markers by the same ratio, so each segment keeps
-its shape and the pose at each marker is unchanged. Put a key on every marker you retime between. Handles become
-free handles (their positions are kept, not recomputed), which is what keeps the shape exact.
+its shape and the pose at each marker is unchanged. A marker the targets do not name stays where it is, so
+`--targets hit=40` moves the hit and squeezes the segments either side of it. Keys on the objects, their data and
+shape keys, their materials (and node trees) and, when no object list is given, the world are all remapped. Put a
+key on every marker you retime between. Handles become free handles (their positions are kept, not recomputed),
+which is what keeps the shape exact. Target frames are whole frames, like the markers.
 
 The demo animates a ball that arcs down onto the floor at "hit" and leaves toward "end".
 
@@ -17,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
 
 import b2m_common as c  # noqa: E402
+from b2m_math import make_mapper, parse_marks  # noqa: E402,F401  (pure functions, tested without Blender)
 
 DEFAULTS = {
     "marks": "start=1,hit=25,end=49",   # the beats as the animation was authored: name=frame
@@ -25,64 +29,45 @@ DEFAULTS = {
 }
 
 
-def parse_marks(text: str) -> dict:
-    marks = {}
-    for part in text.split(","):
-        if part.strip():
-            name, frame = part.split("=")
-            marks[name.strip()] = float(frame)
-    return marks
-
-
-def make_mapper(old: dict, new: dict):
-    """A function old frame -> new frame: straight lines between markers, a plain shift outside them."""
-    missing = set(new) - set(old)
-    if missing:
-        raise KeyError(f"no marker named {', '.join(sorted(missing))}; markers are {', '.join(sorted(old))}")
-    names = sorted(new, key=lambda n: old[n])
-    xs, ys = [old[n] for n in names], [new[n] for n in names]
-    if any(b <= a for a, b in zip(ys, ys[1:])):
-        raise ValueError("target frames must increase in the same order as the markers: "
-                         + ", ".join(f"{n}={new[n]:g}" for n in names))
-
-    def mapper(f: float) -> float:
-        if f <= xs[0]:
-            return ys[0] + (f - xs[0])
-        if f >= xs[-1]:
-            return ys[-1] + (f - xs[-1])
-        for x0, x1, y0, y1 in zip(xs, xs[1:], ys, ys[1:]):
-            if x0 <= f <= x1:
-                return y0 + (f - x0) * (y1 - y0) / (x1 - x0)
-        return f
-    return mapper
-
-
-def animated_ids(objs) -> list:
-    """The objects, their data and their shape keys: where keyframes can live."""
+def animated_ids(objs, world=None) -> list:
+    """Where keyframes can live: the objects, their data, shape keys and materials (with their node trees), and the
+    world with its node tree when one is given."""
     ids: list = []
+
+    def with_tree(idb):
+        tree = getattr(idb, "node_tree", None)
+        return [idb] + ([tree] if tree is not None else [])
+
     for o in objs:
         data = getattr(o, "data", None)
         ids += [o] + ([data] if data is not None else []) + ([data.shape_keys] if getattr(data, "shape_keys", None) else [])
+        for slot in getattr(o, "material_slots", ()):
+            if slot.material is not None and slot.material not in ids:
+                ids += with_tree(slot.material)
+    if world is not None:
+        ids += with_tree(world)
     return ids
 
 
 def retime_between_markers(scene, new_frames: dict, objs=None, tail: int = 0) -> dict:
-    """Move the named markers to new_frames and remap the keys of objs (default: every object in the scene)."""
+    """Move the named markers to new_frames and remap the keys of objs (default: every object in the scene, and the
+    world). Markers not named in new_frames stay put; frame_end follows the old end through the same map."""
     old = {m.name: float(m.frame) for m in scene.timeline_markers}
     mapper = make_mapper(old, new_frames)
-    moved = 0
-    for idb in animated_ids(objs if objs is not None else list(scene.objects)):
+    moved, last = 0, float("-inf")
+    every = animated_ids(objs if objs is not None else list(scene.objects), scene.world if objs is None else None)
+    for idb in every:
         for fc in c.fcurves(idb):
             for kp in fc.keyframe_points:      # freeze the handles where they are, so Blender cannot recompute them
                 kp.handle_left_type = kp.handle_right_type = "FREE"
             for kp in fc.keyframe_points:      # the key and both handles go through the same map
                 kp.co.x, kp.handle_left.x, kp.handle_right.x = mapper(kp.co.x), mapper(kp.handle_left.x), mapper(kp.handle_right.x)
+                last = max(last, kp.co.x)
                 moved += 1
             fc.update()
     for m in scene.timeline_markers:
-        if m.name in new_frames:
-            m.frame = int(round(new_frames[m.name]))
-    scene.frame_end = max(int(round(new_frames[n])) for n in new_frames) + int(tail)
+        m.frame = int(round(mapper(old[m.name])))
+    scene.frame_end = max(int(round(mapper(scene.frame_end))), int(round(last)) if moved else scene.frame_start) + int(tail)
     return {"map": mapper, "moved_keys": moved, "old": old}
 
 
@@ -107,7 +92,8 @@ def _animate(ball, marks: dict):
         ball.keyframe_insert("scale", frame=frame)
 
 
-def build(params=None, clear=True):
+@c.keeps_selection
+def build(params=None, clear=False):
     p = c.merged(DEFAULTS, params)
     coll = c.begin("retime", clear)
     scene = bpy.context.scene
@@ -118,13 +104,14 @@ def build(params=None, clear=True):
     _animate(ball, marks)
     for name, frame in marks.items():
         scene.timeline_markers.new(name, frame=int(frame))
-    c.caption(scene, coll, p["caption"], p, objs["camera"])
     before = _sample(ball, [marks["start"] + (marks["end"] - marks["start"]) * k / 12 for k in range(13)])
-    state = {"p": p, "ball": ball, "scene": scene, "marks": marks, "probe": before, "probes": sorted(before)}
+    state = {"p": p, "ball": ball, "scene": scene, "marks": marks, "probe": before, "probes": sorted(before),
+             "marker_pose": _sample(ball, list(marks.values()))}
     targets = parse_marks(p["targets"])
     if targets:
         info = retime_between_markers(scene, targets, [ball], int(p["tail"]))
         state["map"], state["moved_keys"] = info["map"], info["moved_keys"]
+    c.caption(scene, coll, p["caption"], p, objs["camera"])     # after the retime: its frames are the final timeline's
     return state
 
 
@@ -143,7 +130,12 @@ def measure(state):
         err = 0.0
         for f in state["probes"]:
             err = max(err, max(abs(a - b) for a, b in zip(state["probe"][f], after[mapper(f)])))
-        result.update({"shape_error": err, "moved_keys": state["moved_keys"]})
+        # the pose at each marker's frame now against the authored pose at its old frame: catches markers left behind
+        now = _sample(ball, [float(m.frame) for m in scene.timeline_markers])
+        authored = state["marker_pose"]
+        marker_err = max((max(abs(a - b) for a, b in zip(authored[state["marks"][m.name]], now[float(m.frame)]))
+                          for m in scene.timeline_markers if m.name in state["marks"]), default=0.0)
+        result.update({"shape_error": err, "marker_pose_error": marker_err, "moved_keys": state["moved_keys"]})
     return result
 
 
