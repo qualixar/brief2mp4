@@ -97,13 +97,13 @@ def test_snap_with_a_missing_list_fails(tmp_path):
 
 # ---- analysis ---------------------------------------------------------------------------------------------------
 
-def test_without_librosa_analyze_skips_with_the_install_line_and_exits_0(tmp_path):
+def test_without_librosa_analyze_skips_with_the_install_line_and_exits_3(tmp_path):
     wav = tmp_path / "a.wav"
     wav.write_bytes(b"RIFF")
     code = ("import sys, runpy; sys.modules['librosa'] = None; sys.argv = ['beat_grid.py', 'analyze', %r]; "
             "runpy.run_path(%r, run_name='__main__')" % (str(wav), str(SCRIPTS / "beat_grid.py")))
     proc = run([sys.executable, "-c", code])
-    assert proc.returncode == 0, proc.stderr
+    assert proc.returncode == 3, proc.stderr
     assert proc.stdout.startswith("SKIP") and "python3 -m pip install --user librosa" in proc.stdout
 
 
