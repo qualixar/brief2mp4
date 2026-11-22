@@ -34,6 +34,7 @@ COMMON = {
     "fmt": "PNG",         # PNG, or BMP for tiny test frames
     "fps": 30, "width": 1920, "height": 1080, "samples": 16, "engine": "EEVEE",
     "bg": "#15171c", "floor": "#23262e", "subject": "#f2a65a", "accent": "#e4572e", "ink": "#f4efe6",
+    "stage": True,        # False: add only the subject; keep the scene's own floor, lights, camera and world (live use)
     "caption": "",        # one short line shown low in the frame, as 3D text
     "json": "",           # also write the result to this file
 }
@@ -183,6 +184,9 @@ def set_engine(scene, wanted: str, samples: int) -> None:
 def stage(scene, coll, p: dict, target=(0, 0, 0.6), cam=(4.5, -7.0, 3.0), lens=50.0, floor=True,
           floor_size=60.0) -> dict:
     """Floor, dark world, three area lights and a tracking camera: the recipe from references/blender.md."""
+    aim = empty(coll, "b2m_aim", target)
+    if not p["stage"]:
+        return {"aim": aim, "floor": None, "camera": scene.camera}
     scene.render.resolution_x, scene.render.resolution_y = int(p["width"]), int(p["height"])
     scene.render.resolution_percentage = 100
     scene.render.fps = int(p["fps"])
@@ -193,7 +197,6 @@ def stage(scene, coll, p: dict, target=(0, 0, 0.6), cam=(4.5, -7.0, 3.0), lens=5
     bg.inputs["Color"].default_value = hex_rgba(p["bg"])
     bg.inputs["Strength"].default_value = 0.6
     scene.world = world
-    aim = empty(coll, "b2m_aim", target)
     objs = {"aim": aim}
     if floor:
         half = floor_size / 2
@@ -226,7 +229,7 @@ def track(obj, target) -> None:
 
 def caption(scene, coll, text: str, p: dict, camera) -> bpy.types.Object | None:
     """One short line of flat 3D text parented to the camera: bottom left, inside the safe margin."""
-    if not text:
+    if not text or camera is None:
         return None
     cu = bpy.data.curves.new("b2m_caption", "FONT")
     cu.body, cu.size, cu.align_x, cu.align_y = text, 0.5, "LEFT", "BOTTOM"

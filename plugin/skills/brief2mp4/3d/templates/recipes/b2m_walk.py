@@ -182,7 +182,8 @@ def build(params=None, clear=True):
     _ruler(coll, p, travel + 4)
     targets, worst = _animate(rig, p)
     aim, cam = objs["aim"], objs["camera"]            # the camera and lights ride the aim point, which follows the body
-    cam.parent, cam.location = aim, (1.6, -6.6, 0.7)
+    if cam is not None and p["stage"]:
+        cam.parent, cam.location = aim, (1.6, -6.6, 0.7)
     for f in (1, int(p["frames"])):
         _key(aim, "location", 0, float(p["speed"]) * (f - 1) / float(p["fps"]), f)
     c.set_interpolation([aim], "LINEAR")

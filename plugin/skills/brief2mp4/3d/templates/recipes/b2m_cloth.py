@@ -84,7 +84,8 @@ def build(params=None, clear=True):
     scene = bpy.context.scene
     scene.frame_start, scene.frame_end = 1, int(p["frames"])
     objs = c.stage(scene, coll, p, target=(0, 0, 0.7), cam=(0.0, -6.2, 2.4), lens=45)
-    _collider(objs["floor"])
+    if objs["floor"] is not None:
+        _collider(objs["floor"])
     pedestal, top = _target(coll, p)
     if pedestal is not None:
         _collider(pedestal)
