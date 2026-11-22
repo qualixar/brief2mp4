@@ -165,10 +165,10 @@ def _ruler(coll, p, length):
     for i in range(int(length / 0.5) + 4):
         x = -1.0 + i * 0.5
         base = len(verts)
-        verts += [(x, -1.2, 0.002), (x + 0.04, -1.2, 0.002), (x + 0.04, 1.2, 0.002), (x, 1.2, 0.002)]
+        verts += [(x, -1.2, 0.002), (x + 0.03, -1.2, 0.002), (x + 0.03, 1.2, 0.002), (x, 1.2, 0.002)]
         faces.append((base, base + 1, base + 2, base + 3))
     bars = c.mesh_object(coll, "b2m_ruler", verts, faces)
-    c.paint(bars, c.material("b2m_ruler", p["ink"], roughness=0.8))
+    c.paint(bars, c.material("b2m_ruler", c.mix_hex(p["floor"], p["ink"], 0.3), roughness=0.8))
 
 
 def build(params=None, clear=True):
@@ -182,7 +182,7 @@ def build(params=None, clear=True):
     _ruler(coll, p, travel + 4)
     targets, worst = _animate(rig, p)
     aim, cam = objs["aim"], objs["camera"]            # the camera and lights ride the aim point, which follows the body
-    cam.parent, cam.location = aim, (1.4, -4.6, 0.7)
+    cam.parent, cam.location = aim, (1.6, -6.6, 0.7)
     for f in (1, int(p["frames"])):
         _key(aim, "location", 0, float(p["speed"]) * (f - 1) / float(p["fps"]), f)
     c.set_interpolation([aim], "LINEAR")

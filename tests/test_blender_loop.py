@@ -30,3 +30,10 @@ def test_first_and_last_frame_match_and_the_middle_does_not(loop):
     middle = mean_abs_diff(out / "0001.bmp", out / "0013.bmp")
     assert seam < 0.3, f"frame 1 and frame 25 differ by {seam}"
     assert middle > 5 * max(seam, 0.05), f"the animation barely moves: middle diff {middle}"
+
+
+def test_a_caption_is_drawn_in_the_frame(tmp_path):
+    big = ["--width", "320", "--height", "180", "--samples", "1", "--fmt", "BMP", "--render-frames", "1"]
+    run_recipe("loop", "--out", str(tmp_path / "plain"), *big)
+    run_recipe("loop", "--out", str(tmp_path / "titled"), "--caption", "seamless loop", *big)
+    assert mean_abs_diff(tmp_path / "plain" / "0001.bmp", tmp_path / "titled" / "0001.bmp") > 0.3

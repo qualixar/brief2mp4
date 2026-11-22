@@ -92,6 +92,12 @@ def hex_rgba(h: str, alpha: float = 1.0) -> tuple[float, float, float, float]:
     return (*lin, alpha)
 
 
+def mix_hex(a: str, b: str, t: float) -> str:
+    """A colour t of the way from hex a to hex b, mixed in sRGB."""
+    pa, pb = (tuple(int(h.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)) for h in (a, b))
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(pa, pb))
+
+
 def material(name: str, color: str, roughness: float = 0.5, metallic: float = 0.0,
              emission: str | None = None, strength: float = 0.0) -> bpy.types.Material:
     mat = bpy.data.materials.new(name)
@@ -224,16 +230,18 @@ def caption(scene, coll, text: str, p: dict, camera) -> bpy.types.Object | None:
         return None
     cu = bpy.data.curves.new("b2m_caption", "FONT")
     cu.body, cu.size, cu.align_x, cu.align_y = text, 0.5, "LEFT", "BOTTOM"
+    cu.font = bpy.data.fonts.load("<builtin>")          # a text curve made from code has no font until one is loaded
     ob = add(coll, bpy.data.objects.new("b2m_caption", cu))
     ob.parent = camera
     ratio = scene.render.resolution_x / scene.render.resolution_y
-    depth = 10.0                                      # metres in front of the lens
+    depth = 1.0                                       # metres in front of the lens: close, so nothing in the set can hide it
     half_h = depth * (camera.data.sensor_width / 2 / ratio) / camera.data.lens   # half the view height at that depth
     half_w = half_h * ratio
     px = 2 * half_h / scene.render.resolution_y         # metres per pixel at that depth
     cu.size = 54 * px                                   # 54 px tall text at 1080p
     ob.location = (-half_w + 100 * px, -half_h + 70 * px, -depth)
     paint(ob, material("b2m_caption", p["ink"], roughness=0.9, emission=p["ink"], strength=1.2))
+    ob.visible_shadow = False
     return ob
 
 
