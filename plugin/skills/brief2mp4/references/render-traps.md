@@ -25,7 +25,7 @@ tl.fromTo(card, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.5, im
 
 ## Drawing and styling
 
-**7. SVG stroke drawing.** In the HyperFrames render, `pathLength="1"` with a numeric `strokeDashoffset` tween did not draw progressively: the line stayed invisible and then snapped. Measure the real length with `path.getTotalLength()` and set pixel values: `strokeDasharray = L`, tween `strokeDashoffset` from `L` to `0`. (In a normal browser page `pathLength="1"` works; this trap is specific to the frame-by-frame render. Use pixel lengths in anything that will be filmed.)
+**7. SVG stroke drawing.** In the HyperFrames render, `pathLength="1"` with a numeric `strokeDashoffset` tween did not draw progressively: the line stayed invisible and then snapped. Measure the real length with `path.getTotalLength()` and set pixel values: `strokeDasharray = L`, tween `strokeDashoffset` from `L` to `0`. (In a normal browser page `pathLength="1"` draws, but with `vector-effect: non-scaling-stroke` Chrome draws the wrong amount there too, so the rule is the same everywhere: measured pixel lengths, and no `non-scaling-stroke` on a line you draw. brief2motion follows the same rule.)
 
 **8. Style repeated components by class, never by id.** A second copy that shared an id lost its styles and painted black. Give each repeated image asset its own file; a `?u=` query on an `<img>` SVG source loaded as a broken image.
 
