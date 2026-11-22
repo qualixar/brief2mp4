@@ -48,8 +48,8 @@
         "source": "url",
         "url": "https://github.com/qualixar/brief2motion.git"
       },
-      "description": "Website animation skill: turn a plain brief into a site with professional motion, checked in a real browser. GSAP scroll stories, three.js 3D product pages, kinetic type, page transitions, data stories, particles and 32 visual styles. Installed with brief2mp4.",
-      "version": "1.0.0",
+      "description": "Website animation skill: turn a plain brief into a site with professional motion, checked in a real browser. Site mode for whole sites (plan, wireframes, tokens, design, motion, then layout, accessibility, journey and meta checks), 27 motion patterns, GSAP scroll stories, three.js 3D product pages, kinetic type, page transitions, data stories, particles and 32 visual styles. Installed with brief2mp4.",
+      "version": "1.1.0",
       "author": {
         "name": "Varun Pratap Bhardwaj"
       },
