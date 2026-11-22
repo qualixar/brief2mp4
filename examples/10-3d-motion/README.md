@@ -17,7 +17,7 @@ The MP4 and the music file are not in the repository. Build them yourself.
 
 ## Make it
 
-You need Blender 4.2 or newer, ffmpeg, python3, and a network connection the first time (for the music). The recipes use only Blender's own Python, so the 3D pack's virtual environment is not needed to render.
+You need Blender (the film was built and checked with 5.2.1; older versions are untested), ffmpeg, python3, and a network connection the first time (for the music). The recipes use only Blender's own Python, so the 3D pack's virtual environment is not needed to render.
 
 ```bash
 cd examples/10-3d-motion
@@ -36,10 +36,10 @@ Every act also gets the shared line: the palette, `--look studio`, `--caption-px
 | 1 Cloth drop | `cloth` | `--cloth-res 56 --quality 10 --self-collision --smooth-levels 1 --thickness 0.012 --sheen 0.4 --drop-height 1.6 --orbit 4` | where the sheet ended up (`centre_z` on top of the sphere) |
 | 2 Hinged chain | `rigid` | `--links 7 --link-length 0.45 --release-angle 85 --anchor-height 3.5 --orbit 3` | the closest any joint comes to the frame edge (`frame_margin`) and the largest joint gap |
 | 3 Folding | `fold` | `--folds 3 --fold-frames 34 --pause 9 --back "#3358c8" --thickness 0.004 --orbit 4` | the final width |
-| 4 Walking, feet planted | `walk` | `--speed 0.95 --cycle-frames 34 --thigh 0.47 --shin 0.47 --hip-height 0.9 --bob 0.024` | how far a planted foot moves in a frame |
+| 4 Walking, feet planted | `walk` | `--speed 0.95 --cycle-frames 34 --thigh 0.47 --shin 0.47 --hip-height 0.9 --bob 0.024 --step-height 0.08` | how far a planted foot moves in a frame |
 | 5 Seamless loop | `loop` | `--loop-frames 77 --turns 1 --glow 0`, frames 1-158 (the loop twice) | the slope across the seam |
 
-The options and what each recipe reports are in [references/blender-recipes.md](../../plugin/skills/brief2mp4/references/blender-recipes.md). To change the look of the whole film, change the palette line at the top of `build.sh`; to change one act, change its line. `bash build.sh` re-renders every act; for one act, run that act's Blender line by hand.
+The options and what each recipe reports are in [references/blender-recipes.md](../../plugin/skills/brief2mp4/references/blender-recipes.md). To change the look of the whole film, change the palette line at the top of `build.sh`; to change one act, change its line. `bash build.sh` re-renders every act; `ACTS="3" bash build.sh` re-renders act 3 only, keeps the other acts' frames, and joins and checks the film again. Every act runs Blender with `--python-exit-code 1`, so a recipe that refuses its settings or crashes stops the build with its log.
 
 ## The cut
 

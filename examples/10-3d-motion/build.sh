@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # build.sh: brief 10. One studio, five Blender motion recipes, cut to music on the bar lines.
 #
-#   bash build.sh                 # full film: build/final.mp4 (about 10-20 minutes on a laptop; the acts render in parallel)
+#   bash build.sh                 # full film: build/final.mp4 (about half an hour on a laptop; the acts render in parallel)
 #   bash build.sh --preview       # three stills per act at 960x540 in build/preview, nothing else
 #   ACTS="4" bash build.sh        # re-render act 4 only, keep the other acts' frames, then join and check again
 #
-# Needs Blender 4.2+, ffmpeg, python3 and a network connection the first time (the music comes from Openverse).
+# Needs Blender (built and checked with 5.2.1; older versions are untested), ffmpeg, python3 and a network connection the first time (the music comes from Openverse).
 # Set B2M3D_BLENDER if Blender is not on the PATH; B2M_SKILL points at the skill folder (default: the one here).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -47,7 +47,7 @@ act() {
   rm -rf "$dir"
   local frames=(--render-frames "1-$count"); (( PREVIEW )) && frames=(--render-frames "$preview")
   local first=$(( n == 1 ? 8 : 2 * HALF + 1 )) last=$(( n == 5 ? count - 30 : count - 2 * HALF - 1 ))
-  "$BLENDER" -b --factory-startup -P "$REC/b2m_$recipe.py" -- "${PALETTE[@]}" "${LOOK[@]}" "${SIZE[@]}" \
+  "$BLENDER" -b --factory-startup --python-exit-code 1 -P "$REC/b2m_$recipe.py" -- "${PALETTE[@]}" "${LOOK[@]}" "${SIZE[@]}" \
     --caption "$caption" --caption-frames "$first-$last" --out "$dir" "${frames[@]}" --json "$OUT/act$n.json" "$@" \
     > "$OUT/act$n.log" 2>&1 &
   PIDS+=("$!")
@@ -69,6 +69,8 @@ done
 for n in 1 2 3 4 5; do   # each recipe's own proof, from its result line
   echo "act $n: $(grep -o '"max_slide_per_frame": [0-9.e-]*\|"centre_z": [0-9.]*\|"frame_margin": [0-9.e-]*\|"final_width": [0-9.]*\|"seam_slope_gap": [0-9.e-]*' "$OUT/act$n.json" | head -1)"
 done
+BAD="$(grep -l '"ok": false' "$OUT"/act*.json || true)"   # a recipe's own verdict: a number out of its range stops the film
+[[ -z "$BAD" ]] || { echo "build.sh: a recipe reported ok=false in: $BAD (see its warnings)" >&2; exit 1; }
 (( PREVIEW )) && { mkdir -p "$OUT/preview"; for n in 1 2 3 4 5; do for f in "$OUT"/act$n/*.png; do cp "$f" "$OUT/preview/act$n-$(basename "$f")"; done; done; echo "stills in $OUT/preview"; exit 0; }
 
 # Picture: chain the five acts with 0.4 s dissolves centred on the joins, then ease the last 0.6 s into the backdrop.
