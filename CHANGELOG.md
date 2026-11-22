@@ -2,7 +2,7 @@
 
 All notable changes to brief2mp4. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.8.0] - Unreleased
 
 ### Added
 - **Film mode**: one brief in a project folder, a finished explainer or documentary out, with every stage's file on disk (`scripts/film.py`: story, script, storyboard, assets, voice, retime, build, captions, mix, render, check, report; each stage skippable and re-runnable). New reference section "Explainer and documentary (film mode)" in `references/formats.md`.
