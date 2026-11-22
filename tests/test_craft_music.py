@@ -48,6 +48,16 @@ class Fake:
                     return self.send(200, b"<html>" + b"x" * 3000 + b"</html>", "text/html")
                 if path == "/files/tiny.mp3":
                     return self.send(200, b"abc", "audio/mpeg")
+                if path == "/files/nolen.mp3":           # no Content-Length: the size is only known by reading
+                    self.send_response(200)
+                    self.send_header("Content-Type", "audio/mpeg")
+                    self.end_headers()
+                    return self.wfile.write(outer.tone)
+                if path == "/files/short.mp3":           # promises 5000 bytes, sends 100, hangs up
+                    self.send_response(200)
+                    self.send_header("Content-Length", "5000")
+                    self.end_headers()
+                    return self.wfile.write(b"x" * 100)
                 self.send(404, b"no", "text/plain")
 
             def send(self, code, body, ctype):
@@ -159,6 +169,44 @@ def test_a_pick_beyond_the_results_fails(fake, tmp_path):
     fake.item("aaaa1111")
     proc = run(fake, "download", "calm", "--pick", "5", "--out-dir", tmp_path / "a")
     assert proc.returncode == 1 and "no result number 5" in proc.stdout
+
+
+def test_a_pick_of_zero_or_less_is_refused(fake, tmp_path):
+    fake.item("aaaa1111"); fake.item("bbbb2222")
+    for pick in ("0", "-1"):
+        proc = run(fake, "download", "calm", "--pick", pick, "--out-dir", tmp_path / "a")
+        assert proc.returncode == 1 and "counts from 1" in proc.stdout and not (tmp_path / "a").exists()
+
+
+@pytest.mark.parametrize("url", ["file:///etc/hosts", "ftp://example.org/a.mp3", "http://example.org/a.mp3", "https://"])
+def test_only_https_links_are_downloaded(url):
+    with pytest.raises(fm.FetchError, match="only https"):
+        fm.safe_url(url)
+    assert fm.safe_url("https://example.org/a.mp3")
+
+
+def test_a_track_with_a_file_url_is_never_opened(fake, tmp_path):
+    fake.items.append({**fake.item("fileaaaa"), "url": "file:///etc/hosts"})
+    fake.items.pop(0)
+    proc = run(fake, "download", "calm", "--out-dir", tmp_path / "a")
+    assert proc.returncode == 1 and "only https" in proc.stdout
+
+
+# ---- size cap and dropped transfers ----------------------------------------------------------------------------
+
+def test_a_download_over_the_cap_stops_before_reading_it(fake):
+    with pytest.raises(fm.FetchError, match="cap"):
+        fm.http_get(fake.base + "/files/tone.mp3", 0, 0.01, max_bytes=100)       # Content-Length says too big
+    with pytest.raises(fm.FetchError, match="passed the 0 MB cap"):
+        fm.http_get(fake.base + "/files/nolen.mp3", 0, 0.01, max_bytes=100)      # no length: stopped while reading
+    body, _ = fm.http_get(fake.base + "/files/nolen.mp3", 0, 0.01)
+    assert body == fake.tone
+
+
+def test_a_transfer_cut_short_is_retried_then_reported(fake):
+    with pytest.raises(fm.FetchError, match="stopped after 100 of 5000 bytes.*gave up after 3 tries"):
+        fm.http_get(fake.base + "/files/short.mp3", 2, 0.01)
+    assert fake.hits["/files/short.mp3"] == 3
 
 
 # ---- retries ------------------------------------------------------------------------------------------------------
