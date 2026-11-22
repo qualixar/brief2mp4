@@ -103,14 +103,49 @@ Every subcommand prints one JSON object, so an agent reads results instead of pa
 | `plugin/skills/brief2mp4/SKILL.md` | The loop: spec, route, build, self-check, fix, deliver |
 | `references/*.md` | What the agent needs per tool: HyperFrames, Three.js, Blender, ffmpeg, mixed pipelines, the wider ecosystem |
 | `scripts/finish.sh` | Any render to a delivery MP4: exact length, H.264 and AAC, -14 LUFS, true peak at or below -1.5 dBTP |
-| `scripts/check_delivery.sh` | PASS, WARN or FAIL against the delivery spec |
+| `scripts/check_delivery.sh` | PASS, WARN or FAIL against the delivery spec, including flicker, pops at joins and freezes (`check_seams.py`); a missing optional tool ends `RESULT: INCOMPLETE`, never PASS |
+| `scripts/check_clutter.py`, `scripts/ocr_sweep.sh` | The layout rules (no card on card, 24 px between text, at most four text blocks, nothing clipped) and a sweep of the finished frames for placeholder text and leaked paths |
 | `scripts/contact_sheet.sh` | Stills at named times, plus a grid |
 | `scripts/doctor.sh`, `detect_3d.sh` | What is installed, and the fix for what is not |
-| `templates/` | Starting points that already render: SPEC.md, a Three.js scene, a Blender turntable |
-| `3d/` | The optional pack: `b2m3d` CLI, shot runtime, material presets, installers |
-| `edit/` | The optional edit pack: verified installers for the ArtCraft editors' CLIs, pinned versions, one tested recipe per app |
+| `templates/` | Starting points that already render: SPEC.md, a Three.js scene, a Blender turntable, the film-mode archive desk |
+| `3d/` | The optional pack: `b2m3d` CLI, shot runtime, material presets, the Blender motion recipes, installers ([guide](3d-walkthrough.md)) |
+| `edit/` | The optional edit pack: verified installers for the ArtCraft editors' CLIs, pinned versions, one tested recipe per app ([guide](edit-pack.md)) |
+| `characters/` | The character kit: rig, poses, skins, lip sync, scenes ([kit README](../plugin/skills/brief2mp4/characters/README-CHARACTERS.md)) |
+| `art-forms/`, `references/art-forms/` | 82 deterministic demos and a reference page per art form |
+| `scripts/film.py` | Film mode: one brief to a narrated explainer or documentary, every stage on disk ([guide](film-mode.md)) |
 | `SETUP.md` | Machine setup an agent follows, per OS |
 | `tests/` | Determinism, generation, detection and render tests; CI on macOS, Windows and Ubuntu |
+
+## The repository at a glance
+
+```
+SETUP.md                           the setup script an agent follows (macOS, Windows, Linux)
+AGENTS.md, CLAUDE.md               what an agent opened in this repo should do
+install.sh, install.ps1            install, update or remove for both apps; --with-3d / -With3D, --with-edit / -WithEdit
+.claude-plugin/marketplace.json    marketplace entry, read by Claude Code and Codex
+plugin/
+  .claude-plugin/plugin.json       Claude Code plugin manifest
+  .codex-plugin/plugin.json        Codex plugin manifest
+  skills/brief2mp4/
+    SKILL.md                       the loop the agent follows
+    references/                    formats, pipelines, art forms, ecosystem, hyperframes, threejs, blender,
+                                   blender-recipes, blender-live, generators-3d, ffmpeg, motion doctrine,
+                                   render traps, review checklist, sound
+    scripts/                       finish, check_delivery, check_seams, check_clutter, ocr_sweep, contact_sheet,
+                                   bounds, beat_grid, cut_points, fetch_music, sound_bed, doctor, detect_3d,
+                                   detect_edit, vendor_libs, art_route, gen3d, the character scripts (lipsync,
+                                   character_sheet, character_project, standin_voice) and film mode (film.py
+                                   and its stages, fetch_archive, make_map, sfx_synth, split_takes, retime, mix)
+    templates/                     SPEC.md, a Three.js scene, characters on a 3D stage, a Blender turntable,
+                                   the film-mode archive desk
+    art-forms/                     82 deterministic art-form demos and a gallery page
+    characters/                    the character kit: rig, poses, six skins, starter cast, schemas
+    3d/                            the optional 3D pack, its installers and the Blender motion recipes
+    edit/                          the optional edit pack: verified installers, pinned versions, recipes
+docs/                              guides for people (index: docs/README.md) and the art forms guide (PDF)
+examples/                          ten briefs, several with sample reports, build scripts or scene files
+tests/                             fast checks and render tests (bash tests/run_tests.sh [--slow])
+```
 
 ## Extending it
 

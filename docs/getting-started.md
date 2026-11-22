@@ -64,7 +64,7 @@ Pick one way per app. Installing both ways gives you two copies of the same skil
 | Script, macOS or Linux | `git clone https://github.com/qualixar/brief2mp4.git && bash brief2mp4/install.sh` |
 | Script, Windows | clone the repo, then `powershell -ExecutionPolicy Bypass -File .\brief2mp4\install.ps1` |
 
-Add `--with-3d` (or `-With3D core`) for the 3D pack; see the [3D walkthrough](3d-walkthrough.md). Add `--with-edit` (or `-WithEdit film,sound`) for the edit pack, the ArtCraft timeline editor and audio mixer, when your videos use real footage or a voice-over; see [edit/README-EDIT.md](../plugin/skills/brief2mp4/edit/README-EDIT.md).
+Add `--with-3d` (or `-With3D core`) for the 3D pack; see the [3D walkthrough](3d-walkthrough.md). Add `--with-edit` (or `-WithEdit film,sound`) for the edit pack, the ArtCraft timeline editor and audio mixer, when your videos use real footage or a voice-over; see the [edit pack guide](edit-pack.md).
 
 ## 3. Check the machine
 
@@ -100,7 +100,7 @@ The agent re-reads your brief line by line, shows the evidence for each line, fi
 
 ## 5. Write your own brief
 
-The checklist that makes briefs work: length and size, palette as hex codes and a font, every on-screen word exactly, what happens when (with times), sound, and a "done when" list of checkable lines. The README has a template, and the [free guide](https://qualixar.com/learn/guides/brief2mp4-guide) covers it in depth.
+The checklist that makes briefs work: length and size, palette as hex codes and a font, every on-screen word exactly, what happens when (with times), sound, and a "done when" list of checkable lines. The README has a [template](../README.md#write-a-brief), and the [free guide](https://qualixar.com/learn/guides/brief2mp4-guide) covers it in depth. For a narrated explainer or documentary, read [film mode](film-mode.md).
 
 ## When something goes wrong
 
