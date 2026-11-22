@@ -2,9 +2,18 @@
 
 All notable changes to brief2mp4. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.8.0] - Unreleased
 
 ### Added
+- **Film mode**: one brief in a project folder, a finished explainer or documentary out, with every stage's file on disk (`scripts/film.py`: story, script, storyboard, assets, voice, retime, build, captions, mix, render, check, report; each stage skippable and re-runnable). New reference section "Explainer and documentary (film mode)" in `references/formats.md`.
+- `scripts/fetch_archive.py`: archive photos, maps and documents from Wikimedia Commons and Openverse, public domain, CC0 and CC BY only (ShareAlike, NonCommercial, NoDerivatives and unknown are rejected in the request and again on every answer), with `ASSETS.json` credits.
+- `scripts/make_map.py`: a country or region map as SVG with markers, labels and routes, from Natural Earth (public domain), shipped as a 54 KB subset so it works offline; the projection is chosen for the region.
+- `scripts/sfx_synth.py`: whoosh (without white noise), tick, thud, paper, typewriter, riser and hit made in code, seeded, held under -1 dBTP.
+- `scripts/split_takes.py`: one recording cut into per-line WAVs by pauses and, when available, word timings (a words file or whisper.cpp); the voice is never stretched.
+- `scripts/retime.py`: the picture re-timed to the measured voice, with beat-grid snapping and resolved sound cues.
+- `scripts/mix.py`: voice, music ducked 15 dB under the voice with an exact envelope, effects pinned by their peak, -14 LUFS.
+- `templates/film/`: the archive desk documentary look for HyperFrames (dark editorial layout, slow push-ins at one velocity, typeset captions, map overlays, date stamps, a ledger counter).
+- Optional routes for F5-TTS (voice) and MusicGen (music), with their non-commercial model licence notes; credits for Natural Earth, Wikimedia Commons and whisper.cpp in `references/ecosystem.md`.
 - Craft checks: `scripts/check_seams.py` (one-frame flicker, pops at act joins, hard and soft cuts, true freezes; run by `check_delivery.sh`), `scripts/check_clutter.py` with `scripts/dom_boxes.js` (no card on card, 24 px between text, at most 4 text blocks, nothing clipped), `scripts/ocr_sweep.sh` (placeholder text and leaked paths in the finished frames), `scripts/beat_grid.py` and `scripts/cut_points.sh` (beats and scene cuts), and `scripts/fetch_music.py` (CC0 and CC BY audio from Openverse with ATTRIBUTION.md).
 - References: `motion-doctrine.md`, `render-traps.md`, `review-checklist.md` and `sound.md`.
 

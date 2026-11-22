@@ -1,0 +1,294 @@
+"""Film mode end to end: a 20 s brief, the stand-in voice, no network. The fast test runs every stage up to the mix and the page;
+the slow test renders through HyperFrames (skipped when npx or the vendored libraries are not available) and runs the checks."""
+from __future__ import annotations
+
+import re
+import shutil
+import socket
+import subprocess
+import sys
+
+import pytest
+
+import film_common as fc
+import film
+import film_build
+import film_captions
+from film_lib import load_json
+
+BRIEF = """# How undersea cables carry the internet
+
+Make a 20-second explainer on how undersea cables carry the internet, documentary look, stand-in voice for the draft.
+
+audience: people who use the internet every day
+takeaway: nearly all intercontinental data travels under the sea
+"""
+
+SCRIPT = """# Script
+pace: 150
+format: documentary
+
+## L01
+say: Nearly all intercontinental data swims.
+screen: UNDER THE SEA
+source: https://example.org/cables
+asset: assets/archive/ship.png
+date: MARCH 1931
+
+## L02
+say: One cable runs from Alexandria to Aswan.
+screen: ALEXANDRIA TO ASWAN
+source: https://example.org/egypt
+visual: map
+region: Egypt
+point: Alexandria=31.20,29.92
+point: Aswan=24.09,32.90
+route: Alexandria>Aswan
+
+## L03
+say: About one point four million kilometres lie on the seabed.
+screen: ON THE SEABED
+source: https://example.org/length
+count: 0 -> 1400000 | km of cable
+asset: assets/archive/ship2.png
+
+## L04
+say: That is how the internet crosses an ocean.
+screen: HOW IT CROSSES
+source: https://example.org/summary
+beat: 4
+
+## L05
+say: Ships lay each new cable by hand.
+screen: A LONG WIRE
+source: https://example.org/ships
+beat: 4
+"""
+
+
+def project(tmp_path, script=SCRIPT):
+    root = tmp_path / "film"
+    (root / "assets" / "archive").mkdir(parents=True)
+    for name, color in (("ship.png", "0x3b4a5a"), ("ship2.png", "0x5a4a3b")):
+        fc.ffmpeg("-f", "lavfi", "-i", f"color=c={color}:s=1920x1080:d=1", "-vf", "noise=alls=30:allf=t+u,drawgrid=w=160:h=160:t=2:c=white@0.15", "-frames:v", "1", root / "assets" / "archive" / name)
+    (root / "BRIEF.md").write_text(BRIEF, encoding="utf-8")
+    (root / "SCRIPT.md").write_text(script, encoding="utf-8")
+    return root
+
+
+def run(root, *args):
+    return film.main(["run", "--project", str(root), "--voice", "standin", "--no-fetch", "--acts", "2", *args])
+
+
+@pytest.fixture
+def offline(monkeypatch):
+    """No network at all, and a stand-in for the vendoring step (the real one needs npm and its cache)."""
+    def no_net(*a, **k):
+        raise AssertionError("film mode touched the network")
+    monkeypatch.setattr(socket.socket, "connect", no_net)
+
+    def stub_vendor(out_dir):
+        (out_dir / "vendor" / "fonts").mkdir(parents=True, exist_ok=True)
+        (out_dir / "vendor" / "gsap.min.js").write_text("/* stub */", encoding="utf-8")
+        (out_dir / "vendor" / "fonts" / "fonts.css").write_text("", encoding="utf-8")
+    monkeypatch.setattr(film_build, "vendor", stub_vendor)
+    monkeypatch.setattr(film, "lint_projects", lambda p, jobs: "skipped in the fast test")
+
+
+def test_every_stage_up_to_the_mix_runs_offline_and_writes_its_file(tmp_path, offline, capsys):
+    root = project(tmp_path)
+    assert run(root, "--to", "mix") == 0, capsys.readouterr().out
+    out = capsys.readouterr().out
+    for stage in film.STAGES[:film.STAGES.index("mix") + 1]:
+        assert f"== {stage}" in out
+    for name in ("STORY.md", "STORYBOARD.json", "ASSETS.json", "TIMINGS.json", "BUILD.json", "final.srt", "captions.json"):
+        assert (root / name).is_file(), name
+    assert (root / "audio" / "mix.wav").is_file() and (root / "project_acts" / "A1" / "index.html").is_file() and (root / "project_acts" / "A2" / "index.html").is_file()
+    sb = load_json(root / "STORYBOARD.json")
+    assert sb["retimed"] and 19.0 <= sb["duration"] <= 22.0 and len(sb["acts"]) == 2 and sb["beats"][0]["line_starts"]["L01"] == pytest.approx(0.3, abs=0.01)
+    story = (root / "STORY.md").read_text(encoding="utf-8")
+    assert "takeaway: nearly all intercontinental" in story and "0-5 s" in story
+    mix = load_json(root / "audio" / "mix_report.json")
+    assert mix["lufs"] == pytest.approx(-14, abs=1.0) and mix["true_peak"] <= -1.0
+    cues = film_captions.parse_srt((root / "final.srt").read_text(encoding="utf-8"))
+    assert " ".join(c["text"] for c in cues).split() == " ".join(re.findall(r"^say: (.+)$", SCRIPT, re.M)).split()
+
+
+def test_assets_are_all_licence_recorded_and_the_map_and_sound_are_synthesised_here(tmp_path, offline):
+    root = project(tmp_path)
+    assert run(root, "--to", "assets") == 0
+    assets = load_json(root / "ASSETS.json")["assets"]
+    assert {a["kind"] for a in assets} == {"archive", "map", "sfx"} and all(a["licence"] and a["sha256"] for a in assets)
+    assert (root / "assets" / "maps" / "B02.svg").is_file() and (root / "assets" / "sfx" / "sfx.json").is_file()
+
+
+def test_stages_can_be_skipped_and_run_again_alone(tmp_path, offline, capsys):
+    root = project(tmp_path)
+    assert run(root, "--to", "retime") == 0
+    first = (root / "STORYBOARD.json").read_bytes()
+    capsys.readouterr()
+    assert film.main(["retime", "--project", str(root)]) == 0
+    assert (root / "STORYBOARD.json").read_bytes() == first                                   # re-running a stage is safe and gives the same file
+    assert run(root, "--from", "retime", "--to", "build", "--skip", "voice") == 0
+    out = capsys.readouterr().out
+    assert "== retime" in out and "== build" in out and "== voice" not in out and "== story" not in out
+
+
+def test_an_edited_story_survives_a_second_run(tmp_path, offline):
+    root = project(tmp_path)
+    assert run(root, "--to", "story") == 0
+    (root / "STORY.md").write_text("my own story\nvoice: standin\nlength: 20 s\n", encoding="utf-8")
+    assert run(root, "--to", "script") == 0
+    assert (root / "STORY.md").read_text(encoding="utf-8").startswith("my own story")
+
+
+def test_render_refuses_an_unverified_line_and_the_report_lists_it(tmp_path, offline, capsys):
+    root = project(tmp_path, SCRIPT.replace("source: https://example.org/length\n", ""))
+    assert run(root, "--to", "mix") == 0
+    capsys.readouterr()
+    assert film.main(["render", "--project", str(root), "--quality", "draft"]) == 1
+    out = capsys.readouterr().out
+    assert out.startswith("FAIL") and "L03" in out and "--allow-unverified" in out
+    assert film.main(["report", "--project", str(root)]) == 0
+    report = (root / "REPORT.md").read_text(encoding="utf-8")
+    assert "## Unverified lines" in report and "- L03:" in report and "## Credits and licences" in report and "Natural Earth" in report
+
+
+def test_the_report_keeps_the_storyboard_and_assets_warnings_after_retime(tmp_path, offline, capsys):
+    root = project(tmp_path, SCRIPT.replace("source: https://example.org/summary\n", "source: https://example.org/summary\nquery: cable ship\n"))
+    assert run(root, "--to", "mix") == 0, capsys.readouterr().out
+    assert film.main(["report", "--project", str(root)]) == 0
+    report = (root / "REPORT.md").read_text(encoding="utf-8")
+    items = report.split("## Open items", 1)[1]
+    assert "fetching was skipped" in items and "typeset title beat" in items and "None recorded" not in items
+
+
+def test_24_fps_is_kept_by_every_stage_even_when_one_is_run_alone(tmp_path, offline, capsys):
+    root = project(tmp_path)
+    assert run(root, "--to", "mix", "--fps", "24") == 0, capsys.readouterr().out
+    assert film.main(["retime", "--project", str(root)]) == 0                                  # alone, without --fps: still 24
+    assert film.main(["build", "--project", str(root)]) == 0
+    sb, build = load_json(root / "STORYBOARD.json"), load_json(root / "BUILD.json")
+    assert sb["fps"] == 24 and sb["fps_rate"] == "24"
+    assert all(abs(b["end"] * 24 - round(b["end"] * 24)) < 0.01 for b in sb["beats"])           # every cut on a 24 fps frame
+    for job in build["projects"]:
+        assert job["frames"] == round(job["seconds"] * 24)
+    assert sum(j["frames"] for j in build["projects"]) == round(sb["duration"] * 24)
+    page = (root / build["projects"][0]["dir"] / "index.html").read_text(encoding="utf-8")
+    assert f'data-duration="{build["projects"][0]["frames"] / 24 - 0.001:.4f}" data-fps="24"' in page
+
+
+def test_missing_script_and_other_mistakes_give_one_fail_line(tmp_path, offline, capsys):
+    root = tmp_path / "empty"
+    root.mkdir()
+    (root / "BRIEF.md").write_text(BRIEF, encoding="utf-8")
+    assert film.main(["run", "--project", str(root), "--to", "script"]) == 1
+    out = capsys.readouterr().out
+    assert out.count("FAIL") == 1 and "SCRIPT.md not found" in out
+    assert film.main(["run", "--project", str(root), "--skip", "bogus"]) == 1 and "bogus" in capsys.readouterr().out
+
+
+def test_voice_take_needs_the_take(tmp_path, offline, capsys):
+    root = project(tmp_path)
+    assert film.main(["voice", "--project", str(root), "--voice", "take"]) == 1
+    assert "--take" in capsys.readouterr().out
+
+
+def test_list_and_help_work_without_a_project(capsys):
+    assert film.main(["--list"]) == 0 and capsys.readouterr().out.split() == film.STAGES
+    proc = fc.py_script("film.py", "--help")
+    assert proc.returncode == 0 and "usage" in proc.stdout.lower()
+
+
+# ---- the real render ---------------------------------------------------------------------------------------------------
+
+@pytest.mark.slow
+def test_the_template_passes_its_own_layout_check_with_a_small_counter_and_a_cc_by_credit(tmp_path):
+    """A 2-digit counter (the biggest number font) on a beat whose picture needs an on-screen CC BY credit: stamp, caption,
+    ledger and credit are the four blocks, and none may overlap. Builds with the real vendored GSAP, then reads the layout in Chrome."""
+    import check_clutter
+    if shutil.which("npx") is None or check_clutter.find_chrome() is None:
+        pytest.skip("needs npx (to vendor GSAP once) and Chrome")
+    script = SCRIPT.replace("count: 0 -> 1400000 | km of cable", "count: 0 -> 42 | cables in service")
+    root = project(tmp_path, script)
+    entry = {"file": "assets/archive/ship2.png", "kind": "archive", "source": "wikimedia-commons", "source_url": "https://commons.wikimedia.org/x",
+             "title": "Ship", "author": "Jane Roe", "licence": "CC BY 4.0", "licence_code": "by", "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+             "attribution": '"Ship" by Jane Roe, CC BY 4.0', "credit_required": True, "sha256": "", "retrieved": "2026-11-22"}
+    (root / "ASSETS.json").write_text(__import__("json").dumps({"version": 1, "assets": [entry]}), encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(fc.SCRIPTS / "film.py"), "run", "--project", str(root), "--voice", "standin", "--no-fetch", "--acts", "2",
+                           "--to", "build"], capture_output=True, text=True, encoding="utf-8")
+    if "vendoring GSAP and the fonts failed" in proc.stdout:
+        pytest.skip("npm and its cache are not available to vendor GSAP and the fonts once")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    sb, build = load_json(root / "STORYBOARD.json"), load_json(root / "BUILD.json")
+    assert next(a for a in load_json(root / "ASSETS.json")["assets"] if a["file"] == "assets/archive/ship2.png")["licence_code"] == "by"
+    page_text = "".join((root / j["dir"] / "index.html").read_text(encoding="utf-8") for j in build["projects"])
+    assert 'class="credit"' in page_text and "Jane Roe" in page_text and 'data-count-to="42"' in page_text
+    import film_check
+    for job in build["projects"]:
+        times = film_check.rest_times(sb, job["act"], job["start"])
+        out = fc.py_script("check_clutter.py", "--dom", root / job["dir"] / "index.html", "--at", ",".join(str(t) for t in times))
+        assert out.returncode == 0, out.stdout + out.stderr
+
+
+@pytest.mark.slow
+def test_a_24_fps_film_renders_at_24_with_the_picture_in_sync_with_the_plan(tmp_path):
+    if shutil.which("npx") is None or shutil.which("ffmpeg") is None:
+        pytest.skip("npx or ffmpeg not found")
+    root = project(tmp_path)
+    proc = subprocess.run([sys.executable, str(fc.SCRIPTS / "film.py"), "run", "--project", str(root), "--voice", "standin", "--no-fetch", "--acts", "2",
+                           "--fps", "24", "--quality", "draft", "--to", "render"], capture_output=True, text=True, encoding="utf-8")
+    if "vendoring GSAP and the fonts failed" in proc.stdout:
+        pytest.skip("npm and its cache are not available to vendor GSAP and the fonts once")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    sb, final = load_json(root / "STORYBOARD.json"), root / "final.mp4"
+    probe = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-show_entries", "stream=codec_type,avg_frame_rate,nb_read_frames,duration",
+                            "-of", "json", str(final)], capture_output=True, text=True, check=True).stdout
+    streams = {s["codec_type"]: s for s in __import__("json").loads(probe)["streams"]}
+    assert streams["video"]["avg_frame_rate"] == "24/1" and int(streams["video"]["nb_read_frames"]) == round(sb["duration"] * 24)
+    assert float(streams["audio"]["duration"]) == pytest.approx(float(streams["video"]["duration"]), abs=1 / 24 + 0.03)
+    check = fc.bash_script("check_delivery.sh", final, "--seconds", f"{sb['duration']:.4f}", "--fps", "24", "--joins", f"{sb['acts'][1]['start']:.4f}")
+    assert "RESULT: PASS" in check.stdout, check.stdout
+    # sync: each planned hard cut (the storyboard is re-timed to the voice) is the biggest picture change within half a second
+    # of where it was planned, to two frames. A picture rendered at 30 and relabelled 24 plays 25 % slow and misses by far more.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_seams_e2e", fc.SCRIPTS / "check_seams.py")
+    cs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cs)
+    frames = list(cs.FrameReader(str(final), "24"))
+    diffs = [0.0] + [cs.mad(a, b) for a, b in zip(frames, frames[1:])]
+    planned = [b["start"] for b in sb["beats"][1:] if b["transition"]["type"] == "hard-cut" and b["start"] > 1.0]
+    assert planned
+    for t in planned:
+        k = round(t * 24)
+        window = range(max(1, k - 12), min(len(diffs), k + 13))
+        peak = max(window, key=lambda i: diffs[i])
+        assert abs(peak - k) <= 2, (t, peak / 24, [round(diffs[i], 1) for i in window])
+    # and the dip to dark between the acts is darkest at the planned join (a truncated act moves it seconds earlier)
+    luma = [sum(f) / len(f) for f in frames]
+    for act in sb["acts"][1:]:
+        k = round(act["start"] * 24)
+        window = range(max(0, k - 14), min(len(luma), k + 15))
+        darkest = min(window, key=lambda i: luma[i])
+        assert abs(darkest - k) <= 2 and luma[darkest] < 0.5 * max(luma[i] for i in window), (act["start"], darkest / 24)
+
+
+@pytest.mark.slow
+def test_a_20_second_film_renders_through_hyperframes_and_passes_the_delivery_checks(tmp_path):
+    if shutil.which("npx") is None or shutil.which("ffmpeg") is None:
+        pytest.skip("npx or ffmpeg not found: the film stops at the composition (see the fast test)")
+    root = project(tmp_path)
+    proc = subprocess.run([sys.executable, str(fc.SCRIPTS / "film.py"), "run", "--project", str(root), "--voice", "standin", "--no-fetch", "--acts", "2",
+                           "--quality", "draft", "--skip", "check,report"], capture_output=True, text=True, encoding="utf-8")
+    if "vendoring GSAP and the fonts failed" in proc.stdout:
+        pytest.skip("npm and its cache are not available to vendor GSAP and the fonts once")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    final = root / "final.mp4"
+    info = fc.ffprobe(final)
+    sb = load_json(root / "STORYBOARD.json")
+    assert (info["width"], info["height"]) == (1920, 1080) and info["duration"] == pytest.approx(sb["duration"], abs=1 / 30 + 0.01)
+    check = fc.bash_script("check_delivery.sh", final, "--seconds", f"{sb['duration']:.4f}", "--joins", f"{sb['acts'][1]['start']:.4f}")
+    assert "RESULT: PASS" in check.stdout, check.stdout
+    assert film.main(["check", "--project", str(root)]) == 0
+    assert film.main(["report", "--project", str(root)]) == 0
+    assert "## Checks" in (root / "REPORT.md").read_text(encoding="utf-8")

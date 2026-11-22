@@ -1,0 +1,506 @@
+{
+ "batchcomplete": "",
+ "continue": {
+  "gsroffset": 8,
+  "continue": "gsroffset||"
+ },
+ "query": {
+  "pages": {
+   "47025124": {
+    "pageid": 47025124,
+    "ns": 6,
+    "title": "File:EB1911 Telegraph - submarine cable - slack indicator.jpg",
+    "index": 1,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 26788,
+      "width": 501,
+      "height": 390,
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/f/fe/EB1911_Telegraph_-_submarine_cable_-_slack_indicator.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "thumbwidth": 1920,
+      "thumbheight": 1495,
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/EB1911_Telegraph_-_submarine_cable_-_slack_indicator.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:EB1911_Telegraph_-_submarine_cable_-_slack_indicator.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/47025124",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "EB1911 Telegraph - submarine cable - slack indicator",
+        "source": "mediawiki-metadata"
+       },
+       "ImageDescription": {
+        "value": "The “slack indicator” of Messrs Siemens Brothers &amp; Co. yields a continuous indication and record of the actual slack paid out. It consists of a long screw s",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "<i>Encyclopædia Britannica</i> (11th ed.), v. 26, 1911, “Telegraph,” p. 515, Fig. 11.",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "Harry Robert Kempe (section author)",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "Public domain",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Public domain",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "false",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "License": {
+        "value": "pd",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   "47010147": {
+    "pageid": 47010147,
+    "ns": 6,
+    "title": "File:EB1911 Telegraph - submarine cable - tank and paying-out apparatus.jpg",
+    "index": 3,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 86976,
+      "width": 1201,
+      "height": 305,
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/1/17/EB1911_Telegraph_-_submarine_cable_-_tank_and_paying-out_apparatus.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "thumbwidth": 1920,
+      "thumbheight": 488,
+      "url": "https://upload.wikimedia.org/wikipedia/commons/1/17/EB1911_Telegraph_-_submarine_cable_-_tank_and_paying-out_apparatus.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:EB1911_Telegraph_-_submarine_cable_-_tank_and_paying-out_apparatus.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/47010147",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "EB1911 Telegraph - submarine cable - tank and paying-out apparatus",
+        "source": "mediawiki-metadata"
+       },
+       "ImageDescription": {
+        "value": "Diagram of tank and paying-out apparatus used for laying submarine telegraphic cable:  the cable to be laid is transferred to a cable ship provided with water-t",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "<i>Encyclopædia Britannica</i> (11th ed.), v. 26, 1911, “Telegraph,” p. 514, Fig. 9.",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "Harry Robert Kempe (section author)",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "Public domain",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Public domain",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "false",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "License": {
+        "value": "pd",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   "117956284": {
+    "pageid": 117956284,
+    "ns": 6,
+    "title": "File:HMAS Stalwart (A304), USS Frank Cable (AS-40) and an unidentified Collins class submarine at HMAS Stirling, April 2022 01.jpg",
+    "index": 8,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 1866275,
+      "width": 3264,
+      "height": 2448,
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_01.jpg/1920px-HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 1920,
+      "thumbheight": 1440,
+      "responsiveUrls": {
+       "2": "https://upload.wikimedia.org/wikipedia/commons/3/3b/HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:HMAS_Stalwart_(A304),_USS_Frank_Cable_(AS-40)_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling,_April_2022_01.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/117956284",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "HMAS Stalwart (A304), USS Frank Cable (AS-40) and an unidentified Collins class submarine at HMAS Stirling, April 2022 01",
+        "source": "mediawiki-metadata"
+       },
+       "ImageDescription": {
+        "value": "The HMAS Stalwart (A304), USS Frank Cable (AS-40) and an unidentified Collins class submarine at HMAS Stirling, Garden Island, Western Australia.",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Calistemon\" title=\"User:Calistemon\">Calistemon</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Creative Commons Attribution-Share Alike 4.0",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "commons-desc-page"
+       },
+       "License": {
+        "value": "cc-by-sa-4.0",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   "117956292": {
+    "pageid": 117956292,
+    "ns": 6,
+    "title": "File:HMAS Stalwart (A304), USS Frank Cable (AS-40) and an unidentified Collins class submarine at HMAS Stirling, April 2022 04.jpg",
+    "index": 7,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 2143587,
+      "width": 3264,
+      "height": 2448,
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5b/HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_04.jpg/1920px-HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_04.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 1920,
+      "thumbheight": 1440,
+      "responsiveUrls": {
+       "2": "https://upload.wikimedia.org/wikipedia/commons/5/5b/HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_04.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/HMAS_Stalwart_%28A304%29%2C_USS_Frank_Cable_%28AS-40%29_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling%2C_April_2022_04.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:HMAS_Stalwart_(A304),_USS_Frank_Cable_(AS-40)_and_an_unidentified_Collins_class_submarine_at_HMAS_Stirling,_April_2022_04.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/117956292",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "HMAS Stalwart (A304), USS Frank Cable (AS-40) and an unidentified Collins class submarine at HMAS Stirling, April 2022 04",
+        "source": "mediawiki-metadata"
+       },
+       "ImageDescription": {
+        "value": "The HMAS Stalwart (A304), USS Frank Cable (AS-40) and an unidentified Collins class submarine at HMAS Stirling, Garden Island, Western Australia.",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Calistemon\" title=\"User:Calistemon\">Calistemon</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Creative Commons Attribution-Share Alike 4.0",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "commons-desc-page"
+       },
+       "License": {
+        "value": "cc-by-sa-4.0",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   "86978158": {
+    "pageid": 86978158,
+    "ns": 6,
+    "title": "File:Landing of the submarine cable, Port Darwin, 7 November 1871(GN01968).jpg",
+    "index": 5,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 917869,
+      "width": 3264,
+      "height": 2448,
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/47/Landing_of_the_submarine_cable%2C_Port_Darwin%2C_7_November_1871%28GN01968%29.jpg/1920px-Landing_of_the_submarine_cable%2C_Port_Darwin%2C_7_November_1871%28GN01968%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 1920,
+      "thumbheight": 1440,
+      "responsiveUrls": {
+       "2": "https://upload.wikimedia.org/wikipedia/commons/4/47/Landing_of_the_submarine_cable%2C_Port_Darwin%2C_7_November_1871%28GN01968%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Landing_of_the_submarine_cable%2C_Port_Darwin%2C_7_November_1871%28GN01968%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Landing_of_the_submarine_cable,_Port_Darwin,_7_November_1871(GN01968).jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/86978158",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "<div class=\"fn\">\nLanding of the submarine cable, Port Darwin, 7 November 1871</div>",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "<div class=\"fn value\">\nState Government Photographer</div>",
+        "source": "commons-desc-page"
+       },
+       "ImageDescription": {
+        "value": "<div class=\"description\">\n<p>This image shows a momentous event in Australian history: the landing of the submarine telegraph cable from London (via Java) at Po",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "The History Trust of South Australian,  South Australian Government <br> Photo <a rel=\"nofollow\" class=\"external autonumber\" href=\"http://data.history.sa.gov.au/sagpc/media/preview/3278?maxsize=1000\">[1]</a> <br> Object record <a rel=\"nofollow\" class=\"external autonumber\" href=\"http://data.history.sa.gov.au/sagpc/getitem/3278\">[2]</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Creative Commons Zero, Public Domain Dedication",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "false",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "source": "commons-desc-page"
+       },
+       "License": {
+        "value": "cc0",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   "154253121": {
+    "pageid": 154253121,
+    "ns": 6,
+    "title": "File:Submarine Cable Breaks at Valdez.png",
+    "index": 2,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 1009542,
+      "width": 3004,
+      "height": 1254,
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/Submarine_Cable_Breaks_at_Valdez.png/1920px-Submarine_Cable_Breaks_at_Valdez.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 1920,
+      "thumbheight": 801,
+      "responsiveUrls": {
+       "2": "https://upload.wikimedia.org/wikipedia/commons/5/57/Submarine_Cable_Breaks_at_Valdez.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Submarine_Cable_Breaks_at_Valdez.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Submarine_Cable_Breaks_at_Valdez.png",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/154253121",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "Submarine Cable Breaks at Valdez",
+        "source": "mediawiki-metadata"
+       },
+       "ImageDescription": {
+        "value": "Submarine cable breaks at Valdez, Alaska, resulting from the February 1908 earthquake, as charted aboard the cable ship USAT Burnside",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "<a rel=\"nofollow\" class=\"external free\" href=\"https://dggs.alaska.gov/webpubs/usgs/p/text/p0069.pdf\">https://dggs.alaska.gov/webpubs/usgs/p/text/p0069.pdf</a>",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "Lt. Paul Hurst",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "Public domain",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Public domain",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "false",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "License": {
+        "value": "pd",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      },
+      "mime": "image/png"
+     }
+    ]
+   },
+   "14035217": {
+    "pageid": 14035217,
+    "ns": 6,
+    "title": "File:Submarine cable terminus building at Skewjack - geograph.org.uk - 1302332.jpg",
+    "index": 6,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 78000,
+      "width": 640,
+      "height": 427,
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/6/64/Submarine_cable_terminus_building_at_Skewjack_-_geograph.org.uk_-_1302332.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "thumbwidth": 1920,
+      "thumbheight": 1281,
+      "url": "https://upload.wikimedia.org/wikipedia/commons/6/64/Submarine_cable_terminus_building_at_Skewjack_-_geograph.org.uk_-_1302332.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Submarine_cable_terminus_building_at_Skewjack_-_geograph.org.uk_-_1302332.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/14035217",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "Submarine cable terminus building at Skewjack - geograph.org.uk - 1302332",
+        "source": "mediawiki-metadata"
+       },
+       "ImageDescription": {
+        "value": "Submarine cable terminus building at Skewjack. Skewjack has a long history in telecommunications.  During WWII RAF Sennen was based here because it was a good l",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "From <a rel=\"nofollow\" class=\"external text\" href=\"https://www.geograph.org.uk/photo/1302332\">geograph.org.uk</a>",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.geograph.org.uk/profile/22976\">Rod Allday</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 2.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Creative Commons Attribution-Share Alike 2.0",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/2.0",
+        "source": "commons-desc-page"
+       },
+       "License": {
+        "value": "cc-by-sa-2.0",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   "56277442": {
+    "pageid": 56277442,
+    "ns": 6,
+    "title": "File:Testing cable on Cable Ship \"Faraday\" laying trans-Tasman submarine cable - King Island (30965149433).jpg",
+    "index": 4,
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "size": 1970063,
+      "width": 4871,
+      "height": 3499,
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Testing_cable_on_Cable_Ship_%22Faraday%22_laying_trans-Tasman_submarine_cable_-_King_Island_%2830965149433%29.jpg/1920px-Testing_cable_on_Cable_Ship_%22Faraday%22_laying_trans-Tasman_submarine_cable_-_King_Island_%2830965149433%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 1920,
+      "thumbheight": 1379,
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Testing_cable_on_Cable_Ship_%22Faraday%22_laying_trans-Tasman_submarine_cable_-_King_Island_%2830965149433%29.jpg/3840px-Testing_cable_on_Cable_Ship_%22Faraday%22_laying_trans-Tasman_submarine_cable_-_King_Island_%2830965149433%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Testing_cable_on_Cable_Ship_%22Faraday%22_laying_trans-Tasman_submarine_cable_-_King_Island_%2830965149433%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Testing_cable_on_Cable_Ship_%22Faraday%22_laying_trans-Tasman_submarine_cable_-_King_Island_(30965149433).jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/wiki/Special:Redirect/page/56277442",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "Testing cable on Cable Ship \"Faraday\" laying trans-Tasman submarine cable - King Island (30965149433)",
+        "source": "mediawiki-metadata"
+       },
+       "ImageDescription": {
+        "value": "Call number: At Work and Play - 06609<br>\n<p>Digital ID: bcp_06609<br>\nFormat: photograph<br>\nFind more detailed information about this photograph: <a rel=\"nofo",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "<a rel=\"nofollow\" class=\"external free\" href=\"https://www.flickr.com/photos/statelibraryofnsw/30965149433/\">https://www.flickr.com/photos/statelibraryofnsw/30965149433/</a>",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/29454428@N08\">State Library of New South Wales collection</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "No restrictions",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "No known copyright restrictions",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "false",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://www.flickr.com/commons/usage/",
+        "source": "commons-desc-page"
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   }
+  },
+  "_note": "recorded from the Wikimedia Commons API (trimmed); one cc0 page, pd pages, by-sa pages and a \"No restrictions\" page"
+ }
+}

@@ -96,6 +96,11 @@ jobs:
       - name: Fast tests
         run: bash tests/run_tests.sh -rs
 
+      - name: Film mode end to end, rendered (Windows checks the Git Bash route of render and check)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        run: bash tests/run_tests.sh --slow -k "film_e2e" -rs
+
   craft-tools:
     # The craft checks with their optional tools installed (tesseract, librosa, PySceneDetect, Chrome), so OCR of real
     # frames, beat analysis, scene cuts and the --dom layout route run in CI instead of skipping. Optional: it never blocks.
