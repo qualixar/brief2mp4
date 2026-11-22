@@ -8,8 +8,10 @@ both in the request and again on every answer, so a server that ignores the filt
   python3 fetch_archive.py search "submarine cable ship" [--source commons|openverse|both] [--kind photo|map|document]
   python3 fetch_archive.py download "submarine cable ship" --pick 1 --out-dir assets/archive --assets ASSETS.json
 
-A download is checked to be a real PNG, JPEG or WebP, saved at a usable size (1920 px wide at most), and recorded in
-ASSETS.json: file, source URL, author, licence, attribution text, SHA-256 and the date. Running it again for the same
+A download is checked to be a real PNG, JPEG or WebP and stops at 25 MB. Commons is asked for a 1920 px copy of wide files;
+anything still over 1920 px on its longest side (an Openverse original, a tall scan) is scaled down with ffmpeg when it is
+installed (otherwise kept as it came, and the record says so). It is recorded in ASSETS.json: file, source URL, author,
+licence, attribution text, size, SHA-256 of the saved file and the date. Running it again for the same
 picture changes nothing. Server errors (5xx), rate limits (429) and dropped connections are retried with a growing wait,
 and requests are spaced --delay seconds apart. Public domain is as the host tags it, which differs by country: check
 the source page before a commercial release. Standard library only.
@@ -22,6 +24,8 @@ import hashlib
 import html
 import json
 import re
+import shutil
+import subprocess
 import sys
 import time
 import urllib.parse
@@ -213,17 +217,45 @@ def download(candidate: dict, out_dir: Path, assets_path: Path, delay: float = 1
     sha = hashlib.sha256(body).hexdigest()
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    dest = out_dir / f"{slug(candidate['title'])}-{sha[:8]}.{ext}"
+    dest = out_dir / f"{slug(candidate['title'])}-{sha[:8]}.{ext}"      # named by the download, so a rerun finds the same file
     dest.write_bytes(body)
+    size = fit(dest)
+    width, height = size or (candidate["width"], candidate["height"])
+    sha = hashlib.sha256(dest.read_bytes()).hexdigest()                 # the record holds the saved file's checksum
     assets_path = Path(assets_path)
     rel = Path(dest).resolve().relative_to(assets_path.resolve().parent).as_posix() if assets_path.resolve().parent in dest.resolve().parents else dest.as_posix()
     entry = {"file": rel, "kind": "archive", "source": candidate["source"], "source_url": candidate["page_url"], "download_url": candidate["url"],
              "title": candidate["title"], "author": candidate["creator"] or "unknown", "licence": candidate["licence"],
              "licence_code": code, "licence_url": candidate["licence_url"], "attribution": candidate["attribution"],
-             "width": candidate["width"], "height": candidate["height"], "sha256": sha,
+             "width": width, "height": height, "resized": bool(size), "sha256": sha,
              "credit_required": code == "by", "retrieved": datetime.date.today().isoformat()}
     record(assets_path, entry)
     return entry
+
+
+def fit(path: Path, longest: int = MAX_WIDTH) -> tuple[int, int] | None:
+    """Scale a picture down so its longest side is at most `longest` px (aspect kept). Returns the new (w, h), or None when
+    ffmpeg is missing or the picture is already small enough."""
+    if not shutil.which("ffprobe") or not shutil.which("ffmpeg"):
+        return None
+    probe = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", str(path)],
+                           capture_output=True, text=True)
+    try:
+        w, h = (int(v) for v in probe.stdout.strip().split(",")[:2])
+    except ValueError:
+        return None
+    if max(w, h) <= longest:
+        return None
+    k = longest / max(w, h)
+    nw, nh = max(2, round(w * k / 2) * 2), max(2, round(h * k / 2) * 2)
+    tmp = path.with_name(path.stem + ".fit" + path.suffix)
+    done = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(path), "-vf", f"scale={nw}:{nh}:flags=lanczos", "-frames:v", "1",
+                           *(["-q:v", "2"] if path.suffix == ".jpg" else []), str(tmp)], capture_output=True, text=True)
+    if done.returncode != 0 or not tmp.is_file():
+        tmp.unlink(missing_ok=True)
+        return None
+    tmp.replace(path)
+    return nw, nh
 
 
 def describe(i: int, c: dict) -> str:
