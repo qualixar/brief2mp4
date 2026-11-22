@@ -63,8 +63,15 @@ def test_without_tesseract_it_skips_with_the_install_command_and_exits_3(tmp_pat
 def test_a_frame_with_placeholder_text_fails(tmp_path, lines, hit):
     clip = still_video(tmp_path / "bad.mp4", text_png(tmp_path / "bad.png", lines), seconds=2)
     proc = bash_script("ocr_sweep.sh", clip, "--keep", tmp_path / "kept")
-    assert proc.returncode == 1, proc.stdout
+    assert proc.returncode == 1, proc.stdout + "\nOCR read: " + ocr_text(tmp_path / "bad.png")
     assert f'"{hit}"' in proc.stdout and any((tmp_path / "kept").glob("*.png"))
+
+
+def ocr_text(png):
+    """What this machine's tesseract reads from the test frame, for the failure message."""
+    import subprocess
+    r = subprocess.run(["tesseract", str(png), "-", "--psm", "11"], capture_output=True, text=True)
+    return repr(r.stdout.strip())
 
 
 @needs_ffmpeg
