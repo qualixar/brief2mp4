@@ -29,8 +29,13 @@ def fake_hunyuan(home):
         "hy3dgen/shapegen/__init__.py": (
             "class _Mesh:\n    def export(self, path):\n        open(path, 'wb').write(b'glTF-stand-in')\n"
             "class Hunyuan3DDiTFlowMatchingPipeline:\n"
-            "    @classmethod\n    def from_pretrained(cls, name):\n        o = cls(); o.name = name; return o\n"
-            "    def __call__(self, image=None):\n        assert isinstance(image, str)\n        return [_Mesh()]\n"),
+            "    @classmethod\n    def from_pretrained(cls, name, device='cuda'):\n"
+            "        o = cls(); o.name = name; print('DEVICE', device); return o\n"
+            "    def __call__(self, image=None):\n        assert isinstance(image, (str, tuple)), image\n        print('IMAGE', image)\n        return [_Mesh()]\n"),
+        "hy3dgen/rembg.py": "class BackgroundRemover:\n    def __call__(self, image):\n        return ('cut-out', image)\n",
+        "PIL/__init__.py": "",
+        "PIL/Image.py": "class _I:\n    def __init__(self, p):\n        self.p = p\n    def convert(self, mode):\n        return self.p\n"
+                        "def open(p):\n    return _I(p)\n",
     }.items():
         (home / rel).parent.mkdir(parents=True, exist_ok=True)
         (home / rel).write_text(body)
@@ -59,8 +64,26 @@ def test_doctor_lists_both_tools_with_their_licence_lines():
     hun, tre = out["hunyuan3d"], out["trellis"]
     assert hun["installed"] is False and tre["installed"] is False
     assert "European Union" in hun["licence"] and "South Korea" in hun["licence"] and "United Kingdom" in hun["licence"]
-    assert "MIT" in tre["licence"] and "submodules" in tre["licence"]
+    assert "MIT" in tre["licence"] and "NON-COMMERCIAL" in tre["licence"] and "nvdiffrast" in tre["licence"]
+    assert "Acceptable Use Policy" in hun["licence"] and "machine-generated" in hun["licence"] and "military" in hun["licence"]
+    assert "release date" in hun["licence"] and "PyTorch" in hun["install"] and "custom_rasterizer" in hun["install"]
     assert "pip install" in hun["install"] and "setup.sh" in tre["install"]
+    for flag in ("--nvdiffrast", "--mipgaussian", "--diffoctreerast"):         # research-only parts are opt-in
+        assert flag not in tre["install"] and flag not in tre["install_noncommercial"]
+    assert tre["noncommercial"].startswith("WARNING")
+
+
+def test_the_non_commercial_install_line_is_printed_only_when_asked_and_after_its_warning():
+    tre = json.loads(gen3d("doctor", "--non-commercial").stdout)["trellis"]
+    assert "--nvdiffrast" in tre["install_noncommercial"] and "research or evaluation" in tre["noncommercial"]
+
+
+def test_trellis_refuses_to_run_until_non_commercial_use_is_confirmed(tmp_path):
+    home = tmp_path / "tr"
+    fake_trellis(home)
+    proc = gen3d("run", "trellis", "--prompt", "a lamp", "--out", str(tmp_path / "l.glb"), env={"TRELLIS_HOME": str(home)})
+    assert proc.returncode == 2 and proc.stderr.startswith("WARNING") and "--non-commercial" in proc.stderr
+    assert not (tmp_path / "l.glb").exists()
 
 
 def test_a_missing_tool_prints_how_to_install_and_exits_zero_with_a_skip_line(tmp_path):
@@ -83,6 +106,20 @@ def test_hunyuan_runs_the_documented_entry_point_and_writes_a_credit_sidecar(tmp
     side = json.loads((tmp_path / "chair.glb.source.json").read_text())
     assert side["tool"] == "Hunyuan3D-2" and "European Union" in side["licence"]
     assert "not valid in the European Union" in proc.stdout     # the note is printed before the run
+    assert "DEVICE cuda" in proc.stdout                           # no --device: the tool's own default
+
+
+def test_hunyuan_background_removal_and_device_reach_the_tool(tmp_path):
+    home = tmp_path / "hy"
+    fake_hunyuan(home)
+    img = tmp_path / "photo.jpg"
+    img.write_bytes(b"x")
+    out = tmp_path / "thing.glb"
+    proc = gen3d("run", "hunyuan3d", "--image", str(img), "--out", str(out), "--remove-background", "--device", "mps",
+                 env={"HUNYUAN3D_HOME": str(home)})
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "DEVICE mps" in proc.stdout and out.read_bytes() == b"glTF-stand-in"
+    assert "IMAGE ('cut-out'," in proc.stdout                    # the cut-out, not the photo, went into the pipeline
 
 
 def test_trellis_image_and_text_routes(tmp_path):
@@ -91,8 +128,8 @@ def test_trellis_image_and_text_routes(tmp_path):
     img = tmp_path / "in.png"
     img.write_bytes(b"x")
     env = {"TRELLIS_HOME": str(home)}
-    a = gen3d("run", "trellis", "--image", str(img), "--out", str(tmp_path / "a.glb"), env=env)
-    b = gen3d("run", "trellis", "--prompt", "a chair like an avocado", "--out", str(tmp_path / "b.glb"), env=env)
+    a = gen3d("run", "trellis", "--image", str(img), "--out", str(tmp_path / "a.glb"), "--non-commercial", env=env)
+    b = gen3d("run", "trellis", "--prompt", "a chair like an avocado", "--out", str(tmp_path / "b.glb"), "--non-commercial", env=env)
     assert a.returncode == 0 and b.returncode == 0, a.stdout + a.stderr + b.stdout + b.stderr
     assert (tmp_path / "a.glb").exists() and (tmp_path / "b.glb").exists()
     assert json.loads((tmp_path / "b.glb.source.json").read_text())["tool"] == "TRELLIS"
@@ -106,5 +143,6 @@ def test_one_input_only_and_hunyuan_has_no_text_route(tmp_path):
 def test_dry_run_shows_the_command_without_running_anything(tmp_path):
     home = tmp_path / "tr"
     fake_trellis(home)
-    proc = gen3d("run", "trellis", "--prompt", "a lamp", "--out", str(tmp_path / "l.glb"), "--dry-run", env={"TRELLIS_HOME": str(home)})
+    proc = gen3d("run", "trellis", "--prompt", "a lamp", "--out", str(tmp_path / "l.glb"), "--dry-run", "--non-commercial",
+                 env={"TRELLIS_HOME": str(home)})
     assert proc.returncode == 0 and "TrellisTextTo3DPipeline" in proc.stdout and not (tmp_path / "l.glb").exists()

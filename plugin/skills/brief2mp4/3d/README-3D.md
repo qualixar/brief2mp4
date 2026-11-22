@@ -69,7 +69,7 @@ b2m3d doctor
 
 ## Blender motion recipes, live Blender, generators
 
-Six tested Blender scripts live in `templates/recipes/`: `loop` (frame 1 equals the last frame, cyclic curves), `retime` (move beats between timeline markers), `cloth` (a sheet drops on an object), `rigid` (a hinged or ball-jointed chain), `fold` (shape-key folding) and `walk` (a figure walks forward, feet planted). Each prints the measurements that show it worked. `b2m3d recipe run NAME -- <options>` runs one headless; `references/blender-recipes.md` has the options, what each reports and the traps. Headless stays the route for every render that ships.
+Six tested Blender scripts live in `templates/recipes/`: `loop` (frame 1 equals the last frame, cyclic curves), `retime` (move beats between timeline markers), `cloth` (a sheet drops on an object), `rigid` (a hinged or ball-jointed chain), `fold` (shape-key folding) and `walk` (a figure walks forward, feet planted). Each prints the measurements that show it worked. `b2m3d recipe run NAME -- <options>` runs one headless; `references/blender-recipes.md` has the options, what each reports and the traps. Headless stays the route for every render that ships. The installer copies the pack into `~/.brief2mp4/3d/pack`, so after updating brief2mp4 run `install_3d.sh` again; an older copy answers `invalid choice: 'recipe'`. The recipes' plain arithmetic is in `b2m_math.py`, which imports no Blender, so its tests run everywhere.
 
 The same scripts work inside a running Blender through blender-mcp (`references/blender-live.md`: when to use live and when headless, install, safety, the snippet to send). Optional image or text to mesh (Hunyuan3D-2, TRELLIS) and liquids (the FLIP Fluids add-on) are tools you install, wrapped by `scripts/gen3d.py` and `templates/recipes/b2m_flip_bake.py`, with their licence limits stated in `references/generators-3d.md`. Nothing from those projects is copied into this repository.
 
@@ -164,7 +164,7 @@ The pack itself is MIT, like the rest of this repository. It builds on, and cred
 | Inter, Space Grotesk (`@fontsource-variable`) | SIL Open Font Licence 1.1 | title fonts |
 | Blender | GPL | external program for path-traced shots; not bundled, not linked |
 | blender-mcp (MCP for Blender), Siddharth Ahuja | MIT | optional live Blender route; installed by you |
-| Hunyuan3D-2, Tencent | Tencent community licence, not valid in the EU, UK or South Korea | optional image-to-3D; installed by you, never bundled |
-| TRELLIS, Microsoft | MIT (a few submodules differ) | optional image or text to 3D; installed by you, never bundled |
+| Hunyuan3D-2, Tencent | Tencent community licence, not valid in the EU, UK or South Korea; its Acceptable Use Policy asks for published output to be labelled machine-generated | optional image-to-3D; installed by you, never bundled |
+| TRELLIS, Microsoft | MIT for its code and models, but its GLB export runs non-commercial components (nvdiffrast, a Gaussian rasterizer): research or evaluation use only | optional image or text to 3D; installed by you, never bundled; `gen3d.py` runs it only with `--non-commercial` |
 | FLIP Fluids, Ryan L. Guy and Dennis Fassbaender | add-on GPL, engine MIT, some content royalty free | optional liquids; installed by you, never bundled |
 | HyperFrames | see its own licence | the renderer |

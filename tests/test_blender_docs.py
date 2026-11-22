@@ -37,7 +37,7 @@ def test_every_recipe_is_documented_and_has_a_docstring_and_a_test():
     recipes_doc = (REFS / "blender-recipes.md").read_text(encoding="utf-8")
     for path in sorted(RECIPES.glob("b2m_*.py")):
         name = path.stem.removeprefix("b2m_")
-        if name == "common":
+        if name in ("common", "math"):     # shared helpers, not recipes
             continue
         assert path.read_text(encoding="utf-8").lstrip().startswith('"""'), path.name
         assert f"`{name}`" in recipes_doc or name in GEN, f"{name} is not documented"
@@ -46,8 +46,35 @@ def test_every_recipe_is_documented_and_has_a_docstring_and_a_test():
 
 def test_the_licence_notes_are_in_the_ecosystem_credits():
     for needle in ("blender-mcp", "MIT", "Hunyuan3D-2", "European Union, United Kingdom and South Korea", "TRELLIS",
-                   "diffoctreerast", "FLIP Fluids", "GPL", "Superhive", "never bundles"):
+                   "diffoctreerast", "FLIP Fluids", "GPL", "Superhive", "never bundles", "DISABLE_TELEMETRY",
+                   "Acceptable Use Policy", "machine-generated", "release date"):
         assert needle in ECO, needle
+    trellis_row = next(line for line in ECO.splitlines() if line.startswith("| [TRELLIS]"))
+    assert "non-commercial" in trellis_row and "nvdiffrast" in trellis_row and "--non-commercial" in trellis_row
+
+
+def test_every_trellis_line_says_the_glb_export_is_non_commercial():
+    readme3d = (PACK / "README-3D.md").read_text(encoding="utf-8")
+    section = (PACK.parents[3] / "README.md").read_text(encoding="utf-8")
+    for text in (GEN, readme3d, section):
+        lines = [ln for ln in text.splitlines() if "TRELLIS" in ln and "MIT" in ln and (ln.startswith("|") or "[TRELLIS]" in ln)]
+        assert lines and all("non-commercial" in ln.lower() for ln in lines), lines
+    for quote in ('"non-commercially" means "for research or evaluation purposes only and not for any direct or indirect '
+                  'monetary gain"', 'may be used "non-commercially", i.e., for research and/or evaluation purposes only.'):
+        assert quote in GEN, quote
+
+
+def test_the_hunyuan_note_carries_the_acceptable_use_policy_and_the_readme_as_it_is():
+    assert "machine generated" in GEN and "For military purposes" in GEN and "release date" in GEN
+    assert "supports Macos, Windows, Linux" in GEN and "CUDA GPU" not in GEN and "custom_rasterizer" in GEN
+
+
+def test_the_live_doc_states_safe_mode_telemetry_and_auto_start_as_they_are():
+    live = (REFS / "blender-live.md").read_text(encoding="utf-8")
+    assert "safe mode is a good default" not in live and "It also refuses the recipes" in live
+    assert "opt-in and off by default" not in live and "DISABLE_TELEMETRY=true" in live
+    assert "-e DISABLE_TELEMETRY=true -- uvx" in live and "--env DISABLE_TELEMETRY=true -- uvx" in live
+    assert "Auto-Start Server" in live and "clear=True" in live and "never pass it in a live session" in live
 
 
 def test_the_hunyuan_licence_text_is_quoted_exactly():

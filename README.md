@@ -214,6 +214,21 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -With3D core,cad
 
 The brief does the asking. "Parts fall and settle" becomes a physics bake with a camera that frames the landing zone; "show what's inside" becomes an exploded view; "hero product" becomes a Blender render with a dramatic light rig. The full mapping, the shot JSON and the look rules are in [3d/README-3D.md](plugin/skills/brief2mp4/3d/README-3D.md).
 
+### Blender motion recipes
+
+Six Blender motion recipes, for motion that is slow to get right by hand: a seamless loop (the first frame equals the last), retiming between timeline markers, a cloth drop, a hinged or ball-jointed chain, folding with shape keys, and a walk forward with the feet planted. Each is a script you can change, each prints numbers that show it worked (how far a planted foot moved, whether a joint opened, whether the swing stayed in frame) with an `ok` verdict and warnings, and each has a test that checks them with a real Blender. They share one look: `--look studio` puts any recipe in a seamless studio with soft light and no horizon, `--orbit` moves the camera, and captions fade in as small lower thirds. [Example 10](examples/10-3d-motion/) is a 24-second film made with five of them, in one studio, cut to music: every frame of it comes from the recipes.
+
+```bash
+b2m3d recipe list
+b2m3d recipe run cloth -- --object sphere --frames 90 --out frames
+```
+
+A running Blender can be driven live through [blender-mcp](https://github.com/ahujasid/mcp-for-blender) (MIT). Use it to decide a look by eye. Renders stay headless, so they repeat on any machine.
+
+Three optional tools are called, never bundled, and each has its own terms. [Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) (Tencent) turns an image into a mesh; its licence does not apply in the EU, UK or South Korea, and its use policy asks you to label published output as machine-generated. [TRELLIS](https://github.com/microsoft/TRELLIS) (Microsoft) turns an image or text into a mesh; its own code is MIT, but its GLB export runs non-commercial components (nvdiffrast and a Gaussian rasterizer, research or evaluation use only), so the wrapper runs it only with `--non-commercial`. The [FLIP Fluids](https://github.com/rlguy/Blender-FLIP-Fluids) add-on (GPL, paid; a free demo adds a watermark) bakes liquids. You install them; `scripts/gen3d.py` and a Blender recipe call them.
+
+Read next: [Blender recipes](plugin/skills/brief2mp4/references/blender-recipes.md), [live Blender](plugin/skills/brief2mp4/references/blender-live.md), [generators and licences](plugin/skills/brief2mp4/references/generators-3d.md).
+
 ## The edit pack
 
 Motion graphics are half of a video. The other half is editing: cutting your screen recording or footage on a timeline, mixing a voiceover over music so the music ducks when you speak, compositing titles, making the thumbnail. The optional edit pack installs the command-line tools of six free, open-source desktop editors, the ArtCraft apps by [storytold](https://github.com/storytold) (MIT or Apache-2.0, at your option), so Claude Code or Codex can do that work too, headless, and hand the result to the same checks.
