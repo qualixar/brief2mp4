@@ -94,4 +94,4 @@ def test_templates_readme_lists_the_layout_and_the_markup_contract():
 
 def test_changelog_has_an_unreleased_film_mode_entry():
     text = (fc.REPO / "CHANGELOG.md").read_text(encoding="utf-8")
-    assert "## [Unreleased]" in text and "Film mode" in text.split("## [0.7.0]")[0]
+    assert "## [0.8.0]" in text and "Film mode" in text.split("## [0.7.0]")[0]
