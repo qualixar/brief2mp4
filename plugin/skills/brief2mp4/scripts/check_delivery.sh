@@ -94,8 +94,12 @@ black="$(ffmpeg -nostats -hide_banner -i "$FILE" -vf "blackdetect=d=0.5:pic_th=0
 # Seams and freezes: one-frame flicker, pops at joins, cut classification, true freezes (check_seams.py).
 # Its PASS / WARN / FAIL / INFO lines are printed as they are; a FAIL counts here too.
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PY="$(command -v python3 || command -v python || true)"
-if [[ -z "$PY" ]] || ! "$PY" -c "import sys; sys.exit(sys.version_info < (3, 8))" 2>/dev/null; then
+PY=""
+for cand in python3 python; do   # the first that really runs 3.8+ (on Windows python3 can be the Store stub)
+  c="$(command -v "$cand" 2>/dev/null)" || continue
+  if "$c" -c "import sys; sys.exit(sys.version_info < (3, 8))" 2>/dev/null; then PY="$c"; break; fi
+done
+if [[ -z "$PY" ]]; then
   skip "seam and freeze checks: Python 3.8+ not found, so flicker, joins and freezes were not measured (install it, then rerun)"
 else
   seam_args=("$FILE")

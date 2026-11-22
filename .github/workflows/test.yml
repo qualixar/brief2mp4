@@ -95,3 +95,23 @@ jobs:
 
       - name: Fast tests
         run: bash tests/run_tests.sh -rs
+
+  craft-tools:
+    # The craft checks with their optional tools installed (tesseract, librosa, PySceneDetect, Chrome), so OCR of real
+    # frames, beat analysis, scene cuts and the --dom layout route run in CI instead of skipping. Optional: it never blocks.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install ffmpeg, tesseract and the Python tools
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q ffmpeg tesseract-ocr
+          python -m pip install -q pytest librosa scenedetect opencv-python-headless
+      - name: Craft checks with every optional tool
+        run: bash tests/run_tests.sh -k craft -rs

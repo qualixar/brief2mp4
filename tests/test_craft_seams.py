@@ -245,12 +245,13 @@ def test_check_delivery_counts_a_seam_fail_as_its_own_fail(sound_clips):
 
 
 def fake_python(tmp_path, body):
-    """A python3 first on PATH that runs `body` (bash) and otherwise hands over to the real interpreter."""
+    """A python3 and python first on PATH that run `body` (bash) and otherwise hands over to the real interpreter."""
     d = tmp_path / "fakebin"
     d.mkdir()
-    exe = d / "python3"
-    exe.write_text(f"#!/usr/bin/env bash\n{body}\nexec '{sys.executable}' \"$@\"\n", encoding="utf-8", newline="\n")
-    exe.chmod(0o755)
+    for name in ("python3", "python"):          # check_delivery tries both
+        exe = d / name
+        exe.write_text(f"#!/usr/bin/env bash\n{body}\nexec '{sys.executable}' \"$@\"\n", encoding="utf-8", newline="\n")
+        exe.chmod(0o755)
     return {"PATH": f"{d}{os.pathsep}{os.environ['PATH']}"}
 
 
