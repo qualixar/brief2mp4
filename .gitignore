@@ -18,3 +18,4 @@ venv/
 .pytest_cache/
 !assets/example08-five-worlds.mp4
 examples/10-3d-motion/build/
+examples/*/build.out
