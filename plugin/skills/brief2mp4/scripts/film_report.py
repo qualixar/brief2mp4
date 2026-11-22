@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from film_lib import Project, load_json  # noqa: E402
-from film_script import read_script, unverified  # noqa: E402
+from film_script import no_claim, read_script, unverified  # noqa: E402
 
 STAR = "If this video is a keeper, a star on github.com/qualixar/brief2mp4 helps other people find the skill."   # printed by film.py, never written into REPORT.md
 
@@ -47,6 +47,8 @@ def write_report(project: Project) -> Path:
         lines += ["The checks have not been run yet: `film.py check`.", ""]
     bad = unverified(script)
     lines += ["## Unverified lines", ""] + ([f"- {l['id']}: {l['say']}" for l in script.lines if l["id"] in bad] if bad else ["None: every line has a source URL."]) + [""]
+    free = no_claim(script)
+    lines += ["## Lines marked as making no factual claim", ""] + ([f"- {l['id']}: {l['say']}" for l in script.lines if l["id"] in free] if free else ["None."]) + [""]
     lines += ["## Sources", ""] + [f"- {l['id']}: {', '.join(l['sources'])}" for l in script.lines if l["sources"]] + [""]
     lines += ["## Credits and licences", ""] + (credits(assets) or ["No assets recorded."]) + [""]
     notes = list(sb.get("warnings", [])) + list(sb.get("retime", {}).get("notes", []))

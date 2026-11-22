@@ -205,3 +205,18 @@ def test_caption_longer_than_two_lines_is_warned():
 
 def test_storyboard_is_plain_json():
     json.dumps(sb())
+
+
+@pytest.mark.parametrize("brief,seconds", [
+    ("a documentary about how the 1950s changed television", 180), ("the 50s and 60s in pictures", 180),
+    ("a 20-second explainer", 20), ("make it 3 minutes long", 180), ("about 90 s", 90), ("a 2.5 min film", 150), ("a 45 sec teaser", 45)])
+def test_lengths_are_read_but_decades_and_years_are_not(brief, seconds):
+    assert story.parse_brief(brief)["seconds"] == seconds
+
+
+@pytest.mark.parametrize("brief,voice", [
+    ("what people take away from the first recorded flight", "standin"), ("a recorded history of radio", "standin"),
+    ("use my voice for the narration", "take"), ("I will record it myself", "take"), ("my recording is take.wav", "take"),
+    ("narration from narration-final.m4a", "take"), ("my own take on the story", "take")])
+def test_the_users_recording_is_asked_for_only_when_the_brief_says_so(brief, voice):
+    assert story.parse_brief(brief)["voice"] == voice

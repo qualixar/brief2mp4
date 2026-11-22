@@ -23,6 +23,12 @@ STRUCTURE = [("Hook", 5.0, "The single most surprising fact or question, on scre
              ("Payoff", None, "The takeaway in one sentence, held still on screen at the end")]
 
 
+# A length: a number with a unit word, or a bare "s" only after a space ("20 s"), because "50s" and "1950s" are decades. "a documentary about how the 1950s changed television" has no length in it.
+LENGTH = r"(?<![\d.])(\d+(?:\.\d+)?)(?:\s*-?\s*(minutes?|mins?|seconds?|secs?)\b|\s+(s)\b)"
+# The user's own recording: said outright ("my voice", "my recording", "I will record"), or an audio file named in the brief.
+TAKE = r"\bmy (own )?(voice|recording|take)\b|\bi('ll| will)? record\b|\b[\w-]+\.(wav|m4a|mp3|flac)\b"
+
+
 def parse_brief(text: str) -> dict:
     keyed: dict[str, str] = {}
     prose = []
@@ -35,11 +41,11 @@ def parse_brief(text: str) -> dict:
     ask = " ".join(l.strip() for l in prose if l.strip() and not l.startswith("#"))
     heading = next((re.sub(r"^#+\s*", "", l).strip() for l in prose if l.startswith("#")), "")
     flat = (ask + " " + keyed.get("length", "") + " " + keyed.get("format", "")).lower()
-    m = re.search(r"(\d+(?:\.\d+)?)\s*-?\s*(minutes?|mins?|seconds?|secs?|s)\b", (keyed.get("length", "") or flat).lower()) or re.search(r"(\d+(?:\.\d+)?)\s*-?\s*(minutes?|mins?|seconds?|secs?|s)\b", flat)
-    seconds = int(round(float(m.group(1)) * (60 if m.group(2).startswith("min") else 1))) if m else 180
+    m = re.search(LENGTH, (keyed.get("length", "") or flat).lower()) or re.search(LENGTH, flat)
+    seconds = int(round(float(m.group(1)) * (60 if (m.group(2) or "").startswith("min") else 1))) if m else 180
     fmt = keyed.get("format") or next((name for name, rx in FORMATS if re.search(rx, flat)), "explainer")
     low = text.lower()
-    voice = keyed.get("voice") or ("take" if re.search(r"\bmy (own )?voice\b|\btake\b|\brecord(ed|ing)\b|\.wav\b", low) else "f5-tts" if re.search(r"generated voice|f5|synthetic voice|cloned voice", low) else "standin")
+    voice = keyed.get("voice") or ("take" if re.search(TAKE, low) else "f5-tts" if re.search(r"generated voice|f5|synthetic voice|cloned voice", low) else "standin")
     pace = float(re.search(r"\d+", keyed["pace"]).group(0)) if "pace" in keyed else (170.0 if re.search(r"\bshort\b|\breel\b|\btiktok\b", low) else 150.0)
     sentence = re.split(r"(?<=[.!?])\s+", ask)[0] if ask else ""
     return {"title": keyed.get("title") or heading or sentence[:80], "ask": ask, "audience": keyed.get("audience", ""), "takeaway": keyed.get("takeaway", ""),

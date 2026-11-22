@@ -87,3 +87,15 @@ def test_tokens_ignore_case_and_punctuation():
 def test_read_script_missing_file(tmp_path):
     with pytest.raises(FilmError, match="SCRIPT.md not found"):
         fs.read_script(tmp_path / "SCRIPT.md")
+
+
+@pytest.mark.parametrize("source,unverified", [("https://", True), ("https://x", True), ("http:// example.org", True), ("UNVERIFIED", True),
+                                               ("https://example.org/a", False), ("see https://en.wikipedia.org/wiki/X and https://example.org", False)])
+def test_a_source_needs_a_real_host(source, unverified):
+    line = fs.parse_script(f"## L01\nsay: A fact.\nsource: {source}\n").lines[0]
+    assert line["unverified"] is unverified
+
+
+def test_source_none_marks_a_line_with_no_claim_and_the_report_lists_it():
+    script = fs.parse_script("## L01\nsay: Then it failed.\nsource: none (no factual claim)\n\n## L02\nsay: A fact.\n")
+    assert fs.unverified(script) == ["L02"] and fs.no_claim(script) == ["L01"]

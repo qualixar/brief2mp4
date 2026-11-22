@@ -240,3 +240,11 @@ def test_a_failed_check_writes_the_report_and_names_the_first_fail_line(tmp_path
     assert film.main(["check", "--project", str(p.root)]) == 1
     out = capsys.readouterr().out
     assert "FAIL  clutter: all: FAIL  5 text blocks" in out and p.report.is_file()
+
+
+def test_report_lists_the_lines_marked_as_making_no_claim(tmp_path):
+    p = make_report_project(tmp_path)
+    p.script.write_text("## L01\nsay: Then it failed.\nsource: none (no factual claim)\n", encoding="utf-8")
+    text = rp.write_report(p).read_text(encoding="utf-8")
+    assert "- L01: Then it failed." in text.split("## Lines marked as making no factual claim")[1].split("## Sources")[0]
+    assert "None: every line has a source URL." in text
