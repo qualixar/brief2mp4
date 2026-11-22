@@ -46,7 +46,7 @@ brief2mp4 is a free, MIT-licensed agent skill. You paste a written brief (length
 
 <p align="center">⭐ <b>Free and MIT. If brief2mp4 makes a video you keep, <a href="https://github.com/qualixar/brief2mp4">star the repo</a></b>; it is how other Claude Code and Codex users find it. Made something? Post it in <a href="https://github.com/qualixar/brief2mp4/discussions/categories/show-and-tell">Show and tell</a>.</p>
 
-<p align="center"><b>New in 0.7.0:</b> <a href="#art-forms-ask-for-a-look-by-name">82 art forms</a> and LightCraft in the <a href="#the-edit-pack">edit pack</a>, six free editors in all. From 0.5.0: <a href="#characters-that-talk">characters that talk</a>.</p>
+<p align="center"><b>New in 0.8.0:</b> film mode, from one brief to a finished explainer or documentary; six tested <a href="#blender-motion-recipes">Blender motion recipes</a>; delivery checks that never pass what they did not measure. From 0.7.0: <a href="#art-forms-ask-for-a-look-by-name">82 art forms</a> and the <a href="#the-edit-pack">edit pack</a>.</p>
 
 ## Quick start
 
@@ -216,6 +216,8 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -With3D core,cad
 The brief does the asking. "Parts fall and settle" becomes a physics bake with a camera that frames the landing zone; "show what's inside" becomes an exploded view; "hero product" becomes a Blender render with a dramatic light rig. The full mapping, the shot JSON and the look rules are in [3d/README-3D.md](plugin/skills/brief2mp4/3d/README-3D.md).
 
 ### Blender motion recipes
+
+<p align="center"><img src="assets/3d-recipes-film.webp" width="800" alt="A 24-second film made only from the six recipes: cloth dropping over a ball, a hinged chain swinging from a post, paper folding into a stack, a jointed figure walking with planted feet, and a seamless loop of a ring around a shape."></p>
 
 Six Blender motion recipes, for motion that is slow to get right by hand: a seamless loop (the first frame equals the last), retiming between timeline markers, a cloth drop, a hinged or ball-jointed chain, folding with shape keys, and a walk forward with the feet planted. Each is a script you can change, each prints numbers that show it worked (how far a planted foot moved, whether a joint opened, whether the swing stayed in frame) with an `ok` verdict and warnings, and each has a test that checks them with a real Blender. They share one look: `--look studio` puts any recipe in a seamless studio with soft light and no horizon, `--orbit` moves the camera, and captions fade in as small lower thirds. [Example 10](examples/10-3d-motion/) is a 24-second film made with five of them, in one studio, cut to music: every frame of it comes from the recipes.
 

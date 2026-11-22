@@ -2,7 +2,7 @@
 
 All notable changes to brief2mp4. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
-## [0.8.0] - Unreleased
+## [0.8.0] - 2026-11-22
 
 ### Added
 - **3D pack upgrade.** Six tested Blender motion recipes in `3d/templates/recipes/` (`b2m3d recipe list` and `recipe run NAME`): a seamless loop (frame 1 equals the last frame, cyclic curves), retime between timeline markers (shape-preserving), cloth drop onto an object, rigid bodies with hinge or ball constraints (a chain or a pendulum), folding with shape keys, and a forward walk with planted feet and two-bone IK. Each reports measurements with an `ok` verdict and warnings, refuses settings that cannot work, and has a test that asserts its numbers with a real Blender (skipped when Blender is absent), with a control that must fail (a naive walk, a chain with its constraints deleted, a floor with no collider, a one-key fold). Their plain arithmetic is in `b2m_math.py`, which imports no Blender and is tested in CI on every system. `b2m3d recipe run` passes `--python-exit-code 1`, so a recipe error reaches the caller. If you installed the 3D pack before, run `install_3d.sh` again: the installed copy of the pack does not know `recipe` until then.
