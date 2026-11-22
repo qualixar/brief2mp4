@@ -103,7 +103,10 @@ def beat_html(beat: dict, index: int, total: int, ctx: dict) -> str:
     if counter:
         digits = len(f"{counter['to']:,.0f}") if float(counter["to"]).is_integer() else len(f"{counter['to']:,}")
         size = min(104, int(384 / (max(digits, 1) * 0.62)))                       # the biggest number must fit the 384 px column
-        parts.append(f'<div class="ledger"><span class="n" style="font-size:{size}px">{_num(counter["from"])}</span><span class="l">{esc(counter["label"])}</span></div>')
+        # one text block: the number and its label are inline lines of one paragraph, so the layout check reads them as one
+        # block (two blocks would overlap: the number's glyph box is taller than its line) and the beat keeps four blocks
+        parts.append(f'<p class="ledger"><span class="n" style="font-size:{size}px">{_num(counter["from"])}</span><br />'
+                     f'<span class="l">{esc(counter["label"])}</span></p>')
     credit = "" if ctx["burn"] else credit_text(ctx["assets"].get(beat.get("asset") or ""))
     if credit:
         parts.append(f'<p class="credit">{esc(credit)}</p>')
@@ -158,7 +161,8 @@ def build_project(project: Project, sb: dict, timings: dict, assets: dict, out_d
             shutil.copyfile(project.p(beat["asset"]), dest)
     page = (TEMPLATE / "index.html").read_text(encoding="utf-8")
     frames = round((t1 - t0) * fps)
-    page = page.replace('data-duration="0"', f'data-duration="{frames / fps - EPSILON:.4f}"', 1)
+    rate = f' data-fps="{int(fps)}"' if float(fps).is_integer() else ""     # a plain `npx hyperframes render` of this folder uses the film's rate
+    page = page.replace('data-duration="0"', f'data-duration="{frames / fps - EPSILON:.4f}"{rate}', 1)
     page = page.replace('<script src="film.js"></script>', "<script>\n" + (TEMPLATE / "film.js").read_text(encoding="utf-8").strip() + "\n    </script>")    # inline, so the timeline registration is on the page
     page = page.replace("<!--BEATS-->", "\n".join(markup)).replace("<!--SUBS-->", subs_html(cues or [], t0, t1) if burn else "")
     (out_dir / "index.html").write_text(page, encoding="utf-8", newline="\n")

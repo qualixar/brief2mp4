@@ -175,7 +175,7 @@ def test_24_fps_is_kept_by_every_stage_even_when_one_is_run_alone(tmp_path, offl
         assert job["frames"] == round(job["seconds"] * 24)
     assert sum(j["frames"] for j in build["projects"]) == round(sb["duration"] * 24)
     page = (root / build["projects"][0]["dir"] / "index.html").read_text(encoding="utf-8")
-    assert f'data-duration="{build["projects"][0]["frames"] / 24 - 0.001:.4f}"' in page
+    assert f'data-duration="{build["projects"][0]["frames"] / 24 - 0.001:.4f}" data-fps="24"' in page
 
 
 def test_missing_script_and_other_mistakes_give_one_fail_line(tmp_path, offline, capsys):
@@ -201,6 +201,35 @@ def test_list_and_help_work_without_a_project(capsys):
 
 
 # ---- the real render ---------------------------------------------------------------------------------------------------
+
+@pytest.mark.slow
+def test_the_template_passes_its_own_layout_check_with_a_small_counter_and_a_cc_by_credit(tmp_path):
+    """A 2-digit counter (the biggest number font) on a beat whose picture needs an on-screen CC BY credit: stamp, caption,
+    ledger and credit are the four blocks, and none may overlap. Builds with the real vendored GSAP, then reads the layout in Chrome."""
+    import check_clutter
+    if shutil.which("npx") is None or check_clutter.find_chrome() is None:
+        pytest.skip("needs npx (to vendor GSAP once) and Chrome")
+    script = SCRIPT.replace("count: 0 -> 1400000 | km of cable", "count: 0 -> 42 | cables in service")
+    root = project(tmp_path, script)
+    entry = {"file": "assets/archive/ship2.png", "kind": "archive", "source": "wikimedia-commons", "source_url": "https://commons.wikimedia.org/x",
+             "title": "Ship", "author": "Jane Roe", "licence": "CC BY 4.0", "licence_code": "by", "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+             "attribution": '"Ship" by Jane Roe, CC BY 4.0', "credit_required": True, "sha256": "", "retrieved": "2026-11-22"}
+    (root / "ASSETS.json").write_text(__import__("json").dumps({"version": 1, "assets": [entry]}), encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(fc.SCRIPTS / "film.py"), "run", "--project", str(root), "--voice", "standin", "--no-fetch", "--acts", "2",
+                           "--to", "build"], capture_output=True, text=True, encoding="utf-8")
+    if "vendoring GSAP and the fonts failed" in proc.stdout:
+        pytest.skip("npm and its cache are not available to vendor GSAP and the fonts once")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    sb, build = load_json(root / "STORYBOARD.json"), load_json(root / "BUILD.json")
+    assert next(a for a in load_json(root / "ASSETS.json")["assets"] if a["file"] == "assets/archive/ship2.png")["licence_code"] == "by"
+    page_text = "".join((root / j["dir"] / "index.html").read_text(encoding="utf-8") for j in build["projects"])
+    assert 'class="credit"' in page_text and "Jane Roe" in page_text and 'data-count-to="42"' in page_text
+    import film_check
+    for job in build["projects"]:
+        times = film_check.rest_times(sb, job["act"], job["start"])
+        out = fc.py_script("check_clutter.py", "--dom", root / job["dir"] / "index.html", "--at", ",".join(str(t) for t in times))
+        assert out.returncode == 0, out.stdout + out.stderr
+
 
 @pytest.mark.slow
 def test_a_24_fps_film_renders_at_24_with_the_picture_in_sync_with_the_plan(tmp_path):
