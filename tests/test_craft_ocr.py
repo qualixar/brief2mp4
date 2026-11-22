@@ -122,3 +122,24 @@ def test_a_capped_sweep_says_what_it_did_not_read(tmp_path):
     capped = bash_script("ocr_sweep.sh", clip, "--max-frames", "2", env=env)
     assert capped.returncode == 3 and "read only the first 2 s of 4 s" in capped.stdout, capped.stdout
     assert "PASS" not in capped.stdout
+
+
+# OCR often reads a thin slash as | I l 1 J or a backslash. A stand-in tesseract that "reads" such a misread path
+# proves the pattern itself, the same on every system and tesseract version; ordinary uses of "users" stay clean.
+def fake_tesseract(tmp_path, text):
+    stub = tmp_path / "fake-tesseract"
+    stub.write_text(f'#!/usr/bin/env bash\nprintf "%s\\n" {text!r} > "$2.txt"\n', newline="\n")
+    stub.chmod(0o755)
+    return stub
+
+
+@needs_ffmpeg
+@needs_bash
+@pytest.mark.parametrize("read,leak", [
+    ("J" + USERS[1:].upper() + "BOB", True), ("|USERS|BOB", True), ("IUSERS\\BOB", True),
+    (USERS.upper() + "BOB", True), ("10k users/month", False), ("our users love it", False), ("Allusers/x", False),
+])
+def test_a_home_path_is_found_even_when_ocr_misreads_the_slash(tmp_path, read, leak):
+    clip = still_video(tmp_path / "c.mp4", text_png(tmp_path / "c.png", ["HELLO"]), seconds=1)
+    proc = bash_script("ocr_sweep.sh", clip, env={"TESSERACT": str(fake_tesseract(tmp_path, read))})
+    assert proc.returncode == (1 if leak else 0), proc.stdout
