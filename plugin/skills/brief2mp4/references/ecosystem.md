@@ -113,6 +113,18 @@ brief2mp4 never bundles these. Each script prints the exact install command and 
 | [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (Georgi Gerganov and contributors) | 55.4k | MIT | `scripts/split_takes.py` (optional) | Word timings for cutting a take into lines, through `whisper-cli` and a model you download. Without it, pauses alone are used, or word timings from `npx hyperframes transcribe` |
 | [Demucs](https://github.com/adefossez/demucs) | 3.6k | MIT | optional, see `references/sound.md` | Splits a song into stems so cuts can follow the drums. The original Meta repository is archived; this is the maintained fork |
 
+## 3D tools the pack can call (optional, you install them)
+
+brief2mp4 never bundles these and never copies their code or weights. Each one is called through a small script or a documented recipe; `references/generators-3d.md` and `references/blender-live.md` say how, with the licence text quoted. Star counts and licences were read from GitHub on 22 Nov 2026. The notes are information, not a block.
+
+| Tool | Stars | Licence | Used by | Note |
+|---|---|---|---|---|
+| [blender-mcp / MCP for Blender](https://github.com/ahujasid/mcp-for-blender) (Siddharth Ahuja; the repository was renamed from `blender-mcp`) | 35.3k | MIT | the live Blender route, `references/blender-live.md` | Lets an agent drive a running Blender. Third party, not made by Blender. Runs any Python you send it with no password on its socket: localhost only, save first. Its paid hosted features and opt-in telemetry are not used here |
+| [Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) (Tencent) | 15.5k | Tencent Hunyuan 3D 2.0 Community License; **not valid in the European Union, United Kingdom and South Korea** | `scripts/gen3d.py run hunyuan3d` | Image to mesh, optional texture. The licence covers use of the tool and its output only inside its Territory, caps a product at 1 million monthly active users without a Tencent licence, and bars using it to improve another AI model. Credit: "Hunyuan3D-2 (Tencent)". Needs a CUDA GPU per its README |
+| [TRELLIS](https://github.com/microsoft/TRELLIS) (Microsoft) | 14.4k | MIT for code and models (the model cards say `license: mit`); the README says some submodules, `diffoctreerast` and a modified FlexiCubes, have other licences | `scripts/gen3d.py run trellis` | Image or text to mesh. Needs an NVIDIA GPU with 16 GB or more per its README. Credit: "TRELLIS (Microsoft)" |
+| [FLIP Fluids](https://github.com/rlguy/Blender-FLIP-Fluids) (Ryan L. Guy and Dennis Fassbaender) | 2.0k | Add-on code GPL, simulation engine MIT, some bundled content under a Standard Royalty Free licence | `3d/templates/recipes/b2m_flip_bake.py` | Liquids. Sold on [Superhive](https://superhivemarket.com/products/flipfluids) (formerly Blender Market); a free demo adds a watermark to the simulation meshes. brief2mp4 only runs Blender with it enabled |
+| [Blender](https://github.com/blender/blender) | 22.3k | GPL (external tool) | `references/blender.md`, the recipes | Run as a separate program, never bundled |
+
 ## Picking between the frameworks
 
 - **The brief is a motion graphic and an agent is building it:** HyperFrames. HTML and CSS are what language models write most reliably, the timeline is seekable by design, and lint plus snapshots catch mistakes before a render.
