@@ -51,8 +51,11 @@ def parse_args(defaults: dict, description: str, argv: list[str] | None = None) 
         argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     ap = argparse.ArgumentParser(description=description)
     for key, default in {**COMMON, **defaults}.items():
-        kind = _bool if isinstance(default, bool) else type(default)
-        ap.add_argument("--" + key.replace("_", "-"), dest=key, type=kind, default=default)
+        flag = "--" + key.replace("_", "-")
+        if isinstance(default, bool):          # --naive, or --naive 0
+            ap.add_argument(flag, dest=key, type=_bool, nargs="?", const=True, default=default)
+        else:
+            ap.add_argument(flag, dest=key, type=type(default), default=default)
     return vars(ap.parse_args(argv))
 
 
