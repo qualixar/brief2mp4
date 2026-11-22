@@ -178,3 +178,54 @@ def test_musicgen_missing_says_how_to_install_and_the_licence(tmp_path, monkeypa
     with pytest.raises(FilmError) as err:
         fas.musicgen(Project(tmp_path), "calm piano", 20)
     assert "pip install audiocraft" in str(err.value) and "CC BY-NC" in str(err.value)
+
+
+def test_running_the_stage_again_keeps_every_cc_by_credit(tmp_path, monkeypatch):
+    # run 1 downloads a CC BY picture for B03; run 2 (film.py assets again, or run --from assets) sees it as `asset:`
+    # and must keep its licence, author and credit, never relabel it "supplied by the user"
+    fake_network(monkeypatch)
+    p = project(tmp_path)
+    once = fas.run_assets(p, storyboard(), delay=0)
+    b3 = once["beats"][2]["asset"]
+    first = next(a for a in assets_by_kind(p, "archive") if a["file"] == b3)
+    assert first["licence_code"] in ("by", "cc0", "pdm")
+    twice = fas.run_assets(p, once, delay=0)
+    again = next(a for a in assets_by_kind(p, "archive") if a["file"] == b3)
+    assert {k: again[k] for k in ("licence", "licence_code", "author", "attribution", "credit_required", "source_url")} == \
+           {k: first[k] for k in ("licence", "licence_code", "author", "attribution", "credit_required", "source_url")}
+    fas.run_assets(p, twice, fetch=False, delay=0)                                                 # offline third run: same
+    assert next(a for a in assets_by_kind(p, "archive") if a["file"] == b3)["licence_code"] == first["licence_code"]
+
+
+def test_a_cc_by_credit_survives_a_rerun_even_when_the_file_was_moved(tmp_path, monkeypatch):
+    fake_network(monkeypatch)
+    p = project(tmp_path)
+    once = fas.run_assets(p, storyboard(), delay=0)
+    src = tmp_path / once["beats"][2]["asset"]
+    moved = tmp_path / "assets" / "archive" / "renamed.png"
+    src.rename(moved)
+    once["beats"][2]["asset"] = "assets/archive/renamed.png"
+    fas.run_assets(p, once, delay=0)
+    entry = next(a for a in assets_by_kind(p, "archive") if a["file"] == "assets/archive/renamed.png")
+    assert entry["licence_code"] != "user" and entry["author"] != "supplied by the user"
+
+
+def test_rerunning_does_not_repeat_warnings(tmp_path, monkeypatch):
+    fake_network(monkeypatch)
+    p = project(tmp_path)
+    once = fas.run_assets(p, storyboard(), fetch=False)
+    twice = fas.run_assets(p, once, fetch=False)
+    assert twice["warnings"] == once["warnings"] and len(twice["warnings"]) == len(set(twice["warnings"]))
+
+
+def test_giving_a_downloaded_cc_by_track_again_as_music_keeps_its_credit(tmp_path, monkeypatch):
+    fake_network(monkeypatch)
+    p = project(tmp_path)
+    (tmp_path / "assets" / "music").mkdir(parents=True)
+    track = fc.write_wav(tmp_path / "assets" / "music" / "bed.wav", [0.1] * 4800)
+    entry = {**fas._entry(p, track, "music"), "source": "openverse", "author": "A. Maker", "licence": "CC BY 4.0", "licence_code": "by",
+             "attribution": '"Bed" by A. Maker, CC BY 4.0', "credit_required": True}
+    p.assets.write_text(json.dumps({"version": 1, "assets": [entry]}), encoding="utf-8")
+    fas.run_assets(p, storyboard(), delay=0, music_file=track)
+    music = assets_by_kind(p, "music")
+    assert len(music) == 1 and music[0]["licence_code"] == "by" and music[0]["credit_required"] is True
