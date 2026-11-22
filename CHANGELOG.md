@@ -14,6 +14,13 @@ All notable changes to brief2mp4. The format follows [Keep a Changelog](https://
 - `scripts/mix.py`: voice, music ducked 15 dB under the voice with an exact envelope, effects pinned by their peak, -14 LUFS.
 - `templates/film/`: the archive desk documentary look for HyperFrames (dark editorial layout, slow push-ins at one velocity, typeset captions, map overlays, date stamps, a ledger counter).
 - Optional routes for F5-TTS (voice) and MusicGen (music), with their non-commercial model licence notes; credits for Natural Earth, Wikimedia Commons and whisper.cpp in `references/ecosystem.md`.
+- Craft checks: `scripts/check_seams.py` (one-frame flicker, pops at act joins, hard and soft cuts, true freezes; run by `check_delivery.sh`), `scripts/check_clutter.py` with `scripts/dom_boxes.js` (no card on card, 24 px between text, at most 4 text blocks, nothing clipped), `scripts/ocr_sweep.sh` (placeholder text and leaked paths in the finished frames), `scripts/beat_grid.py` and `scripts/cut_points.sh` (beats and scene cuts), and `scripts/fetch_music.py` (CC0 and CC BY audio from Openverse with ATTRIBUTION.md).
+- References: `motion-doctrine.md`, `render-traps.md`, `review-checklist.md` and `sound.md`.
+
+### Changed
+- A check that could not measure never passes. Decode errors, truncated files, a broken tesseract, a page with no timeline or an empty box file are FAILs; a missing optional tool is a SKIP with exit 3, and `check_delivery.sh` then ends `RESULT: INCOMPLETE` (exit 3) instead of `RESULT: PASS`.
+- `check_seams.py` reads frames at a constant rate, so times in variable-frame-rate recordings are real seconds.
+- `fetch_music.py` streams downloads under a size cap, downloads only from https:// links, and counts `--pick` from 1.
 
 ## [0.7.0] - 2026-11-22
 

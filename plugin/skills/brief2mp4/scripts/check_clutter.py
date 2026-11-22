@@ -14,8 +14,8 @@ Where the boxes come from:
   python3 check_clutter.py --boxes boxes.json
       a JSON file, written by hand or by any tool (a layout dump, a browser script). Format below.
   python3 check_clutter.py --dom index.html --at 1.5,4,7.2 [--frame 1920x1080]
-      loads the page in headless Chrome, seeks every timeline in window.__timelines to each time, and
-      collects the boxes with dom_boxes.js. Needs Chrome, Chromium or Edge (set CHROME_BIN to choose one).
+      loads the page in headless Chrome, waits for its fonts and its timelines, seeks every timeline in
+      window.__timelines to each time, and collects the boxes with dom_boxes.js. Needs Chrome, Chromium or Edge (set CHROME_BIN to choose one).
   python3 check_clutter.py --still frame.png --bg "#101114"
       pixels only: just rule 4, using bounds.py's ink measurement. Ink touching the outermost row or column fails.
 
@@ -25,7 +25,9 @@ Box file format. A list of samples, or {"frame": {"width": 1920, "height": 1080}
 kind is "text" or "card". x, y, w, h are in frame pixels, measured from the top-left. A bare list of boxes is one sample.
 
 Sample at rest, after the entrances: text sliding in from off screen is, for a moment, clipped on purpose.
-Prints one PASS / FAIL line per rule and exits 1 if any rule fails. Only the Python standard library is used.
+Prints one PASS / FAIL line per rule and exits 1 if any rule fails. A layout that was not measured is a FAIL, never a
+pass: an empty box file, a page with no timeline in window.__timelines, a seek that throws, or no text at any sample.
+Without Chrome, --dom prints SKIP and exits 3 (not measured). Only the Python standard library is used.
 """
 import argparse
 import html
@@ -139,6 +141,9 @@ RULES = (
 
 
 def report(samples, frame, opts):
+    if not samples:
+        print("FAIL  layout not measured: no samples (the box file is empty)")
+        return 1
     per_rule = {key: [] for key, _ in RULES}
     for s in samples:
         for key, msgs in check_sample(s, frame, opts).items():
@@ -179,6 +184,10 @@ def find_chrome():
     return None
 
 
+class Unmeasured(Exception):
+    """The layout could not be measured. Printed as a FAIL line: a check that did not measure never passes."""
+
+
 def collect_from_dom(html_path, times, frame):
     """Seek the page's timelines to each time in headless Chrome and read the boxes back. None if no Chrome."""
     chrome = find_chrome()
@@ -186,15 +195,24 @@ def collect_from_dom(html_path, times, frame):
         return None
     src = Path(html_path).resolve()
     collector = (HERE / "dom_boxes.js").read_text(encoding="utf-8")
-    runner = ("<script>" + collector + "\nwindow.addEventListener('load', function () {\n"
-              "  var out = [], tls = Object.values(window.__timelines || {});\n"
-              f"  [{','.join(str(t) for t in times)}].forEach(function (t) {{\n"
-              "    tls.forEach(function (tl) { tl.pause(); tl.seek(t, false); });\n"
-              "    out.push({ t: t, boxes: window.b2mCollectBoxes() });\n"
+    runner = ("<script>" + collector + "\n(function () {\n"
+              f"  var times = [{','.join(str(t) for t in times)}], tries = 0;\n"
+              "  function collect() {\n"
+              "    var tls = Object.values(window.__timelines || {}), out = { timelines: tls.length, errors: [], samples: [] };\n"
+              "    times.forEach(function (t) {\n"
+              "      try { tls.forEach(function (tl) { tl.pause(); tl.seek(t, false); }); } catch (e) { out.errors.push(t + 's: ' + e); }\n"
+              "      out.samples.push({ t: t, boxes: window.b2mCollectBoxes() });\n"
+              "    });\n"
+              "    var pre = document.createElement('pre'); pre.id = 'b2m-out'; pre.textContent = JSON.stringify(out);\n"
+              "    document.body.appendChild(pre);\n"
+              "  }\n"
+              "  function wait() {   // timelines are often registered after the fonts load: give them up to 3 s\n"
+              "    if (Object.keys(window.__timelines || {}).length || ++tries > 60) collect(); else setTimeout(wait, 50);\n"
+              "  }\n"
+              "  window.addEventListener('load', function () {\n"
+              "    (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(wait, 0); });\n"
               "  });\n"
-              "  var pre = document.createElement('pre'); pre.id = 'b2m-out'; pre.textContent = JSON.stringify(out);\n"
-              "  document.body.appendChild(pre);\n"
-              "});</script>")
+              "})();</script>")
     page = src.read_text(encoding="utf-8")
     base = f'<base href="{src.parent.as_uri()}/">'
     page = page.replace("<head>", "<head>" + base, 1) if "<head>" in page else base + page
@@ -209,9 +227,18 @@ def collect_from_dom(html_path, times, frame):
         proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=90)
     marker = '<pre id="b2m-out">'
     if marker not in proc.stdout:
-        raise SystemExit("check_clutter.py: the page produced no boxes (does it register window.__timelines, and did Chrome start?)")
+        raise Unmeasured("the page produced no boxes (did Chrome start, and does the page load without errors?)")
     raw = proc.stdout.split(marker, 1)[1].split("</pre>", 1)[0]
-    return json.loads(html.unescape(raw))
+    data = json.loads(html.unescape(raw))
+    if not data.get("timelines"):
+        raise Unmeasured("no timeline in window.__timelines, so the page could not be seeked to the sample times "
+                         "(register every GSAP timeline there, as HyperFrames compositions do)")
+    if data.get("errors"):
+        raise Unmeasured("seeking the timelines failed: " + "; ".join(data["errors"][:3]))
+    if not any(b.get("kind") == "text" for s in data["samples"] for b in s["boxes"]):
+        raise Unmeasured("no text was visible at any sample time: the times are outside the film, or the page did not draw")
+    return data["samples"]
+
 
 
 def check_still(png, bg, tol):
@@ -249,11 +276,19 @@ def main():
     if args.dom:
         if not args.at:
             ap.error("--dom needs --at")
-        samples = collect_from_dom(args.dom, [float(t) for t in args.at.split(",")], frame)
+        try:
+            at = [float(t) for t in args.at.split(",") if t.strip()]
+        except ValueError:
+            ap.error(f"--at must be comma-separated seconds, got '{args.at}'")
+        try:
+            samples = collect_from_dom(args.dom, at, frame)
+        except (Unmeasured, OSError, subprocess.SubprocessError, ValueError) as err:
+            print(f"FAIL  layout not measured: {err}")
+            return 1
         if samples is None:
-            print("SKIP  check_clutter --dom: no Chrome, Chromium or Edge found. Install Google Chrome, or set CHROME_BIN, "
-                  "or dump the boxes yourself and use --boxes (see dom_boxes.js)")
-            return 0
+            print("SKIP  check_clutter --dom: no Chrome, Chromium or Edge found, so the layout was not measured. Install Google "
+                  "Chrome, or set CHROME_BIN, or dump the boxes yourself and use --boxes (see dom_boxes.js)")
+            return 3
     else:
         samples, frame = load_boxes(args.boxes, frame)
     return report(samples, frame, opts)

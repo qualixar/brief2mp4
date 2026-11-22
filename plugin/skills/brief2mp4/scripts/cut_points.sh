@@ -6,7 +6,7 @@
 #   cut_points.sh recording.mp4 --detector adaptive   # better on footage with camera or screen movement
 #
 # Uses PySceneDetect (BSD-3-Clause), which you install yourself. Without it the script prints the install
-# command and exits 0 with a SKIP line, so a missing optional tool never fails a build:
+# command and a SKIP line and exits 3 (no cut list was made: never read as success, never a failure either):
 #   python3 -m pip install --user scenedetect opencv-python-headless
 #
 # Options
@@ -50,7 +50,7 @@ fi
 if [[ ${#SD[@]} -eq 0 ]]; then
   echo "SKIP  cut_points: PySceneDetect is not installed, so no cut list was made."
   echo "      Install it: python3 -m pip install --user scenedetect opencv-python-headless"
-  exit 0
+  exit 3
 fi
 
 WORK="$(mktemp -d)"

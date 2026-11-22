@@ -98,7 +98,7 @@ These teach an agent craft: shot recipes, launch structure, polish passes, promp
 
 ## Tools the checks and sound scripts call (optional, you install them)
 
-brief2mp4 never bundles these. Each script prints the exact install command and exits 0 with a SKIP line when its tool is missing, so a delivery never fails because an optional tool is absent. Star counts and licences were read from GitHub on 22 Nov 2026.
+brief2mp4 never bundles these. Each script prints the exact install command and a SKIP line, and exits 3, when its tool is missing: a delivery does not fail because an optional tool is absent, but a skipped check is never reported as a pass. Star counts and licences were read from GitHub on 22 Nov 2026.
 
 | Tool | Stars | Licence | Used by | Note |
 |---|---|---|---|---|

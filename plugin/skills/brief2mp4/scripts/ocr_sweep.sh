@@ -11,14 +11,16 @@
 # --extra adds your own pattern (an extended regular expression, case-insensitive): names, version
 # strings, anything that must never be on screen.
 #
-# Needs tesseract. Without it the script prints the install command and exits 0 with a SKIP line, so a
-# missing optional tool never fails a delivery:
+# Needs tesseract. Without it the script prints the install command and a SKIP line and exits 3 (not
+# measured: never read as a pass, and never a FAIL either):
 #   macOS: brew install tesseract    Debian/Ubuntu: sudo apt-get install tesseract-ocr
 #   Windows: winget install -e --id UB-Mannheim.TesseractOCR
 #
 # OCR misreads thin, wide-spaced display type, so a hit is a reason to LOOK at the frame (it is kept next
 # to the list with --keep DIR), not proof. A miss is not proof either: view the frames yourself.
-# Exit 1 when any pattern hits, 0 otherwise.
+# Exit 0 = every frame read and nothing found; 1 = a pattern hit, or the frames or the OCR could not be read
+# (a broken tesseract, a file ffmpeg cannot decode, no frames at all); 2 = bad arguments; 3 = SKIP or INCOMPLETE
+# (no tesseract, or --max-frames stopped the 1 fps sweep before the end of the video).
 set -uo pipefail
 
 FPS=1 EXTRA="" KEEP="" MAX_FRAMES=600 VIDEO="" SCAN_TEXT=""
@@ -67,18 +69,22 @@ if ! command -v "$TESS" >/dev/null 2>&1; then
   echo "SKIP  ocr_sweep: tesseract is not installed, so the final file was not read for placeholder text."
   echo "      Install it: macOS: brew install tesseract | Debian/Ubuntu: sudo apt-get install tesseract-ocr | Windows: winget install -e --id UB-Mannheim.TesseractOCR"
   echo "      Then rerun. Until then, look at the frames yourself (contact_sheet.sh)."
-  exit 0
+  exit 3
 fi
+[[ "$FPS" =~ ^[0-9]+([.][0-9]+)?$ && "$MAX_FRAMES" =~ ^[0-9]+$ ]] || { echo "ocr_sweep.sh: --fps and --max-frames must be numbers" >&2; exit 2; }
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 # One frame per second, then every scene change (a frame just after a cut shows the new scene's text).
-ffmpeg -nostats -v error -i "$VIDEO" -an -vf "fps=$FPS" -frames:v "$MAX_FRAMES" "$WORK/t_%05d.png"
+if ! ffmpeg -nostats -v error -i "$VIDEO" -an -vf "fps=$FPS" -frames:v "$MAX_FRAMES" "$WORK/t_%05d.png" 2> "$WORK/extract.log"; then
+  echo "FAIL  ocr_sweep: ffmpeg could not read frames from $VIDEO: $(tr '\n' ' ' < "$WORK/extract.log" | cut -c1-200)"
+  exit 1
+fi
 ffmpeg -nostats -v info -i "$VIDEO" -an -vf "select=gt(scene\,0.3),showinfo" -fps_mode vfr -frames:v 200 "$WORK/s_%05d.png" 2> "$WORK/scene.log" \
   || ffmpeg -nostats -v error -i "$VIDEO" -an -vf "select=gt(scene\,0.3)" -vsync vfr -frames:v 200 "$WORK/s_%05d.png"
 grep -o 'pts_time:[0-9.]*' "$WORK/scene.log" 2>/dev/null | cut -d: -f2 > "$WORK/scene_times.txt" || true
 
-COUNT=0
+COUNT=0 UNREAD=0 FIRST_ERR=""
 for img in "$WORK"/t_*.png "$WORK"/s_*.png; do
   [[ -f "$img" ]] || continue
   base="$(basename "$img" .png)"; n=$((10#${base#*_}))
@@ -87,17 +93,37 @@ for img in "$WORK"/t_*.png "$WORK"/s_*.png; do
   else
     label="$(sed -n "${n}p" "$WORK/scene_times.txt" | awk '{printf "%.1fs (scene change)", $1}')"
   fi
-  "$TESS" "$img" "$WORK/ocr" --psm 11 >/dev/null 2>&1 || true
   COUNT=$((COUNT + 1))
+  rm -f "$WORK/ocr.txt"
+  if ! "$TESS" "$img" "$WORK/ocr" --psm 11 >/dev/null 2> "$WORK/tess.log" || [[ ! -f "$WORK/ocr.txt" ]]; then
+    UNREAD=$((UNREAD + 1))
+    [[ -z "$FIRST_ERR" ]] && FIRST_ERR="$(tr '\n' ' ' < "$WORK/tess.log" | cut -c1-200)"
+    continue
+  fi
   before=$HITS
   scan_text "$label" "$WORK/ocr.txt"
   if [[ -n "$KEEP" && "$HITS" -gt "$before" ]]; then mkdir -p "$KEEP"; cp "$img" "$KEEP/$base.png"; fi
 done
 
+DUR="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$VIDEO" 2>/dev/null | head -1)"
+READ_S="$(awk -v n="$MAX_FRAMES" -v f="$FPS" 'BEGIN{printf "%.0f", n/f}')"
+CAPPED="$(awk -v d="${DUR:-0}" -v n="$MAX_FRAMES" -v f="$FPS" 'BEGIN{print (d*f > n+1)?1:0}')"
 echo "----"
-if [[ "$HITS" == 0 ]]; then
-  echo "PASS  no placeholder text or leaked paths in $COUNT frame(s) of $VIDEO"
-else
+if [[ "$HITS" != 0 ]]; then
   echo "FAIL  $HITS hit(s) in $COUNT frame(s) of $VIDEO: open each frame and confirm${KEEP:+ (kept in $KEEP)}"
   exit 1
 fi
+if [[ "$COUNT" == 0 ]]; then
+  echo "FAIL  ocr_sweep: no frames came out of $VIDEO, so nothing was read"
+  exit 1
+fi
+if [[ "$UNREAD" != 0 ]]; then
+  echo "FAIL  ocr_sweep: tesseract read nothing from $UNREAD of $COUNT frame(s) (is its language data installed? set TESSDATA_PREFIX): ${FIRST_ERR:-no output file}"
+  exit 1
+fi
+if [[ "$CAPPED" == 1 ]]; then
+  echo "WARN  ocr_sweep: read only the first ${READ_S} s of ${DUR%.*} s at $FPS fps (--max-frames $MAX_FRAMES); the rest was not read"
+  echo "INCOMPLETE  no placeholder text or leaked paths in the $COUNT frame(s) read; raise --max-frames to read the whole video"
+  exit 3
+fi
+echo "PASS  no placeholder text or leaked paths in $COUNT frame(s) of $VIDEO"

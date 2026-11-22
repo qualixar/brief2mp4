@@ -1,6 +1,7 @@
 """ocr_sweep.sh: placeholder and leak patterns (no OCR needed), then real frames through tesseract when it is installed."""
 from __future__ import annotations
 
+import os
 import shutil
 
 import pytest
@@ -49,11 +50,11 @@ def test_extra_pattern_is_applied_to_video_text_and_files(tmp_path):
 
 
 @needs_ffmpeg
-def test_without_tesseract_it_skips_with_the_install_command_and_exits_0(tmp_path):
+def test_without_tesseract_it_skips_with_the_install_command_and_exits_3(tmp_path):
     clip = still_video(tmp_path / "c.mp4", text_png(tmp_path / "c.png", ["HELLO"]), seconds=1)
     proc = bash_script("ocr_sweep.sh", clip, env={"TESSERACT": "definitely-not-installed"})
-    assert proc.returncode == 0, proc.stdout
-    assert proc.stdout.startswith("SKIP") and "brew install tesseract" in proc.stdout and "apt-get install tesseract-ocr" in proc.stdout
+    assert proc.returncode == 3, proc.stdout       # not measured: neither a pass nor a fail
+    assert proc.stdout.startswith("SKIP") and "PASS" not in proc.stdout and "brew install tesseract" in proc.stdout and "apt-get install tesseract-ocr" in proc.stdout
 
 
 @needs_ffmpeg
@@ -83,3 +84,41 @@ def test_text_that_appears_after_a_cut_is_found_by_the_scene_change_frame(tmp_pa
            "-filter_complex", "[0:v]gblur=sigma=8[a];[1:v]gblur=sigma=8,negate[b];[a][b]concat=n=2:v=1:a=0", *X264, clip)
     proc = bash_script("ocr_sweep.sh", clip)
     assert proc.returncode == 1 and "(scene change)" in proc.stdout and '"TODO"' in proc.stdout, proc.stdout
+
+
+# ---- it never passes what it did not read ------------------------------------------------------------------------
+
+def fake_tesseract(tmp_path, text=""):
+    """A stand-in OCR that 'reads' the same text from every frame (POSIX shells only)."""
+    exe = tmp_path / "fake-tesseract"
+    exe.write_text(f"#!/usr/bin/env bash\nprintf '%s' '{text}' > \"$2.txt\"\n", encoding="utf-8", newline="\n")
+    exe.chmod(0o755)
+    return str(exe)
+
+
+def test_a_file_ffmpeg_cannot_read_fails(tmp_path):
+    bad = tmp_path / "not.mp4"
+    bad.write_text("not a video", encoding="utf-8")
+    proc = bash_script("ocr_sweep.sh", bad, env={"TESSERACT": "true"})
+    assert proc.returncode == 1 and "FAIL  ocr_sweep: ffmpeg could not read frames" in proc.stdout, proc.stdout
+    assert "PASS" not in proc.stdout
+
+
+@needs_ffmpeg
+def test_a_broken_tesseract_fails_instead_of_passing_every_frame(tmp_path):
+    clip = still_video(tmp_path / "c.mp4", text_png(tmp_path / "c.png", ["HELLO"]), seconds=2)
+    proc = bash_script("ocr_sweep.sh", clip, env={"TESSERACT": "false"})     # runs, exits 1, writes nothing
+    assert proc.returncode == 1 and "tesseract read nothing from 2 of 2 frame(s)" in proc.stdout, proc.stdout
+    assert "PASS" not in proc.stdout
+
+
+@needs_ffmpeg
+@pytest.mark.skipif(os.name == "nt", reason="the stand-in OCR is a bash script")
+def test_a_capped_sweep_says_what_it_did_not_read(tmp_path):
+    clip = still_video(tmp_path / "c.mp4", text_png(tmp_path / "c.png", ["HELLO"]), seconds=4)
+    env = {"TESSERACT": fake_tesseract(tmp_path, "HELLO")}
+    whole = bash_script("ocr_sweep.sh", clip, env=env)
+    assert whole.returncode == 0 and "PASS  no placeholder text or leaked paths in 4 frame(s)" in whole.stdout, whole.stdout
+    capped = bash_script("ocr_sweep.sh", clip, "--max-frames", "2", env=env)
+    assert capped.returncode == 3 and "read only the first 2 s of 4 s" in capped.stdout, capped.stdout
+    assert "PASS" not in capped.stdout

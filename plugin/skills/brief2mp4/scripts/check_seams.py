@@ -26,14 +26,19 @@ What it measures, and why each rule is built the way it is:
     3 frames before and after. scdet alone calls a fast pan a cut and misses a cut made mid-pan.
   Freeze (WARN). A stretch is frozen only when every frame matches the previous one AND the last
     frame still matches the first of the stretch. The second test is what stops a slow pan or
-    push-in from being flagged: its frames differ from each other by a hair, but they drift.
+    push-in over a detailed picture from being flagged: its frames differ by a hair, but they drift.
+    Over a low-texture plate (flat grey, faint grid) a slow push-in can drift too little to see at 96x54.
 
-Prints one PASS / WARN / FAIL line per check (plus INFO lines). Exit 1 if anything FAILs.
+Prints one PASS / WARN / FAIL line per check (plus INFO lines). Exit 1 if anything FAILs. A check that could not
+measure never passes: a file ffprobe cannot read, a decode error, fewer frames decoded than the file says it holds,
+or fewer than 4 frames are each a FAIL line (exit 1). Frames are read at the file's average frame rate (constant
+frame rate), so the times of a variable-frame-rate recording line up with --joins.
 """
 import argparse
 import statistics
 import subprocess
 import sys
+import tempfile
 from collections import deque
 from operator import sub
 
@@ -69,32 +74,60 @@ def ssim(a, b):
     return total / blocks
 
 
-def probe_fps(path):
-    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
-                          "stream=avg_frame_rate", "-of", "default=nw=1:nk=1", path],
-                         capture_output=True, text=True).stdout.strip()
-    num, _, den = out.partition("/")
+class Unmeasured(Exception):
+    """The video could not be measured: reported as a FAIL line, never as a pass."""
+
+
+def probe(path):
+    """(fps as float, fps as ffmpeg's rational text, expected frame count or None) from ffprobe.
+
+    The expected count is the stream's duration times its average rate, which is what the constant-rate decode yields."""
+    proc = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                           "stream=avg_frame_rate,nb_frames,duration:format=duration", "-of", "default=nw=1", path],
+                          capture_output=True, text=True)
+    info = {}
+    for line in proc.stdout.splitlines():
+        key, _, val = line.partition("=")
+        info.setdefault(key.strip(), val.strip())     # the stream's duration comes before the container's
+    num, _, den = info.get("avg_frame_rate", "").partition("/")
     try:
-        return float(num) / float(den or 1)
+        fps = float(num) / float(den or 1)
     except (ValueError, ZeroDivisionError):
-        raise SystemExit(f"check_seams.py: cannot read the frame rate of {path}")
-
-
-def frames(path):
-    """Yield each frame as W*H grey bytes."""
-    cmd = ["ffmpeg", "-v", "error", "-i", path, "-an", "-vf", f"scale={W}:{H}:flags=area,format=gray",
-           "-f", "rawvideo", "-"]
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    size = W * H
+        fps = 0.0
+    if proc.returncode != 0 or fps <= 0:
+        raise Unmeasured(f"ffprobe cannot read the frame rate of {path}" + (f": {' '.join(proc.stderr.split())[:200]}" if proc.stderr.strip() else ""))
     try:
-        while True:
-            buf = proc.stdout.read(size)
-            if len(buf) < size:
-                break
-            yield buf
-    finally:
-        proc.stdout.close()
-        proc.wait()
+        expected = round(float(info.get("duration", "")) * fps)
+    except ValueError:
+        expected = int(info["nb_frames"]) if info.get("nb_frames", "").isdigit() else None
+    rate = info["avg_frame_rate"]
+    return fps, rate, expected
+
+
+class FrameReader:
+    """Iterate a video as W*H grey frames at a constant rate; afterwards .returncode and .errors say how decoding went."""
+
+    def __init__(self, path, rate):
+        self.path, self.rate, self.returncode, self.errors, self.count = path, rate, None, "", 0
+
+    def __iter__(self):
+        cmd = ["ffmpeg", "-v", "error", "-i", self.path, "-an", "-vf",
+               f"fps={self.rate},scale={W}:{H}:flags=area,format=gray", "-f", "rawvideo", "-"]
+        size = W * H
+        with tempfile.TemporaryFile() as err:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=err)
+            try:
+                while True:
+                    buf = proc.stdout.read(size)
+                    if len(buf) < size:
+                        break
+                    self.count += 1
+                    yield buf
+            finally:
+                proc.stdout.close()
+                self.returncode = proc.wait()
+                err.seek(0)
+                self.errors = err.read().decode("utf-8", "replace").strip()
 
 
 def scdet_events(path, fps):
@@ -114,13 +147,13 @@ def scdet_events(path, fps):
     return events
 
 
-def scan(path, joins, flicker_min):
+def scan(reader, joins, flicker_min):
     """One pass: per-frame differences, flicker spans, freeze spans (in frames) and the SSIM at each join frame."""
     diffs, flickers, join_ssim, freeze = [0.0], [], {}, FreezeTracker()
     ring = deque(maxlen=6)           # the last frames, newest at the right
     join_set = set(joins)
     count = 0
-    for idx, fr in enumerate(frames(path)):
+    for idx, fr in enumerate(reader):
         count = idx + 1
         if ring:
             diffs.append(mad(ring[-1], fr))
@@ -191,10 +224,32 @@ def stamp(idx, fps):
     return f"{idx / fps:.2f}s"
 
 
+def times(text):
+    """argparse type: comma-separated seconds, each a number >= 0."""
+    try:
+        vals = [float(t) for t in text.split(",") if t.strip()]
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{text}' is not a comma-separated list of seconds")
+    if any(v < 0 or v != v for v in vals):
+        raise argparse.ArgumentTypeError(f"'{text}' has a negative or invalid time")
+    return vals
+
+
+def decode_problems(reader, count, expected):
+    """FAIL messages when the decode did not read the whole video."""
+    found = []
+    if reader.returncode not in (0, None):
+        found.append(f"ffmpeg could not decode the video (exit {reader.returncode})"
+                     + (f": {reader.errors.splitlines()[-1][:200]}" if reader.errors else ""))
+    if expected is not None and abs(count - expected) > 1:
+        found.append(f"read {count} frame(s) but the file says it holds {expected}: the video is truncated or damaged"
+                     + (f" ({reader.errors.splitlines()[-1][:160]})" if reader.errors else ""))
+    if count < 4:
+        found.append(f"only {count} frame(s) could be read: nothing was measured")
+    return found
+
+
 def report(args, path):
-    fps = probe_fps(path)
-    joins = [round(float(t) * fps) for t in args.joins.split(",") if t.strip()] if args.joins else []
-    diffs, flickers, join_ssim, spans = scan(path, joins, args.flicker_min)
     results, fails = [], 0
 
     def out(level, text):
@@ -202,9 +257,27 @@ def report(args, path):
         fails += level == "FAIL"
         results.append(f"{level:<5} {text}")
 
-    if len(diffs) < 4:
-        out("WARN", "fewer than 4 frames, seam checks skipped")
-    planned = [float(t) * fps for t in args.flash_ok.split(",") if t.strip()] if args.flash_ok else []
+    try:
+        fps, rate, expected = probe(path)
+    except (Unmeasured, OSError) as err:
+        print(f"FAIL  seams not measured: {err}")
+        return 1
+    joins = [round(t * fps) for t in (args.joins or [])]
+    reader = FrameReader(path, rate)
+    try:
+        diffs, flickers, join_ssim, spans = scan(reader, joins, args.flicker_min)
+    except OSError as err:
+        print(f"FAIL  seams not measured: cannot run ffmpeg ({err})")
+        return 1
+    problems = decode_problems(reader, reader.count, expected)
+    for msg in problems:
+        out("FAIL", f"seams not measured: {msg}")
+    if problems:
+        print("\n".join(results))
+        return 1
+    if reader.errors:
+        out("WARN", f"the decoder reported errors but read every frame: {reader.errors.splitlines()[-1][:200]}")
+    planned = [t * fps for t in (args.flash_ok or [])]
     surprise = 0
     for idx, length, size in flickers:
         what = f"{length} odd frame(s), change {size:.1f}/255 each way, then the picture returns"
@@ -214,7 +287,7 @@ def report(args, path):
         surprise += 1
         out("FAIL" if args.strict else "WARN", f"flicker at {stamp(idx, fps)}: {what}"
             + ("" if args.strict else ". Intended (a flash, a flickering look)? List it with --flash-ok; if not, fix it"))
-    if not surprise and len(diffs) >= 4:
+    if not surprise:
         out("PASS", "no one-frame pop or flicker")
     for idx in joins:
         ratio = diffs[idx] / max(neighbours(diffs, idx), 0.05) if idx < len(diffs) else 0
@@ -245,7 +318,7 @@ def report(args, path):
             + ", ".join(f"{stamp(s, fps)} for {d:.1f}s" for s, d in freezes)
             + ". Expected where the brief asks for a hold (say so in REPORT.md), otherwise dead air")
     else:
-        out("PASS", f"nothing frozen over {args.freeze_seconds:g}s (slow pans and push-ins do not count)")
+        out("PASS", f"nothing frozen over {args.freeze_seconds:g}s (slow pans over a detailed picture do not count)")
     print("\n".join(results))
     return 1 if fails else 0
 
@@ -258,12 +331,12 @@ def scdet_available():
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("video")
-    ap.add_argument("--joins", help="comma-separated times (s) where separate segments were joined")
+    ap.add_argument("--joins", type=times, help="comma-separated times (s) where separate segments were joined")
     ap.add_argument("--join-ssim", type=float, default=0.99, help="lowest SSIM across a join that counts as a match (default 0.99)")
     ap.add_argument("--freeze-seconds", type=float, default=1.5, help="shortest frozen stretch to report (default 1.5)")
     ap.add_argument("--flicker-min", type=float, default=6.0,
                     help="smallest frame change (0-255 scale) that can be a flicker (default 6)")
-    ap.add_argument("--flash-ok", help="comma-separated times (s) of planned flashes; flicker within 2 frames of one is INFO")
+    ap.add_argument("--flash-ok", type=times, help="comma-separated times (s) of planned flashes; flicker within 2 frames of one is INFO")
     ap.add_argument("--strict", action="store_true", help="an unlisted flicker is a FAIL instead of a WARN")
     args = ap.parse_args()
     return report(args, args.video)

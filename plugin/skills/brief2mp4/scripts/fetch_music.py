@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """fetch_music.py: find and download free music or sound effects from Openverse, with an attribution file.
 
-Openverse (https://openverse.org, run by the WordPress Foundation) indexes openly licensed audio. Its API needs
+Openverse (https://openverse.org, a WordPress project) indexes openly licensed audio. Its API needs
 no key for light use. This script only accepts licences you can put in a video: CC0 and public domain (no
 credit needed) and CC BY (credit required: ATTRIBUTION.md is written for you, paste it into the video description).
 It never takes NonCommercial, NoDerivatives or ShareAlike tracks.
@@ -12,11 +12,13 @@ It never takes NonCommercial, NoDerivatives or ShareAlike tracks.
 
 Each download is checked to be real audio when ffprobe is available, and recorded in <out-dir>/ATTRIBUTION.md:
 title, creator, licence and its link, the source page, the Openverse text, and the date. Server errors (5xx),
-rate limits (429) and dropped connections are retried with a growing wait. Other errors fail at once.
+rate limits (429) and dropped connections are retried with a growing wait. Other errors fail at once. Downloads
+are streamed with a size cap (200 MB for audio, 25 MB for anything else) and only from https:// links.
 Listen before you use a track, and check the licence on its source page: Openverse reports what the host says.
 """
 import argparse
 import datetime
+import http.client
 import json
 import os
 import re
@@ -33,20 +35,45 @@ AGENT = "brief2mp4-fetch-music/1.0 (+https://github.com/qualixar/brief2mp4)"
 ALLOWED = ("cc0", "pdm", "by")          # the only licences accepted, however the API is asked
 PAGE_MAX = 20                            # the most results one anonymous request may ask for (more gets HTTP 401)
 RETRY_STATUS = (429, 500, 502, 503, 504)
+MAX_BYTES = 25 * 2 ** 20                 # the most any one request may download, unless the caller says otherwise
+AUDIO_MAX_BYTES = 200 * 2 ** 20          # an audio file: about 20 minutes of WAV, hours of MP3
+CHUNK = 1 << 16
 
 
 class FetchError(Exception):
     pass
 
 
-def http_get(url, retries, backoff, timeout=60, agent=None):
-    """GET a URL and return (body bytes, content type). Retries 429/5xx and network errors. `agent` overrides the User-Agent."""
+def read_capped(resp, max_bytes, url):
+    """Read a response in chunks; stop at max_bytes. Raises ConnectionError when the body is shorter than announced."""
+    length = resp.headers.get("Content-Length")
+    host = urllib.parse.urlsplit(url).netloc
+    if length and length.isdigit() and int(length) > max_bytes:
+        raise FetchError(f"{host} offers {int(length) / 2 ** 20:.0f} MB, more than the {max_bytes / 2 ** 20:.0f} MB cap: nothing was kept")
+    parts, total = [], 0
+    while True:
+        chunk = resp.read(CHUNK)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise FetchError(f"the download from {host} passed the {max_bytes / 2 ** 20:.0f} MB cap: nothing was kept")
+        parts.append(chunk)
+    if length and length.isdigit() and total < int(length):
+        raise ConnectionError(f"the transfer stopped after {total} of {length} bytes")
+    return b"".join(parts)
+
+
+def http_get(url, retries, backoff, timeout=60, agent=None, max_bytes=MAX_BYTES):
+    """GET a URL and return (body bytes, content type). Retries 429/5xx and network errors. `agent` overrides the User-Agent.
+
+    The body is read in chunks and the request fails (without retrying) once it passes max_bytes."""
     last = ""
     for attempt in range(retries + 1):
         req = urllib.request.Request(url, headers={"User-Agent": agent or AGENT, "Accept": "*/*"})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.read(), resp.headers.get("Content-Type", "")
+                return read_capped(resp, max_bytes, url), resp.headers.get("Content-Type", "")
         except urllib.error.HTTPError as err:
             last = f"HTTP {err.code} from {urllib.parse.urlsplit(url).netloc}"
             if err.code not in RETRY_STATUS:
@@ -55,12 +82,21 @@ def http_get(url, retries, backoff, timeout=60, agent=None):
             retry_after = err.headers.get("Retry-After") if err.headers else None
             if retry_after and retry_after.isdigit():
                 wait = max(wait, min(int(retry_after), 60))
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
-            last = f"network error: {getattr(err, 'reason', err)}"
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException, OSError) as err:
+            last = f"network error: {getattr(err, 'reason', None) or err!r}"
             wait = backoff * (2 ** attempt)
         if attempt < retries:
             time.sleep(wait)
     raise FetchError(f"{last} (gave up after {retries + 1} tries)")
+
+
+def safe_url(url):
+    """Only https:// downloads (plain http only from this machine, for a local test server)."""
+    parts = urllib.parse.urlsplit(url or "")
+    local = parts.scheme == "http" and parts.hostname in ("127.0.0.1", "localhost", "::1")
+    if parts.scheme != "https" and not local or not parts.hostname:
+        raise FetchError(f"refusing to download from '{(url or '')[:80]}': only https:// links are used")
+    return url
 
 
 def api_json(path, params, retries, backoff):
@@ -139,7 +175,7 @@ def record(out_dir, item, filename):
 
 
 def download(item, out_dir, args):
-    body, ctype = http_get(item["url"], args.retries, args.backoff, timeout=120)
+    body, ctype = http_get(safe_url(item["url"]), args.retries, args.backoff, timeout=120, max_bytes=AUDIO_MAX_BYTES)
     if len(body) < 1024:
         raise FetchError(f"the download is only {len(body)} bytes: not an audio file")
     os.makedirs(out_dir, exist_ok=True)
@@ -171,6 +207,8 @@ def cmd_download(args):
         if not args.query:
             raise FetchError("give a search query or --id")
         items = search(args.query, args)
+        if args.pick < 1:
+            raise FetchError(f"--pick counts from 1, got {args.pick}")
         if not items or args.pick > len(items):
             raise FetchError(f"no result number {args.pick} for that search")
         item = items[args.pick - 1]
