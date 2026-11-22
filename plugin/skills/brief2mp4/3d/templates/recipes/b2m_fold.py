@@ -104,7 +104,7 @@ def build(params=None, clear=True):
         raise ValueError("folds must be at least 1 and fold_steps at least 2")
     coll = c.begin("fold", clear)
     scene = bpy.context.scene
-    objs = c.stage(scene, coll, p, target=(0, 0, 0.35), cam=(0.0, -4.0, 2.4), lens=45)
+    objs = c.stage(scene, coll, p, target=(-0.2, 0, -0.15), cam=(-0.2, -4.4, 2.6), lens=45)   # aimed low, so the sheet sits above the caption
     verts, faces = _grid(p)
     sheet = c.mesh_object(coll, "b2m_sheet", verts, faces, (0, 0, float(p["layer_gap"])))
     for poly in sheet.data.polygons:

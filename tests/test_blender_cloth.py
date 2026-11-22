@@ -30,3 +30,16 @@ def test_the_cloth_rests_on_the_object_and_drapes_over_the_sides(drop):
 def test_a_cloth_without_the_collision_object_falls_to_the_floor():
     free = run_recipe("cloth", "--frames", "60", "--cloth-res", "20", "--object", "none")
     assert free["final_max_z"] < 0.15                                 # no object: it lies on the floor
+
+
+def test_a_delayed_sheet_hangs_still_until_released_and_still_lands():
+    late = run_recipe("cloth", "--frames", "70", "--cloth-res", "20", "--delay", "20")
+    assert late["moved_before_release"] < 1e-6
+    assert late["final_max_z"] < late["start_mean_z"] - 0.3
+
+
+def test_the_render_only_smoothing_does_not_change_the_simulation():
+    plain = run_recipe("cloth", "--frames", "40", "--cloth-res", "20")
+    smooth = run_recipe("cloth", "--frames", "40", "--cloth-res", "20", "--smooth-levels", "1")
+    assert smooth["centre_z"] == pytest.approx(plain["centre_z"], abs=1e-6)
+    assert smooth["vertices"] == plain["vertices"] == 441

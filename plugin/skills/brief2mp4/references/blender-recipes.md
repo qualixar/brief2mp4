@@ -70,7 +70,7 @@ Use it to fit picture to a measured voice: place a marker on each word or beat i
 
 A 2.4 m grid with a Cloth modifier falls 1.6 m onto a sphere or box standing on the floor. The floor and the object carry Collision modifiers. The simulation is stepped once from frame 1 in order, then frames render in any order.
 
-Knobs: `--object sphere|box|none`, `--object-size`, `--cloth-size`, `--cloth-res` (20 is quick, 32 looks good), `--drop-height`, `--mass`, `--bend` (low drapes into folds, high holds its shape), `--quality`, `--self-collision`, `--smooth-levels 1` for a smoother render.
+Knobs: `--object sphere|box|none`, `--object-size`, `--cloth-size`, `--cloth-res` (20 is quick, 32 looks good), `--drop-height`, `--delay` (frames the sheet hangs still before release, so the eye sees it before it falls), `--mass`, `--bend` (low drapes into folds, high holds its shape), `--quality`, `--self-collision`, `--smooth-levels 1` for a smoother render (the subdivision is render-only: switching a modifier on and off while stepping resets the cloth cache, so the numbers are read from the simulated grid).
 
 Reads: `start_mean_z`, `final_min_z` (must stay above `floor_z`), `final_max_z`, `centre_z` against `object_top_z`, `edge_mean_z` (lower than the centre when it draped), `motion_last_10_frames` (near zero when settled), `nan_vertices`. The tests assert it fell, never went through the floor, rests on the object, hangs lower at the edges, and with `--object none` lies on the floor.
 

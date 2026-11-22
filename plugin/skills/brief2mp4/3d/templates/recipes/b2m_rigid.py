@@ -76,7 +76,7 @@ def build(params=None, clear=True):
     scene.frame_start, scene.frame_end = 1, int(p["frames"])
     n, length, width = int(p["links"]), float(p["link_length"]), float(p["link_width"])
     top = float(p["anchor_height"])
-    objs = c.stage(scene, coll, p, target=(0.2, 0, top - n * length / 2), cam=(0.0, -2.0 - 1.1 * n * length - 3, top * 0.7), lens=50)
+    objs = c.stage(scene, coll, p, target=(0.2, 0, top * 0.5), cam=(0.2, -(top * 1.9 + 2.5), top * 0.55), lens=40)   # the whole drop in frame
     if scene.rigidbody_world is None:
         bpy.ops.rigidbody.world_add()
     world = scene.rigidbody_world

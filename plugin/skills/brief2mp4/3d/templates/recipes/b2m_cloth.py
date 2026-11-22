@@ -23,11 +23,12 @@ DEFAULTS = {
     "cloth_size": 2.4,        # square sheet, side in metres
     "cloth_res": 32,          # quads per side; 20 is quick, 32 looks good
     "drop_height": 1.6,       # height of the sheet at frame 1
+    "delay": 0,               # frames the sheet hangs still before it is released
     "mass": 0.3,              # kilograms for the sheet; lower is lighter and floatier
     "bend": 0.6,              # bending stiffness: low drapes into folds, high holds shape
     "quality": 6,             # solver steps per frame
     "self_collision": False,  # folds that rest on themselves; slower
-    "smooth_levels": 0,       # Subdivision after the cloth, for the render (0 for tests)
+    "smooth_levels": 0,       # Subdivision after the cloth, in the render only (the numbers are read from the sim)
 }
 
 
@@ -71,10 +72,10 @@ def _sheet(coll, p):
     s.shear_stiffness, s.air_damping = 5.0, 1.0
     col.use_collision, col.distance_min, col.collision_quality = True, 0.015, 4
     col.use_self_collision = bool(p["self_collision"])
-    mod.point_cache.frame_start, mod.point_cache.frame_end = 1, int(p["frames"])
+    mod.point_cache.frame_start, mod.point_cache.frame_end = 1 + int(p["delay"]), int(p["frames"])
     if int(p["smooth_levels"]) > 0:
-        sub = sheet.modifiers.new("Smooth", "SUBSURF")
-        sub.levels = sub.render_levels = int(p["smooth_levels"])
+        sub = sheet.modifiers.new("Smooth", "SUBSURF")      # render only: toggling it while stepping would reset the cloth cache
+        sub.show_viewport, sub.show_render, sub.render_levels = False, True, int(p["smooth_levels"])
     return sheet
 
 
@@ -83,7 +84,7 @@ def build(params=None, clear=True):
     coll = c.begin("cloth", clear)
     scene = bpy.context.scene
     scene.frame_start, scene.frame_end = 1, int(p["frames"])
-    objs = c.stage(scene, coll, p, target=(0, 0, 0.7), cam=(0.0, -6.2, 2.4), lens=45)
+    objs = c.stage(scene, coll, p, target=(0, 0, 0.45), cam=(0.0, -6.2, 2.4), lens=45)
     if objs["floor"] is not None:
         _collider(objs["floor"])
     pedestal, top = _target(coll, p)
@@ -91,21 +92,15 @@ def build(params=None, clear=True):
         _collider(pedestal)
     sheet = _sheet(coll, p)
     c.caption(scene, coll, p["caption"], p, objs["camera"])
-    return {"p": p, "sheet": sheet, "scene": scene, "top": top, "n": int(p["cloth_res"])}
+    return {"p": p, "sheet": sheet, "scene": scene, "top": top, "n": int(p["cloth_res"]), "delay": int(p["delay"])}
 
 
 def _positions(sheet):
-    """Evaluated vertex positions (cloth only: any Subdivision after it is switched off while reading)."""
-    subs = [m for m in sheet.modifiers if m.type == "SUBSURF"]
-    flags = [m.show_viewport for m in subs]
-    for m in subs:
-        m.show_viewport = False
+    """Evaluated vertex positions of the simulated sheet (the smoothing modifier is render-only, so it is not in them)."""
     ev = sheet.evaluated_get(bpy.context.evaluated_depsgraph_get())
     mesh = ev.to_mesh()
     pts = [tuple(v.co) for v in mesh.vertices]
     ev.to_mesh_clear()
-    for m, f in zip(subs, flags):
-        m.show_viewport = f
     return pts
 
 
@@ -114,9 +109,11 @@ def measure(state):
     end = scene.frame_end
     scene.frame_set(1)
     start = _positions(sheet)
-    last_ten = None
+    last_ten, before = None, None
     for f in range(2, end + 1):
         scene.frame_set(f)
+        if f == state["delay"] + 1 and state["delay"] > 0:
+            before = _positions(sheet)                    # the frame the sheet is released: still where it started
         if f == end - 10:
             last_ten = _positions(sheet)
     final = _positions(sheet)
@@ -127,7 +124,8 @@ def measure(state):
     moved = [math.dist(a, b) for a, b in zip(final, last_ten or final)]
     return {"start_mean_z": sum(q[2] for q in start) / len(start), "final_min_z": min(zs), "final_max_z": max(zs),
             "floor_z": 0.0, "object_top_z": state["top"], "centre_z": centre[2], "edge_mean_z": sum(edge) / len(edge),
-            "motion_last_10_frames": sum(moved) / len(moved), "nan_vertices": nan, "vertices": len(final)}
+            "motion_last_10_frames": sum(moved) / len(moved), "nan_vertices": nan, "vertices": len(final),
+            "moved_before_release": max((math.dist(a, b) for a, b in zip(start, before)), default=0.0) if before else 0.0}
 
 
 if __name__ == "__main__":
