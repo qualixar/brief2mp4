@@ -144,9 +144,12 @@ Each recipe has a test that runs it in a real Blender and checks its numbers, wi
 Every render that ships runs headless: a script builds the scene, renders frames and exits, so it repeats on any machine. A Blender window that is already open can also be driven live through [blender-mcp](https://github.com/ahujasid/mcp-for-blender) (MIT, by Siddharth Ahuja; you install it yourself). Use the window to decide: where things stand, what the camera sees, whether the light works, the scale of an imported model. Then write the numbers down and render the same recipe headless.
 
 ```bash
-claude mcp add blender -e DISABLE_TELEMETRY=true -- uvx mcp-for-blender       # Claude Code
-codex mcp add blender --env DISABLE_TELEMETRY=true -- uvx mcp-for-blender     # Codex
-uvx mcp-for-blender install-addon                                             # then enable the add-on in Blender
+# Claude Code
+claude mcp add blender -e DISABLE_TELEMETRY=true -- uvx mcp-for-blender
+# Codex
+codex mcp add blender --env DISABLE_TELEMETRY=true -- uvx mcp-for-blender
+# the Blender add-on; then enable it in Blender's preferences
+uvx mcp-for-blender install-addon
 ```
 
 Three things to know before you connect it. The server can run any Python the agent sends, so save the `.blend` first. Its socket has no password, so keep it on localhost, and untick the add-on's auto-start when you are not using it. It sends a small anonymous usage record by default; `DISABLE_TELEMETRY=true`, as in the lines above, turns that off. A recipe can run inside the open scene without taking it over (`stage: False` keeps your floor, lights and camera). The install steps, the safety settings and how to send a recipe are in [references/blender-live.md](../plugin/skills/brief2mp4/references/blender-live.md).

@@ -123,7 +123,8 @@ python3 $SKILL/scripts/film.py --list                                  # the sta
 python3 $SKILL/scripts/film.py run --project my-film                   # all of them
 python3 $SKILL/scripts/film.py run --project my-film --from retime     # from one stage on
 python3 $SKILL/scripts/film.py run --project my-film --skip assets,render
-python3 $SKILL/scripts/film.py voice --project my-film --voice take --take take.wav   # one stage alone
+# one stage alone
+python3 $SKILL/scripts/film.py voice --project my-film --voice take --take take.wav
 ```
 
 ## Pictures, maps and sound, with licences you can publish
@@ -137,8 +138,11 @@ Each piece works on its own too:
 
 ```bash
 python3 $SKILL/scripts/fetch_archive.py search "submarine cable ship" --kind photo
-python3 $SKILL/scripts/fetch_archive.py download "submarine cable ship" --pick 1 --out-dir assets/archive --assets ASSETS.json
-python3 $SKILL/scripts/make_map.py --region Egypt --point "Alexandria=31.20,29.92" --point "Aswan=24.09,32.90" --route "Alexandria>Aswan" --out assets/maps/egypt.svg
+python3 $SKILL/scripts/fetch_archive.py download "submarine cable ship" --pick 1 \
+  --out-dir assets/archive --assets ASSETS.json
+python3 $SKILL/scripts/make_map.py --region Egypt \
+  --point "Alexandria=31.20,29.92" --point "Aswan=24.09,32.90" \
+  --route "Alexandria>Aswan" --out assets/maps/egypt.svg
 python3 $SKILL/scripts/sfx_synth.py all --out-dir assets/sfx --seed 7
 ```
 

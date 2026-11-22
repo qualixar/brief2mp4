@@ -48,9 +48,11 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithEdit film,sound
 Or the pack's own installer, from the skill folder (`plugin/skills/brief2mp4` in a clone), which also has a dry run:
 
 ```bash
-bash edit/install_edit.sh --components all --dry-run      # print every download and its size, change nothing
+# print every download and its size, change nothing
+bash edit/install_edit.sh --components all --dry-run
 bash edit/install_edit.sh --components film,sound,effect,photo,vector,light
-bash scripts/detect_edit.sh                               # edit: ready (film,sound,...) or edit: not installed
+# prints "edit: ready (film,sound,...)" or "edit: not installed"
+bash scripts/detect_edit.sh
 ```
 
 It needs `curl` and Node.js (already required by brief2mp4), plus `unzip` or `bsdtar` on macOS. Nothing uses sudo or admin rights, and nothing changes your system PATH. Everything goes into `~/.brief2mp4/edit` (Windows `%USERPROFILE%\.brief2mp4\edit`; set `B2M_EDIT_HOME` for another folder), and the installed pack never reads from the clone or the plugin cache.
@@ -112,9 +114,11 @@ Ask the pinned CLI before using a command: `filmcraft-cli commands`, `soundcraft
 ## Uninstall
 
 ```bash
-bash install.sh --uninstall --uninstall-edit                # brief2mp4 and the edit pack (from the repository root)
-bash edit/install_edit.sh --uninstall                       # the edit pack only (from the skill folder)
-bash edit/install_edit.sh --uninstall --components photo    # one app
+# brief2mp4 and the edit pack, from the repository root
+bash install.sh --uninstall --uninstall-edit
+# the edit pack only, or one app, from the skill folder
+bash edit/install_edit.sh --uninstall
+bash edit/install_edit.sh --uninstall --components photo
 ```
 
 Only the paths the installer recorded in its manifest are removed. Anything else you put in that folder stays.

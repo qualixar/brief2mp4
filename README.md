@@ -186,7 +186,8 @@ One brief in a project folder; a finished narrated explainer or short documentar
 Why you would want it: archive pictures come only as public domain, CC0 or CC BY, with the credit written for you; maps of any country or region are drawn offline from Natural Earth; sound effects are made in code, so there is nothing to license; and your voice is never time-stretched, because the picture is re-timed to it.
 
 ```bash
-python3 plugin/skills/brief2mp4/scripts/film.py run --project my-film     # every stage, from BRIEF.md to REPORT.md
+# every stage, from BRIEF.md to final.mp4 and REPORT.md
+python3 plugin/skills/brief2mp4/scripts/film.py run --project my-film
 ```
 
 Read next: the [film mode guide](docs/film-mode.md), with a run you can try in a minute.
@@ -198,7 +199,8 @@ A brief that says "two characters talk, walk or argue" gets characters that hold
 Why you would want it: a story or skit in any of those looks without a separate animation tool, and the same scene file renders in every skin by changing one flag.
 
 ```bash
-python3 plugin/skills/brief2mp4/scripts/character_project.py --scene scene.json --skin cel-shaded --out project/
+python3 plugin/skills/brief2mp4/scripts/character_project.py \
+  --scene scene.json --skin cel-shaded --out project/
 ```
 
 Read next: the [character kit](plugin/skills/brief2mp4/characters/README-CHARACTERS.md) and [example 09](examples/09-story-characters/).
@@ -210,8 +212,10 @@ An optional layer for 3D product shots and Blender animation. It turns a CAD or 
 Why you would want it: "parts fall and settle", "show what's inside" and "a cloth drops over it" become real physics and real Blender animation instead of hand-keyed guesses. Without the pack, 3D beats use the Three.js template and the report says so.
 
 ```bash
-bash install.sh --with-3d                     # Windows: install.ps1 -With3D core; add CadQuery with --with-3d=core,cad
-~/.brief2mp4/3d/venv/bin/brief2mp4-3d recipe run cloth -- --object sphere --frames 90 --out frames
+# Windows: install.ps1 -With3D core. Add CadQuery parts with --with-3d=core,cad
+bash install.sh --with-3d
+~/.brief2mp4/3d/venv/bin/brief2mp4-3d recipe run cloth -- \
+  --object sphere --frames 90 --out frames
 ```
 
 A running Blender can also be driven live through [blender-mcp](https://github.com/ahujasid/mcp-for-blender) (MIT) to decide a look by eye; renders stay headless so they repeat. Optional generators you install yourself make a prop from a picture or a prompt: [Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) (its licence excludes the EU, UK and South Korea) and [TRELLIS](https://github.com/microsoft/TRELLIS) (its code is MIT, but its GLB export runs non-commercial components, so the wrapper needs `--non-commercial`).
@@ -229,7 +233,8 @@ Why you would want it: Claude Code or Codex can then cut and mix real footage he
 </p>
 
 ```bash
-bash install.sh --with-edit                   # FilmCraft + SoundCraft; all six: --with-edit=film,sound,effect,photo,vector,light
+# FilmCraft + SoundCraft. All six: --with-edit=film,sound,effect,photo,vector,light
+bash install.sh --with-edit
 ```
 
 Read next: the [edit pack guide](docs/edit-pack.md): the six apps and their pinned versions, download sizes, how verification works, and the tested recipes.
@@ -255,7 +260,8 @@ Say "claymation", "paper cut-out", "anime", "like a blueprint" or "shadow puppet
 Three rules carry all of them: the picture is a function of time; handmade looks hold their drawings at 8 to 12 changes a second while the video stays at 24 or 30; and every wobble, flicker and misregistration is seeded by the drawing number, so two renders of the same frame match. The demos are starting points for a scene, not finished films.
 
 ```bash
-python3 plugin/skills/brief2mp4/scripts/art_route.py BRIEF.md     # proposes a form from your brief and says why
+# proposes an art form from your brief and says why
+python3 plugin/skills/brief2mp4/scripts/art_route.py BRIEF.md
 ```
 
 Read next: the [art forms index](plugin/skills/brief2mp4/references/art-forms.md) and the [art forms guide](docs/art-forms-guide/brief2mp4-art-forms.pdf) (PDF, 87 pages, one picture per form; its source is in [docs/art-forms-guide/](docs/art-forms-guide/README.md)).
