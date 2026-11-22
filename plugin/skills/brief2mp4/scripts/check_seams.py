@@ -26,7 +26,8 @@ What it measures, and why each rule is built the way it is:
     3 frames before and after. scdet alone calls a fast pan a cut and misses a cut made mid-pan.
   Freeze (WARN). A stretch is frozen only when every frame matches the previous one AND the last
     frame still matches the first of the stretch. The second test is what stops a slow pan or
-    push-in from being flagged: its frames differ from each other by a hair, but they drift.
+    push-in over a detailed picture from being flagged: its frames differ by a hair, but they drift.
+    Over a low-texture plate (flat grey, faint grid) a slow push-in can drift too little to see at 96x54.
 
 Prints one PASS / WARN / FAIL line per check (plus INFO lines). Exit 1 if anything FAILs. A check that could not
 measure never passes: a file ffprobe cannot read, a decode error, fewer frames decoded than the file says it holds,
@@ -317,7 +318,7 @@ def report(args, path):
             + ", ".join(f"{stamp(s, fps)} for {d:.1f}s" for s, d in freezes)
             + ". Expected where the brief asks for a hold (say so in REPORT.md), otherwise dead air")
     else:
-        out("PASS", f"nothing frozen over {args.freeze_seconds:g}s (slow pans and push-ins do not count)")
+        out("PASS", f"nothing frozen over {args.freeze_seconds:g}s (slow pans over a detailed picture do not count)")
     print("\n".join(results))
     return 1 if fails else 0
 
