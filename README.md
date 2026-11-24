@@ -6,6 +6,25 @@
 
 <p align="center"><b>Text to video for Claude Code and Codex. Write a brief, get a finished MP4 of motion graphics, an explainer video, a documentary, a YouTube Short or a 3D animation, checked against every line of your brief before you see it.</b><br>2D explainers · narrated documentaries · maths animations · tutorials · Shorts and Reels · data stories · product launches · logo stings · kinetic type · talking characters · Blender animation · 3D products with physics · 82 art forms from oil painting and Madhubani to manga, synthwave and silent film</p>
 
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://youtu.be/aP2wHwG_dSA"><img src="assets/yt-documentary.webp" width="360" alt="Video: I Gave Claude Code One Brief. It Made a Full Documentary"></a><br>
+      <b><a href="https://youtu.be/aP2wHwG_dSA">▶ Claude Code made a full documentary</a></b><br>
+      <sub>One brief in, a sourced 6-minute documentary out</sub>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://youtu.be/NnnftZVsp5o"><img src="assets/yt-24-art-styles.webp" width="360" alt="Video: Claude Code and Codex Animation: 1 Kite, 24 Art Styles"></a><br>
+      <b><a href="https://youtu.be/NnnftZVsp5o">▶ 1 kite, 24 art styles</a></b><br>
+      <sub>The animations brief2mp4 makes, in Claude Code and Codex</sub>
+    </td>
+  </tr>
+</table>
+
+<p align="center">The documentary is one command, from <code>BRIEF.md</code> to <code>final.mp4</code>:<br><code>python3 plugin/skills/brief2mp4/scripts/film.py run --project my-film</code></p>
+
+<p align="center"><a href="https://youtu.be/aP2wHwG_dSA"><b>▶ Watch: Claude Code made a full documentary with brief2mp4 (6 min)</b></a></p>
+
 <p align="center">
   <a href="https://github.com/qualixar/brief2mp4/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/qualixar/brief2mp4?style=flat&color=FF5A1F"></a>
   <a href="https://github.com/qualixar/brief2mp4/releases"><img alt="Release" src="https://img.shields.io/github/v/release/qualixar/brief2mp4?color=FF5A1F"></a>
@@ -42,6 +61,13 @@ https://github.com/user-attachments/assets/40f4f310-5ce1-46b9-a899-ded3ba520e79
 ## Made with brief2mp4
 
 <table>
+  <tr>
+    <td colspan="2" valign="top">
+      <a href="https://youtu.be/aP2wHwG_dSA"><img src="assets/film-andree-documentary.webp" width="100%" alt="Thumbnail: Claude Code made a full documentary, with the 1897 Andrée balloon photograph on the ice"></a>
+      <b>A full documentary from one brief, 6 min.</b> The 1897 Andrée balloon expedition, told with the expedition's own recovered photographs. Every script line carries a source, and the render is blocked if one is missing.<br>
+      <a href="https://youtu.be/aP2wHwG_dSA">Watch the film and how it was made</a>
+    </td>
+  </tr>
   <tr>
     <td width="50%" valign="top">
       <img src="assets/3d-recipes-film.webp" width="100%" alt="A 24-second Blender animation made only from the motion recipes: cloth dropping over a ball, a hinged chain swinging from a post, paper folding into a stack, a jointed figure walking with planted feet, and a seamless loop of a ring around a shape.">
